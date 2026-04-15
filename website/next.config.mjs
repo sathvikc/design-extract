@@ -1,11 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ['playwright-core', '@sparticuz/chromium'],
-  turbopack: {
-    resolveAlias: {
-      'playwright': 'playwright-core',
-    },
-  },
+  turbopack: {},
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.resolve.alias['playwright'] = 'playwright-core';

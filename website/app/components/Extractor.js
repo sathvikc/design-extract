@@ -77,7 +77,11 @@ export default function Extractor() {
 
       {error && (
         <div className="extractor-error">
-          {error}
+          <p>{error}</p>
+          <p className="extractor-error-hint">
+            Server too slow? Run it locally — it hits different:<br />
+            <code>npx designlang {url || 'https://example.com'}</code>
+          </p>
         </div>
       )}
 
