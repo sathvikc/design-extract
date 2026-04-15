@@ -45,7 +45,7 @@ npx designlang https://stripe.com --full
 | `*-theme.js` | React/CSS-in-JS theme (Chakra, Stitches, Vanilla Extract) |
 | `*-shadcn-theme.css` | shadcn/ui globals.css variables |
 
-The markdown output has **14 sections**: Color Palette, Typography, Spacing, Border Radii, Box Shadows, CSS Custom Properties, Breakpoints, Transitions & Animations, Component Patterns, Layout System, Responsive Design, Interaction States, Accessibility (WCAG 2.1), and Quick Start.
+The markdown output has **19 sections**: Color Palette, Typography, Spacing, Border Radii, Box Shadows, CSS Custom Properties, Breakpoints, Transitions & Animations, Component Patterns (with full CSS snippets), Layout System, Responsive Design, Interaction States, Accessibility (WCAG 2.1), Gradients, Z-Index Map, SVG Icons, Font Files, Image Style Patterns, and Quick Start.
 
 ## Install
 
@@ -169,6 +169,52 @@ designlang watch https://stripe.com --interval 60
 
 Checks hourly and alerts when colors, fonts, or accessibility scores change.
 
+### 9. Apply Command (NEW in v5)
+
+Extract a site's design and write tokens directly into your project — auto-detects your framework:
+
+```bash
+designlang apply https://stripe.com --dir ./my-app
+```
+
+Detects Tailwind, shadcn/ui, or plain CSS and writes to the right config files automatically.
+
+### 10. Auth Extraction (NEW in v5)
+
+Extract from authenticated or protected pages with cookies and custom headers:
+
+```bash
+designlang https://internal-app.com --cookie "session=abc123" --header "Authorization:Bearer token"
+```
+
+### 11. Gradient Extraction (NEW in v5)
+
+Detects all CSS gradients — type (linear/radial/conic), direction, color stops, and classifies them as subtle, brand, bold, or complex.
+
+### 12. Z-Index Map (NEW in v5)
+
+Builds a layer hierarchy from all z-index values, groups them into layers (base, sticky, dropdown, modal, etc.), and flags z-index wars or excessive values (>9999).
+
+### 13. SVG Icon Extraction (NEW in v5)
+
+Finds and deduplicates all inline SVGs, classifies them by size and style (outline/solid/duotone), and extracts the icon color palette.
+
+### 14. Font File Detection (NEW in v5)
+
+Identifies every font source — Google Fonts, self-hosted, CDN, or system — and generates ready-to-use `@font-face` CSS.
+
+### 15. Image Style Patterns (NEW in v5)
+
+Detects image aspect ratios, border treatments, filters, and classifies patterns like avatar, hero, thumbnail, and gallery.
+
+### 16. Dark Mode Diffing (NEW in v5)
+
+Compare light and dark mode side-by-side — see exactly which colors change and which CSS variables are overridden:
+
+```bash
+designlang https://vercel.com --dark
+```
+
 ## All Features
 
 | Feature | Flag / Command | Description |
@@ -177,12 +223,19 @@ Checks hourly and alerts when colors, fonts, or accessibility scores change.
 | Layout system | automatic | Grid patterns, flex usage, container widths, gap values |
 | Accessibility | automatic | WCAG 2.1 contrast ratios for all fg/bg pairs |
 | Design scoring | automatic | 7-category quality rating (A-F) with actionable issues |
-| Dark mode | `--dark` | Extracts dark color scheme |
+| Gradients | automatic | Gradient type, direction, stops, classification |
+| Z-index map | automatic | Layer hierarchy, z-index wars detection |
+| SVG icons | automatic | Deduplicated icons, size/style classification, color palette |
+| Font files | automatic | Source detection (Google/self-hosted/CDN/system), @font-face CSS |
+| Image styles | automatic | Aspect ratios, shapes, filters, pattern classification |
+| Dark mode | `--dark` | Extracts dark color scheme + light/dark diff |
+| Auth pages | `--cookie`, `--header` | Extract from authenticated/protected pages |
 | Multi-page | `--depth <n>` | Crawl N internal pages for site-wide tokens |
 | Screenshots | `--screenshots` | Capture buttons, cards, inputs, nav, hero, full page |
 | Responsive | `--responsive` | Crawl at 4 viewports, map breakpoint changes |
 | Interactions | `--interactions` | Capture hover/focus/active state transitions |
 | Everything | `--full` | Enable screenshots + responsive + interactions |
+| Apply | `designlang apply <url>` | Auto-detect framework and write tokens to your project |
 | Clone | `designlang clone <url>` | Generate a working Next.js starter with extracted design |
 | Score | `designlang score <url>` | Rate design quality with visual bar chart breakdown |
 | Watch | `designlang watch <url>` | Monitor for design changes on interval |
@@ -208,11 +261,14 @@ Options:
   --responsive            Capture at multiple breakpoints
   --interactions          Capture hover/focus/active states
   --full                  Enable all captures
+  --cookie <cookies...>   Cookies for authenticated pages (name=value)
+  --header <headers...>   Custom headers (name:value)
   --framework <type>      Only generate specific theme (react, shadcn)
   --no-history            Skip saving to history
   --verbose               Detailed progress output
 
 Commands:
+  apply <url>             Extract and apply design directly to your project
   clone <url>             Generate a working Next.js starter from extracted design
   score <url>             Rate design quality (7 categories, A-F, bar chart)
   watch <url>             Monitor for design changes on interval
@@ -252,9 +308,14 @@ Running `designlang https://vercel.com --full`:
   Shadows: 11 unique shadows
   Radii: 10 unique values
   Breakpoints: 45 breakpoints
-  Components: 11 types detected
+  Components: 11 types detected (with CSS snippets)
   CSS Vars: 407 custom properties
   Layout: 55 grids, 492 flex containers
+  Gradients: 4 unique gradients
+  Z-Index: 8 layers mapped
+  Icons: 23 unique SVGs
+  Font Files: 4 font sources detected
+  Images: 6 style patterns
   Responsive: 4 viewports, 3 breakpoint changes
   Interactions: 8 state changes captured
   A11y: 94% WCAG score (7 failing pairs)
@@ -264,8 +325,8 @@ Running `designlang https://vercel.com --full`:
 ## How It Works
 
 1. **Crawl** — Launches headless Chromium via Playwright, waits for network idle and fonts
-2. **Extract** — Single `page.evaluate()` walks up to 5,000 DOM elements collecting 25+ computed style properties including layout (grid, flex, container) data
-3. **Process** — 12 extractor modules parse, deduplicate, cluster, and classify the raw data
+2. **Extract** — Single `page.evaluate()` walks up to 5,000 DOM elements collecting 25+ computed style properties, layout data, inline SVGs, font sources, and image metadata
+3. **Process** — 17 extractor modules parse, deduplicate, cluster, and classify the raw data (including gradients, z-index layers, icons, fonts, and image patterns)
 4. **Format** — 8 formatter modules generate output files
 5. **Score** — Accessibility extractor calculates WCAG contrast ratios for all color pairs
 6. **Capture** — Optional: screenshots, responsive viewport crawling, interaction state recording
