@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">designlang</h1>
+  <h1 align="center">DESIGNLANG</h1>
   <p align="center">Reverse-engineer any website's complete design system in one command.</p>
 </p>
 
