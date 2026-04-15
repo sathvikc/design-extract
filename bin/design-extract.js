@@ -28,7 +28,7 @@ const program = new Command();
 program
   .name('designlang')
   .description('Extract the complete design language from any website')
-  .version('4.0.0');
+  .version('4.0.1');
 
 // ── Main command: extract ──────────────────────────────────────
 program
