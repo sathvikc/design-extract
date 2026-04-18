@@ -4,6 +4,9 @@ import HeroExtractor from './components/HeroExtractor';
 import TokenBrowser from './components/TokenBrowser';
 import McpSection from './components/McpSection';
 import PlatformTabs from './components/PlatformTabs';
+import CssHealth from './components/CssHealth';
+import A11ySlider from './components/A11ySlider';
+import RegionsComponents from './components/RegionsComponents';
 
 export default function Home() {
   return (
@@ -105,17 +108,17 @@ export default function Home() {
 
       {/* ── §04 HEALTH ────────────────────────────────────── */}
       <section>
-        <Rule number="04" label="CSS health audit" />
+        <CssHealth />
       </section>
 
       {/* ── §05 REMEDIATION ───────────────────────────────── */}
       <section>
-        <Rule number="05" label="A11y remediation" />
+        <A11ySlider />
       </section>
 
       {/* ── §06 REGIONS + COMPONENTS ──────────────────────── */}
       <section>
-        <Rule number="06" label="Regions and components" />
+        <RegionsComponents />
       </section>
 
       {/* ── §07 SPECIMENS ─────────────────────────────────── */}
