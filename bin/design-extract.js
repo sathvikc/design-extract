@@ -48,7 +48,7 @@ const program = new Command();
 program
   .name('designlang')
   .description('Extract the complete design language from any website')
-  .version('8.0.0');
+  .version('9.0.0');
 
 // ── Main command: extract ──────────────────────────────────────
 program
@@ -220,6 +220,15 @@ program
         cssHealth: design.cssHealth || null,
       };
       files.push({ name: `${prefix}-mcp.json`, content: JSON.stringify(mcpPayload, null, 2), label: 'MCP companion' });
+
+      // v9: motion tokens + component anatomy stubs + voice
+      const { formatMotionTokens } = await import('../src/formatters/motion-tokens.js');
+      const { formatAnatomyStubs } = await import('../src/extractors/component-anatomy.js');
+      files.push({ name: `${prefix}-motion-tokens.json`, content: formatMotionTokens(design.motion), label: 'Motion Tokens' });
+      if ((design.componentAnatomy || []).length) {
+        files.push({ name: `${prefix}-anatomy.tsx`, content: formatAnatomyStubs(design.componentAnatomy), label: 'Component Anatomy (stubs)' });
+      }
+      files.push({ name: `${prefix}-voice.json`, content: JSON.stringify(design.voice || {}, null, 2), label: 'Brand Voice' });
 
       for (const file of files) {
         writeFileSync(join(outDir, file.name), file.content, 'utf-8');
@@ -800,6 +809,86 @@ program
       }
     } catch (err) {
       process.stderr.write(`Error: ${err.message}\n`);
+      process.exit(1);
+    }
+  });
+
+// ── Token lint (v9) ────────────────────────────────────────
+program
+  .command('lint <file>')
+  .description('Audit a local token file (.json / .css) for color sprawl, scale drift, contrast fails')
+  .option('--json', 'emit machine-readable JSON')
+  .action(async (file, opts) => {
+    try {
+      const { lintTokens } = await import('../src/lint.js');
+      const r = lintTokens(resolve(file));
+      if (opts.json) { process.stdout.write(JSON.stringify(r, null, 2) + '\n'); return; }
+      console.log('');
+      console.log(chalk.bold(`  designlang lint — ${file}`));
+      console.log(`  Score: ${chalk.bold(r.score + '/100')}  Grade: ${chalk.bold(r.grade)}   Tokens: ${r.tokenCount}`);
+      console.log('');
+      for (const [k, v] of Object.entries(r.scorecard)) {
+        const bar = '█'.repeat(Math.round(v / 5)) + '░'.repeat(20 - Math.round(v / 5));
+        console.log(`  ${k.padEnd(20)} ${bar} ${v}`);
+      }
+      console.log('');
+      for (const f of r.findings) {
+        const color = f.severity === 'error' ? chalk.red : f.severity === 'warn' ? chalk.yellow : chalk.cyan;
+        console.log(`  ${color(f.severity.toUpperCase())} [${f.rule}] ${f.message}`);
+      }
+      if (!r.findings.length) console.log(chalk.green('  ✓ no issues found'));
+      console.log('');
+      process.exit(r.findings.some(f => f.severity === 'error') ? 1 : 0);
+    } catch (err) {
+      process.stderr.write(chalk.red(`\n  Error: ${err.message}\n\n`));
+      process.exit(1);
+    }
+  });
+
+// ── Drift (v9) ─────────────────────────────────────────────
+program
+  .command('drift <url>')
+  .description('Compare local tokens against a live site and report drift (CI-friendly)')
+  .requiredOption('--tokens <file>', 'local tokens file (.json or .css)')
+  .option('--tolerance <n>', 'color distance tolerance (0-50)', parseInt, 8)
+  .option('--fail-on <level>', 'exit non-zero on: minor-drift | notable-drift | major-drift', 'notable-drift')
+  .option('--json', 'emit machine-readable JSON')
+  .action(async (url, opts) => {
+    if (!url.startsWith('http')) url = `https://${url}`;
+    validateUrl(url);
+    try {
+      const { checkDrift, formatDriftMarkdown } = await import('../src/drift.js');
+      const r = await checkDrift(url, { tokens: resolve(opts.tokens), tolerance: opts.tolerance });
+      if (opts.json) { process.stdout.write(JSON.stringify(r, null, 2) + '\n'); }
+      else { console.log('\n' + formatDriftMarkdown(r) + '\n'); }
+      const order = ['in-sync', 'minor-drift', 'notable-drift', 'major-drift'];
+      if (order.indexOf(r.verdict) >= order.indexOf(opts.failOn)) process.exit(1);
+    } catch (err) {
+      process.stderr.write(chalk.red(`\n  Error: ${err.message}\n\n`));
+      process.exit(1);
+    }
+  });
+
+// ── Visual diff (v9) ───────────────────────────────────────
+program
+  .command('visual-diff <before> <after>')
+  .description('Side-by-side HTML diff of two URLs with screenshots + token changes')
+  .option('-o, --out <dir>', 'output directory', './design-extract-output')
+  .action(async (before, after, opts) => {
+    if (!before.startsWith('http')) before = `https://${before}`;
+    if (!after.startsWith('http')) after = `https://${after}`;
+    validateUrl(before); validateUrl(after);
+    const spinner = ora('Capturing before + after').start();
+    try {
+      const { visualDiff, formatVisualDiffHtml } = await import('../src/visual-diff.js');
+      const r = await visualDiff({ beforeUrl: before, afterUrl: after });
+      const html = formatVisualDiffHtml(r);
+      mkdirSync(resolve(opts.out), { recursive: true });
+      const path = join(resolve(opts.out), `visual-diff-${Date.now()}.html`);
+      writeFileSync(path, html, 'utf8');
+      spinner.succeed(`Visual diff written → ${path}`);
+    } catch (err) {
+      spinner.fail(err.message);
       process.exit(1);
     }
   });

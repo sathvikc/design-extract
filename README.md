@@ -15,11 +15,20 @@
   <img src="designlang.png" alt="designlang in action" width="100%">
 </p>
 
- [![designlang on npm](https://pkgfolio.vercel.app/embed/pkg/designlang?v=2)](https://www.npmjs.com/package/designlang)
- 
-**designlang** crawls any website with a headless browser, extracts every computed style from the live DOM, and generates **8 output files** — including an AI-optimized markdown file, visual HTML preview, Tailwind config, React theme, shadcn/ui theme, Figma variables, W3C design tokens, and CSS custom properties.
+[![designlang on npm](https://pkgfolio.vercel.app/embed/pkg/designlang?v=2)](https://www.npmjs.com/package/designlang)
 
-But unlike every other tool out there, it also extracts **layout patterns** (grids, flexbox, containers), captures **responsive behavior** across 4 breakpoints, records **interaction states** (hover, focus, active), scores **WCAG accessibility**, and lets you **compare multiple brands** or **sync live sites to local tokens**.
+**designlang** crawls any website with a headless browser, extracts every computed style from the live DOM, and generates **11+ output files** — including an AI-optimized markdown file, visual HTML preview, Tailwind config, React theme, shadcn/ui theme, Figma variables, W3C design tokens, CSS custom properties, **motion tokens**, **typed component anatomy stubs**, and a **brand voice** summary.
+
+But unlike every other tool out there, it also extracts **layout patterns** (grids, flexbox, containers), **motion language** (durations, easings, springs, scroll-linked animations), **component anatomy** (slots, variant × size × state matrices), **brand voice** (tone, CTA verbs, heading style), captures **responsive behavior** across 4 breakpoints, records **interaction states** (hover, focus, active), scores **WCAG accessibility**, lints your own token files, and lets you **drift-check a codebase against a live site**, **visual-diff two URLs**, **compare multiple brands**, or **sync live sites to local tokens**.
+
+## What's New in v9 — The Motion & Voice Release
+
+- **Motion Language** — durations bucketed into semantic tokens (`instant`/`xs`/`sm`/`md`/`lg`/`xl`), easings classified into families (ease-out, spring-overshoot, steps), scroll-linked animation detection (`animation-timeline`, `view-timeline-name`), keyframe kind classification (slide / fade / reveal / rotate / scale / pulse), and a `feel` fingerprint — *springy*, *responsive*, *smooth*, *mechanical*, or *mixed*.
+- **Component Anatomy v2** — every component cluster is now an *anatomy tree* with slots (label, icon, badge, heading, media), variant × size × state matrices, and an emitted `*-anatomy.tsx` file of typed React stubs you can wire into your design system.
+- **Brand Voice** — extracts tone (friendly / formal / technical / playful / neutral), pronoun posture (`we→you` / `you-only` / `we-only` / `third-person`), heading style (Title Case / Sentence case / all-lowercase), top CTA verbs, and a microcopy inventory. Feeds LLMs the *voice*, not just the paint.
+- **`designlang lint`** — audit your own `design-tokens.json` (DTCG or flat) or `variables.css` for color sprawl, spacing-scale drift, radius/shadow bloat, and WCAG fg/bg contrast fails. Exits non-zero on errors — CI-ready.
+- **`designlang drift`** — point at a live site, pass your local token file, and get a verdict: `in-sync` / `minor-drift` / `notable-drift` / `major-drift`. Integrates cleanly with the existing GitHub Action.
+- **`designlang visual-diff`** — capture two URLs side-by-side and emit a single-file HTML report with component screenshots, file-size deltas, and changed color tokens. No heavy pixel-diff dependencies — runs in pure Node + Playwright.
 
 ## Quick Start
 
@@ -33,7 +42,7 @@ Get everything at once:
 npx designlang https://stripe.com --full
 ```
 
-## What You Get (8 Files)
+## What You Get (11+ Files)
 
 | File | What it is |
 |------|------------|
@@ -45,6 +54,9 @@ npx designlang https://stripe.com --full
 | `*-figma-variables.json` | Figma Variables import (with dark mode support) |
 | `*-theme.js` | React/CSS-in-JS theme (Chakra, Stitches, Vanilla Extract) |
 | `*-shadcn-theme.css` | shadcn/ui globals.css variables |
+| `*-motion-tokens.json` | **(v9)** Motion tokens — durations, easings, springs, scroll-linked flag |
+| `*-anatomy.tsx` | **(v9)** Typed React stubs for every detected component + variants |
+| `*-voice.json` | **(v9)** Brand voice fingerprint — tone, CTA verbs, heading style |
 
 The markdown output has **19 sections**: Color Palette, Typography, Spacing, Border Radii, Box Shadows, CSS Custom Properties, Breakpoints, Transitions & Animations, Component Patterns (with full CSS snippets), Layout System, Responsive Design, Interaction States, Accessibility (WCAG 2.1), Gradients, Z-Index Map, SVG Icons, Font Files, Image Style Patterns, and Quick Start.
 
@@ -321,7 +333,112 @@ A Manifest-v3 popup lives in [`chrome-extension/`](chrome-extension/). One click
 - **Install:** toggle developer mode at `chrome://extensions`, click *Load unpacked*, pick the `chrome-extension/` folder.
 - **Firefox + Edge** work with the same MV3 manifest.
 
-### 23. Better Auth + Network Control (NEW in v7.1)
+### 24. Motion Language (NEW in v9)
+
+Extracts the full motion fingerprint, not just transition strings:
+
+```bash
+designlang https://linear.app
+# emits linear-app-motion-tokens.json
+```
+
+```
+Motion: feel = springy, 2 spring easings, scroll-linked = yes
+Durations: instant (80ms), xs (150ms), sm (220ms), md (380ms)
+Easings: ease-out (61%), spring-overshoot (18%), ease-in-out (21%)
+Keyframes: fade-up (slide-y, used 18x), scale-in (reveal, used 4x)
+```
+
+### 25. Component Anatomy v2 (NEW in v9)
+
+Every detected component becomes an anatomy tree with typed React stubs:
+
+```bash
+designlang https://stripe.com
+# emits stripe-com-anatomy.tsx
+```
+
+```tsx
+export interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
+  leadingIcon?: React.ReactNode;
+  badge?: React.ReactNode;
+  children?: React.ReactNode;
+}
+```
+
+### 26. Brand Voice (NEW in v9)
+
+Pulls the voice alongside the visual:
+
+```bash
+designlang https://vercel.com
+# emits vercel-com-voice.json + a Brand Voice section in the markdown
+```
+
+```
+Tone: technical · Pronoun: we→you · Headings: Sentence case (tight)
+Top CTA verbs: start (14), get (8), deploy (5), try (3)
+Sample headings:
+  > Develop. Preview. Ship.
+  > The React framework for the web.
+```
+
+### 27. `designlang lint` — Token Quality Linter (NEW in v9)
+
+Audit your own token file with the same rules the scorer runs against live sites:
+
+```bash
+designlang lint ./src/tokens/design-tokens.json
+```
+
+```
+Score: 74/100  Grade: C   Tokens: 126
+
+  colorDiscipline      ██████████████░░░░░░ 72
+  spacingSystem        ████████████████░░░░ 84
+  borderRadii          ████████████░░░░░░░░ 60
+  shadows              ██████████░░░░░░░░░░ 50
+  accessibility        █████████████████░░░ 88
+
+  WARN  [color-sprawl] 3 near-duplicate color pair(s) within 8 RGB units
+  ERROR [contrast-wcag-aa] 2 fg/bg pair(s) fail WCAG AA (4.5:1)
+```
+
+Exits non-zero on any `error`-level finding — drop into CI.
+
+### 28. `designlang drift` — Codebase ↔ Live Site Sync Check (NEW in v9)
+
+Point at a deployed site, pass your local tokens, and get a verdict:
+
+```bash
+designlang drift https://yourapp.com --tokens ./src/tokens.json --tolerance 8
+```
+
+```
+Verdict: notable-drift (drift ratio: 0.24)
+
+| token          | local    | nearest live       | Δ  |
+|----------------|----------|--------------------|----|
+| color.primary  | #4338CA  | #5B4CF5 (primary)  | 22 |
+| color.border   | #D4D4D8  | #E5E5EA (surface)  | 18 |
+```
+
+Configurable `--fail-on <level>` for CI: `minor-drift` / `notable-drift` / `major-drift`.
+
+### 29. `designlang visual-diff` — Two-URL Side-by-Side (NEW in v9)
+
+Capture screenshots + token deltas for two URLs in a single self-contained HTML report:
+
+```bash
+designlang visual-diff https://staging.app.com https://app.com
+```
+
+Emits `visual-diff-<timestamp>.html` with embedded images (base64), file-size deltas, and a changed-color-tokens table. Nothing else to serve — just open the file.
+
+### 30. Better Auth + Network Control (v7.1)
 
 Extracting from authenticated, self-signed, or non-default environments now takes one flag:
 
@@ -409,15 +526,18 @@ Options:
   --verbose               Detailed progress output
 
 Commands:
-  apply <url>             Extract and apply design directly to your project
-  clone <url>             Generate a working Next.js starter from extracted design
-  score <url>             Rate design quality (7 categories, A-F, bar chart)
-  watch <url>             Monitor for design changes on interval
-  diff <urlA> <urlB>      Compare two sites' design languages
-  brands <urls...>        Multi-brand comparison matrix
-  sync <url>              Sync local tokens with live site
-  history <url>           View design change history
-  mcp                     Launch stdio MCP server (--output-dir <dir>)
+  apply <url>                       Extract and apply design directly to your project
+  clone <url>                       Generate a working Next.js starter from extracted design
+  score <url>                       Rate design quality (7 categories, A-F, bar chart)
+  watch <url>                       Monitor for design changes on interval
+  diff <urlA> <urlB>                Compare two sites' design languages
+  brands <urls...>                  Multi-brand comparison matrix
+  sync <url>                        Sync local tokens with live site
+  history <url>                     View design change history
+  mcp                               Launch stdio MCP server (--output-dir <dir>)
+  lint <file>                       (v9) Audit a local token file (.json/.css) — CI-ready
+  drift <url> --tokens <file>       (v9) Check local tokens for drift against a live site
+  visual-diff <before> <after>      (v9) Side-by-side HTML diff of two URLs
 ```
 
 ## Example Output

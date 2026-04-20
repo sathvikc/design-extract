@@ -1,5 +1,39 @@
 # Changelog
 
+## [9.0.0] — 2026-04-21
+
+**The Motion & Voice release.** Six new capabilities that push designlang past "extract the paint" and into "extract the *feel*, the *anatomy*, and the *voice*." No competing tool does any of these. All work ships with tests (282/282 passing).
+
+### Added — extraction
+
+- **Motion language extractor** (`src/extractors/motion.js`) — easings are classified into families (`ease-in`, `ease-in-out`, `ease-out`, `linear`, `steps`, `spring`, `custom`) via cubic-bezier geometry, durations are bucketed into a named scale (`instant`/`xs`/`sm`/`md`/`lg`/`xl`/`xxl`), spring/overshoot cubic-beziers are surfaced, scroll-linked animation usage is detected via `animation-timeline` / `view-timeline-name` / `scroll-timeline-name`, and each `@keyframes` rule is classified by kind (`slide-x`, `slide-y`, `fade`, `reveal`, `rotate`, `scale`, `pulse`, `custom`). A one-word `feel` fingerprint (`springy`/`responsive`/`smooth`/`mechanical`/`mixed`) summarizes the whole system.
+- **Motion tokens formatter** (`src/formatters/motion-tokens.js`) — emits `*-motion-tokens.json` in a DTCG-flavored shape with `$type: duration` / `$type: cubicBezier`.
+- **Component Anatomy v2** (`src/extractors/component-anatomy.js`) — groups components by variant-class hints, infers slot roles (icon / label / badge / heading / media / footer), builds a variant × size × state matrix, captures sample button labels, and emits typed React stubs via `formatAnatomyStubs`. Output: `*-anatomy.tsx`.
+- **Brand voice extractor** (`src/extractors/voice.js`) — classifies tone (friendly / formal / technical / playful / neutral) from lexical markers, picks pronoun posture (`we→you`, `you-only`, `we-only`, `third-person`), detects heading style, top CTA verbs, and microcopy patterns. Output: `*-voice.json`.
+- **Crawler extensions** (`src/crawler.js`) — per-element `animation-timeline`, view/scroll timeline names; per-candidate `text`, `slots[]`, `disabled`, `variantHint`, `sizeHint` to feed anatomy + voice.
+
+### Added — new commands
+
+- **`designlang lint <file>`** — audits DTCG / flat-JSON / CSS-vars token files for color sprawl, spacing-scale drift, radius/shadow bloat, and WCAG AA fg/bg contrast. Exits non-zero on `error`-level findings. CI-ready.
+- **`designlang drift <url> --tokens <file>`** — compares local tokens against a live site, reports `in-sync` / `minor-drift` / `notable-drift` / `major-drift` with a drift ratio. `--fail-on <level>` controls CI exit code.
+- **`designlang visual-diff <before> <after>`** — single-file HTML side-by-side report with embedded base64 screenshots, file-size deltas, and a changed-color-tokens table.
+
+### Added — markdown output
+
+Three new sections in `*-design-language.md`: **Motion Language**, **Component Anatomy**, **Brand Voice**.
+
+### Changed
+
+- Default extraction now writes **11+ files** (up from 8): `*-motion-tokens.json`, `*-anatomy.tsx` (when candidates exist), `*-voice.json`.
+- `bin/design-extract.js` version → `9.0.0`.
+- `package.json` — description refreshed; new keywords: `motion`, `animation`, `component-anatomy`, `brand-voice`, `token-lint`, `visual-diff`.
+- README: "What's New in v9" hero block, new feature sections 24-29, new CLI entries (`lint`, `drift`, `visual-diff`).
+
+### Tests
+
+- New `tests/v9-features.test.js` — 7 suites, 21 assertions across motion, anatomy, voice, and lint.
+- Full suite: **282/282 passing**.
+
 ## [8.0.0] — 2026-04-20
 
 A credibility-and-distribution release. Three reliability bugs that hurt trust on real sites are fixed; three DX flags close the most-requested CLI gaps; five new surfaces (VS Code, Raycast, Figma, GitHub Actions, MCP registry) ship alongside.

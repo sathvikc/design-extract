@@ -623,6 +623,94 @@ export function formatMarkdown(design) {
     }
   }
 
+  // ── Motion Language (v9) ──
+  if (design.motion && (design.motion.durations?.length || design.motion.keyframes?.length)) {
+    lines.push('## Motion Language');
+    lines.push('');
+    lines.push(`**Feel:** ${design.motion.feel} · **Scroll-linked:** ${design.motion.scrollLinked?.present ? 'yes' : 'no'}`);
+    lines.push('');
+    if (design.motion.durations?.length) {
+      lines.push('### Duration Tokens');
+      lines.push('');
+      lines.push('| name | value | ms |');
+      lines.push('|---|---|---|');
+      for (const d of design.motion.durations) lines.push(`| \`${d.name}\` | \`${d.css}\` | ${d.ms} |`);
+      lines.push('');
+    }
+    if (design.motion.easings?.length) {
+      lines.push('### Easing Families');
+      lines.push('');
+      const byFamily = {};
+      for (const e of design.motion.easings) (byFamily[e.family] ||= []).push(e);
+      for (const [family, list] of Object.entries(byFamily)) {
+        lines.push(`- **${family}** (${list.reduce((s, e) => s + (e.count || 0), 0)} uses) — \`${list.map(e => e.raw).slice(0, 3).join('`, `')}\``);
+      }
+      lines.push('');
+    }
+    if (design.motion.springs?.length) {
+      lines.push('### Spring / Overshoot Easings');
+      lines.push('');
+      for (const s of design.motion.springs) lines.push(`- \`${s.raw}\``);
+      lines.push('');
+    }
+    const usedKf = (design.motion.keyframes || []).filter(k => k.used);
+    if (usedKf.length) {
+      lines.push('### Keyframes In Use');
+      lines.push('');
+      lines.push('| name | kind | properties | uses |');
+      lines.push('|---|---|---|---|');
+      for (const k of usedKf.slice(0, 20)) lines.push(`| \`${k.name}\` | ${k.kind} | ${k.propertiesAnimated.slice(0, 4).join(', ')} | ${k.usageCount} |`);
+      lines.push('');
+    }
+  }
+
+  // ── Component Anatomy (v9) ──
+  if ((design.componentAnatomy || []).length) {
+    lines.push('## Component Anatomy');
+    lines.push('');
+    for (const a of design.componentAnatomy.slice(0, 6)) {
+      lines.push(`### ${a.kind} — ${a.totalInstances} instance${a.totalInstances === 1 ? '' : 's'}`);
+      lines.push('');
+      const slots = Object.entries(a.slots).filter(([, v]) => v).map(([k]) => k);
+      if (slots.length) lines.push(`**Slots:** ${slots.join(', ')}`);
+      if (a.props.variant.length) lines.push(`**Variants:** ${a.props.variant.join(' · ')}`);
+      if (a.props.size.length) lines.push(`**Sizes:** ${a.props.size.join(' · ')}`);
+      lines.push('');
+      if (a.variants.length > 1) {
+        lines.push('| variant | count | sample label |');
+        lines.push('|---|---|---|');
+        for (const v of a.variants.slice(0, 8)) lines.push(`| ${v.name} | ${v.count} | ${(v.sampleText[0] || '').slice(0, 40)} |`);
+        lines.push('');
+      }
+    }
+  }
+
+  // ── Brand Voice (v9) ──
+  if (design.voice && (design.voice.ctaVerbs?.length || design.voice.sampleHeadings?.length)) {
+    lines.push('## Brand Voice');
+    lines.push('');
+    lines.push(`**Tone:** ${design.voice.tone} · **Pronoun:** ${design.voice.pronoun} · **Headings:** ${design.voice.headingStyle} (${design.voice.headingLengthClass})`);
+    lines.push('');
+    if (design.voice.ctaVerbs?.length) {
+      lines.push('### Top CTA Verbs');
+      lines.push('');
+      for (const v of design.voice.ctaVerbs.slice(0, 8)) lines.push(`- **${v.value}** (${v.count})`);
+      lines.push('');
+    }
+    if (design.voice.buttonPatterns?.length) {
+      lines.push('### Button Copy Patterns');
+      lines.push('');
+      for (const p of design.voice.buttonPatterns.slice(0, 10)) lines.push(`- "${p.value}" (${p.count}×)`);
+      lines.push('');
+    }
+    if (design.voice.sampleHeadings?.length) {
+      lines.push('### Sample Headings');
+      lines.push('');
+      for (const h of design.voice.sampleHeadings) lines.push(`> ${h}`);
+      lines.push('');
+    }
+  }
+
   // ── Quick Start ──
   lines.push('## Quick Start');
   lines.push('');

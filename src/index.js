@@ -25,7 +25,11 @@ import { extractModernCss } from './extractors/modern-css.js';
 import { extractWideGamut } from './extractors/wide-gamut.js';
 import { extractTokenSources } from './extractors/token-sources.js';
 import { extractInteractionStates } from './extractors/interaction-states.js';
+import { extractMotion } from './extractors/motion.js';
+import { extractComponentAnatomy, formatAnatomyStubs } from './extractors/component-anatomy.js';
+import { extractVoice } from './extractors/voice.js';
 import { formatDtcgTokens } from './formatters/dtcg-tokens.js';
+import { formatMotionTokens } from './formatters/motion-tokens.js';
 
 function safeExtract(fn, ...args) {
   try { return fn(...args); } catch { return null; }
@@ -73,6 +77,9 @@ export async function extractDesignLanguage(url, options = {}) {
     wideGamut: safeExtract(extractWideGamut, rawData.light.modernColors || []) || { oklch: { count: 0, samples: [] }, oklab: { count: 0, samples: [] }, colorMix: { count: 0, samples: [] }, lightDark: { count: 0, samples: [] }, displayP3: { count: 0, samples: [] }, rec2020: { count: 0, samples: [] }, totalCount: 0 },
     tokenSources: [],
     interactionStates: safeExtract(extractInteractionStates, rawData.interactState || rawData.light.interactState) || { scrollSettled: false, menusOpened: 0, hover: { sampled: 0, changed: 0, deltas: [] }, accordionsOpened: 0, modals: [] },
+    motion: safeExtract(extractMotion, styles, rawData.light.keyframes) || { durations: [], easings: [], springs: [], keyframes: [], scrollLinked: { present: false, signals: [] }, stats: {}, feel: 'unknown' },
+    componentAnatomy: safeExtract(extractComponentAnatomy, rawData.light.componentCandidates) || [],
+    voice: safeExtract(extractVoice, { componentCandidates: rawData.light.componentCandidates, sections: rawData.light.sections }) || { tone: 'neutral', ctaVerbs: [], buttonPatterns: [], sampleHeadings: [] },
     score: null,
   };
 
@@ -165,3 +172,10 @@ export { watchSite } from './watch.js';
 export { diffDarkMode } from './darkdiff.js';
 export { applyDesign } from './apply.js';
 export { loadConfig, mergeConfig } from './config.js';
+export { extractMotion } from './extractors/motion.js';
+export { formatMotionTokens } from './formatters/motion-tokens.js';
+export { extractComponentAnatomy, formatAnatomyStubs } from './extractors/component-anatomy.js';
+export { extractVoice } from './extractors/voice.js';
+export { lintTokens } from './lint.js';
+export { checkDrift, formatDriftMarkdown } from './drift.js';
+export { visualDiff, formatVisualDiffHtml } from './visual-diff.js';

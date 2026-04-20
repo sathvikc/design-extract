@@ -89,6 +89,12 @@ export default function Home() {
         <HeroExtractor />
       </section>
 
+      {/* ── §00 v9 — MOTION · ANATOMY · VOICE ─────────────── */}
+      <section id="v9">
+        <Rule number="00" label="v9 — motion · anatomy · voice" />
+        <V9Capabilities />
+      </section>
+
       {/* ── §01 DTCG BROWSER ──────────────────────────────── */}
       <section id="features">
         <Rule number="01" label="DTCG token browser" />
@@ -395,5 +401,122 @@ function SiteFooter() {
         Extracted, not generated.
       </div>
     </footer>
+  );
+}
+
+function V9Capabilities() {
+  const cardStyle = {
+    border: '1px solid var(--ink)',
+    padding: 'var(--r4)',
+    background: 'var(--paper)',
+  };
+  const tagStyle = {
+    fontFamily: 'var(--font-mono)',
+    fontSize: 10,
+    letterSpacing: '0.14em',
+    textTransform: 'uppercase',
+    color: 'var(--accent, #FF4800)',
+    marginBottom: 'var(--r2)',
+    display: 'block',
+  };
+  const titleStyle = {
+    fontSize: 22,
+    lineHeight: 1.1,
+    letterSpacing: '-0.02em',
+    marginBottom: 'var(--r3)',
+  };
+  const bodyStyle = {
+    fontSize: 14,
+    color: 'var(--ink-2)',
+    lineHeight: 1.55,
+    marginBottom: 'var(--r3)',
+  };
+  const codeStyle = {
+    fontFamily: 'var(--font-mono)',
+    fontSize: 11,
+    background: 'var(--ink)',
+    color: 'var(--paper)',
+    padding: 'var(--r2) var(--r3)',
+    display: 'block',
+    overflowX: 'auto',
+    whiteSpace: 'pre',
+  };
+
+  const items = [
+    {
+      tag: 'A · motion',
+      title: 'Motion language',
+      body: 'Easing families, springs, duration tokens, scroll-linked animation detection, keyframe classification. Emits *-motion-tokens.json.',
+      code: `feel: springy
+durations: xs 150ms, sm 220ms, md 380ms
+easings: ease-out (61%), spring (18%)
+scroll-linked: yes`,
+    },
+    {
+      tag: 'B · anatomy',
+      title: 'Component anatomy v2',
+      body: 'Variant × size × state matrices with slot inference. Emits typed React stubs (*-anatomy.tsx).',
+      code: `interface ButtonProps {
+  variant?: 'primary' | 'secondary';
+  size?: 'sm' | 'md' | 'lg';
+  leadingIcon?: ReactNode;
+  badge?: ReactNode;
+}`,
+    },
+    {
+      tag: 'E · voice',
+      title: 'Brand voice',
+      body: 'Tone, pronoun posture, heading style, CTA verbs. The words that match the paint.',
+      code: `tone: technical
+pronoun: we→you
+headings: Sentence case (tight)
+cta: start (14), ship (8), deploy (5)`,
+    },
+    {
+      tag: 'F · lint',
+      title: 'designlang lint',
+      body: 'Audit your own tokens. Color sprawl, spacing variance, contrast. Exits non-zero. CI-ready.',
+      code: `$ designlang lint ./tokens.json
+Score 74/100 · Grade C
+ERROR [contrast-wcag-aa] 2 pairs fail
+WARN  [color-sprawl] 3 near-dupes`,
+    },
+    {
+      tag: 'C · drift',
+      title: 'designlang drift',
+      body: 'Compare local tokens against a live site. Drifted, matched, unknown — verdict + ratio.',
+      code: `$ designlang drift \\
+  https://app.com \\
+  --tokens ./src/tokens.json
+Verdict: notable-drift (0.24)`,
+    },
+    {
+      tag: 'D · visual-diff',
+      title: 'designlang visual-diff',
+      body: 'Two URLs, one HTML file. Embedded screenshots, size deltas, changed tokens. No server needed.',
+      code: `$ designlang visual-diff \\
+  https://staging.app.com \\
+  https://app.com`,
+    },
+  ];
+
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: 'var(--r3)',
+        padding: 'var(--r5) 0',
+      }}
+    >
+      {items.map((it) => (
+        <div key={it.title} style={cardStyle}>
+          <span style={tagStyle}>{it.tag}</span>
+          <h3 className="display" style={titleStyle}>{it.title}</h3>
+          <p style={bodyStyle}>{it.body}</p>
+          <pre style={codeStyle}>{it.code}</pre>
+        </div>
+      ))}
+    </div>
   );
 }

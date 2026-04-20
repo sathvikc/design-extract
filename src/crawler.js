@@ -559,6 +559,11 @@ async function extractPageData(page, ignoreSelectors, scopeSelector) {
         zIndex: cs.zIndex,
         transition: cs.transition,
         animation: cs.animation,
+        animationTimeline: cs.animationTimeline || cs.getPropertyValue('animation-timeline') || '',
+        animationRangeStart: cs.getPropertyValue('animation-range-start') || '',
+        animationRangeEnd: cs.getPropertyValue('animation-range-end') || '',
+        viewTimelineName: cs.getPropertyValue('view-timeline-name') || '',
+        scrollTimelineName: cs.getPropertyValue('scroll-timeline-name') || '',
         display: cs.display,
         position: cs.position,
         flexDirection: cs.flexDirection,
@@ -757,10 +762,25 @@ async function extractPageData(page, ignoreSelectors, scopeSelector) {
         parseFloat(cs.fontSize) || 0,
         parseFloat(cs.fontWeight) || 0,
       ];
+      const text = ((el.innerText || el.textContent || '') + '').trim().slice(0, 160);
+      const slots = Array.from(el.children).slice(0, 8).map(c => {
+        const tagName = c.tagName.toLowerCase();
+        let role = 'content';
+        if (tagName === 'svg' || tagName === 'img' || c.querySelector?.('svg,img')) role = 'icon';
+        else if (/badge|pill|tag|chip/i.test(c.className || '')) role = 'badge';
+        else if (/h[1-6]/.test(tagName) || /title|heading/i.test(c.className || '')) role = 'heading';
+        else if (/description|subtitle|text|body/i.test(c.className || '')) role = 'text';
+        return { tag: tagName, role, text: ((c.innerText || c.textContent || '') + '').trim().slice(0, 80) };
+      });
       results.componentCandidates.push({
         kind,
         structuralHash: structuralHashOf(el),
         styleVector,
+        text,
+        slots,
+        disabled: el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true',
+        variantHint: (cls.match(/\b(primary|secondary|tertiary|ghost|outline|solid|destructive|danger|success|warning|link|subtle)\b/) || [])[1] || '',
+        sizeHint: (cls.match(/\b(xs|sm|md|lg|xl|small|medium|large)\b/) || [])[1] || '',
         css: {
           background: cs.backgroundColor,
           color: cs.color,
