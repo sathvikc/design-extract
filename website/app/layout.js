@@ -1,4 +1,5 @@
 import { Fraunces, Instrument_Sans, JetBrains_Mono } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import StructuredData from './components/StructuredData';
 import {
   SITE_URL,
@@ -120,7 +121,10 @@ export default function RootLayout({ children }) {
         <link rel="me" href="https://github.com/Manavarya09" />
         <StructuredData />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
