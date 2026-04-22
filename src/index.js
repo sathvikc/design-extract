@@ -203,6 +203,8 @@ export { extractMaterialLanguage } from './extractors/material-language.js';
 export { extractImageryStyle } from './extractors/imagery-style.js';
 export { extractLogo } from './extractors/logo.js';
 export { captureComponentScreenshotsV10 } from './extractors/component-screenshots.js';
+export { pairDarkMode } from './extractors/dark-mode-pair.js';
+export { captureResponsiveScreenshots } from './extractors/responsive-screenshots.js';
 export { refineWithSmart } from './classifiers/smart.js';
 export { crawlCanonicalPages, computeCrossPageConsistency, discoverCanonicalPages } from './multipage.js';
 export { buildPromptPack, formatV0Prompt, formatLovablePrompt, formatCursorPrompt, formatClaudeArtifactPrompt } from './formatters/prompt-pack.js';

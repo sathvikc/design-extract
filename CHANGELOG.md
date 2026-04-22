@@ -1,5 +1,20 @@
 # Changelog
 
+## [10.2.0] — 2026-04-22
+
+**Dark mode pairing + responsive screenshots.** Joins the light & dark extractor passes into semantic pairs, and adds full-page captures at 4 breakpoints × (light, dark).
+
+### Added
+
+- **`src/extractors/dark-mode-pair.js`** — pure function that maps light ↔ dark pairs for primary/secondary/accent/background/text roles and every CSS variable that actually differs between themes. Emits a drop-in Tailwind `darkMode: 'class'` config plus an audit (tokens missing from either pass).
+- **`src/extractors/responsive-screenshots.js`** — full-page PNGs at mobile / tablet / desktop / wide × (light, dark). Writes to `screenshots/responsive/<breakpoint>-<scheme>.png` with an index.
+- New flag `--responsive-shots`. Auto-on with `--full`.
+- New outputs: `*-dark-mode.json`, `*-responsive.json`.
+
+### Changed
+
+- CLI version test now reads from `package.json` instead of a hardcoded string — no per-release test churn going forward.
+
 ## [10.1.0] — 2026-04-22
 
 **Component screenshots.** The existing `--screenshots` flag now emits cluster-aware, retina (2×), multi-variant PNGs instead of five hardcoded selectors and a full-page image.

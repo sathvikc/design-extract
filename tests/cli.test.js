@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parsePlatforms, mergeConfig } from '../src/config.js';
 
@@ -18,9 +19,10 @@ describe('CLI', () => {
     assert.ok(output.trim().match(/^\d+\.\d+\.\d+$/));
   });
 
-  it('shows version number 10.1.0', () => {
+  it('shows the version from package.json', async () => {
+    const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'));
     const output = execFileSync('node', [CLI_PATH, '--version'], { encoding: 'utf-8' });
-    assert.equal(output.trim(), '10.1.0');
+    assert.equal(output.trim(), pkg.version);
   });
 
   it('exits with error when no arguments provided', () => {
