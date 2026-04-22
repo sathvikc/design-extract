@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.3.0] — 2026-04-22
+
+**Perf + SEO.** designlang now doubles as a lightweight auditor.
+
+### Added
+
+- **`src/extractors/perf.js`** — `captureCoreWebVitals(url)` opens a fresh Playwright context, measures LCP / CLS / INP via PerformanceObserver, categorises every network response into JS / CSS / font / image / document / other, counts third-party requests against a known-host list, and synthesises an interaction so INP reports. Returns grade buckets (good / needs-improvement / poor) per vital.
+- **`src/extractors/seo.js`** — pure extractor for Open Graph, Twitter cards, canonical, manifest, theme-color, viewport, every favicon, and inline JSON-LD blocks (schema.org structured data).
+- Crawler now captures `favicons`, `manifest`, and `<script type="application/ld+json">` content.
+- New flag `--perf`. Auto-on with `--full`.
+- New outputs: `*-seo.json`, `*-perf.json`.
+
 ## [10.2.0] — 2026-04-22
 
 **Dark mode pairing + responsive screenshots.** Joins the light & dark extractor passes into semantic pairs, and adds full-page captures at 4 breakpoints × (light, dark).

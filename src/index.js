@@ -33,6 +33,7 @@ import { extractSectionRoles } from './extractors/section-roles.js';
 import { extractComponentLibrary } from './extractors/component-library.js';
 import { extractMaterialLanguage } from './extractors/material-language.js';
 import { extractImageryStyle } from './extractors/imagery-style.js';
+import { extractSeo } from './extractors/seo.js';
 import { formatDtcgTokens } from './formatters/dtcg-tokens.js';
 import { formatMotionTokens } from './formatters/motion-tokens.js';
 
@@ -137,6 +138,7 @@ export async function extractDesignLanguage(url, options = {}) {
   design.componentLibrary = safeExtract(extractComponentLibrary, rawData.light?.stack || {}) || { library: 'unknown', confidence: 0, evidence: [], alternates: [] };
   design.materialLanguage = safeExtract(extractMaterialLanguage, design) || { label: 'flat', confidence: 0, signals: [], metrics: {} };
   design.imageryStyle = safeExtract(extractImageryStyle, rawData.light?.images || []) || { label: 'none', confidence: 0, counts: {}, signals: [] };
+  design.seo = safeExtract(extractSeo, rawData) || { openGraph: {}, twitter: {}, structuredData: [], score: {} };
   // Stash raw crawler output so downstream orchestration (multipage, smart)
   // can rebuild the digest without re-crawling.
   design._raw = rawData;
@@ -205,6 +207,8 @@ export { extractLogo } from './extractors/logo.js';
 export { captureComponentScreenshotsV10 } from './extractors/component-screenshots.js';
 export { pairDarkMode } from './extractors/dark-mode-pair.js';
 export { captureResponsiveScreenshots } from './extractors/responsive-screenshots.js';
+export { captureCoreWebVitals, extractFontLoading } from './extractors/perf.js';
+export { extractSeo } from './extractors/seo.js';
 export { refineWithSmart } from './classifiers/smart.js';
 export { crawlCanonicalPages, computeCrossPageConsistency, discoverCanonicalPages } from './multipage.js';
 export { buildPromptPack, formatV0Prompt, formatLovablePrompt, formatCursorPrompt, formatClaudeArtifactPrompt } from './formatters/prompt-pack.js';

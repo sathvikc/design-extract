@@ -12,6 +12,7 @@ import { extractLogo } from '../src/extractors/logo.js';
 import { captureComponentScreenshotsV10 } from '../src/extractors/component-screenshots.js';
 import { pairDarkMode } from '../src/extractors/dark-mode-pair.js';
 import { captureResponsiveScreenshots } from '../src/extractors/responsive-screenshots.js';
+import { captureCoreWebVitals, extractFontLoading } from '../src/extractors/perf.js';
 import { buildPromptPack } from '../src/formatters/prompt-pack.js';
 import { formatMarkdown } from '../src/formatters/markdown.js';
 import { formatTokens } from '../src/formatters/tokens.js';
@@ -55,7 +56,7 @@ const program = new Command();
 program
   .name('designlang')
   .description('Extract the complete design language from any website')
-  .version('10.2.0');
+  .version('10.3.0');
 
 // ── Main command: extract ──────────────────────────────────────
 program
@@ -88,6 +89,7 @@ program
   .option('--pages <n>', 'crawl N canonical pages (pricing/docs/blog/about/product) in addition to the homepage', parseInt)
   .option('--no-prompts', 'skip writing the prompt-pack directory')
   .option('--responsive-shots', 'capture full-page PNGs at 4 breakpoints × (light,dark)')
+  .option('--perf', 'measure Core Web Vitals + bundle profile (LCP/CLS/INP, JS/CSS/font/img bytes, third-party count)')
   .option('--json', 'output raw JSON to stdout (for CI/CD)')
   .option('--json-pretty', 'output formatted JSON to stdout')
   .option('--no-history', 'skip saving to history')
@@ -239,6 +241,19 @@ program
       // v10.2: dark-mode pairing (pure, based on already-extracted data).
       design.darkModePaired = pairDarkMode(design);
 
+      // v10.3: Core Web Vitals + bundle profile.
+      if (merged.full || merged.perf) {
+        spinner.text = 'Measuring Core Web Vitals...';
+        try {
+          design.perf = await captureCoreWebVitals(url, {
+            width: merged.width,
+            height: parseInt(merged.height) || 800,
+            channel: merged.systemChrome ? 'chrome' : undefined,
+          });
+          design.perf.fontLoading = extractFontLoading(design._raw?.light?.stack || {});
+        } catch (e) { design.perf = { error: e.message }; }
+      }
+
       // v10.2: responsive screenshots at 4 breakpoints × (light, dark).
       if (merged.full || merged.responsiveShots) {
         spinner.text = 'Capturing responsive screenshots...';
@@ -344,6 +359,12 @@ program
       }
       if (design.responsiveShots && Array.isArray(design.responsiveShots.shots) && design.responsiveShots.shots.length) {
         files.push({ name: `${prefix}-responsive.json`, content: JSON.stringify(design.responsiveShots, null, 2), label: 'Responsive Screenshots index' });
+      }
+      if (design.seo) {
+        files.push({ name: `${prefix}-seo.json`, content: JSON.stringify(design.seo, null, 2), label: 'SEO + Structured Data' });
+      }
+      if (design.perf && !design.perf.error) {
+        files.push({ name: `${prefix}-perf.json`, content: JSON.stringify(design.perf, null, 2), label: 'Perf + Bundle' });
       }
       if (merged.prompts !== false) {
         const pack = buildPromptPack(design);

@@ -867,6 +867,17 @@ async function extractPageData(page, ignoreSelectors, scopeSelector) {
       results.fontData.documentFonts.push({ family: font.family.replace(/['"]/g, ''), style: font.style, weight: font.weight, status: font.status });
     }
 
+    // v10.3 — favicons, manifest, JSON-LD.
+    results.favicons = Array.from(document.querySelectorAll('link[rel~="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]'))
+      .slice(0, 10)
+      .map(l => ({ rel: l.getAttribute('rel'), href: l.href, sizes: l.getAttribute('sizes') || '', type: l.getAttribute('type') || '' }));
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    results.manifest = manifestLink ? manifestLink.href : null;
+    results.jsonLd = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
+      .slice(0, 12)
+      .map(s => s.textContent || '')
+      .filter(Boolean);
+
     // Image data
     results.images = [];
     for (const img of document.querySelectorAll('img, picture img, [role="img"]')) {
