@@ -85,6 +85,7 @@ program
   .option('--insecure', 'ignore HTTPS/SSL certificate errors (self-signed, dev, proxies)')
   .option('--ignore <selectors...>', 'CSS selectors to remove before extraction')
   .option('--ignore-widgets', 'Also ignore a curated list of third-party widgets (Intercom, Drift, HubSpot chat, cookie banners, reCAPTCHA, etc.)  See `designlang widgets`.')
+  .option('--storybook', 'Emit a runnable Storybook project (stories/, .storybook/, package.json) alongside the extraction')
   .option('--selector <css>', 'only extract design from elements matching this CSS selector (e.g. ".pricing-card")')
   .option('--system-chrome', 'use the system Chrome install instead of the bundled Chromium (skips the 150MB Playwright download)')
   .option('--tokens-legacy', 'Emit pre-v7 flat token JSON (backward compat)')
@@ -470,6 +471,20 @@ program
           mkdirSync(join(p, '..'), { recursive: true });
           writeFileSync(p, agentFiles[rel], 'utf-8');
           platformFiles.push({ path: p, label: `Agent rules (${rel})` });
+        }
+      }
+
+      // Storybook project (opt-in via --storybook)
+      if (merged.storybook && Array.isArray(design.componentAnatomy) && design.componentAnatomy.length > 0) {
+        const { formatStorybook } = await import('../src/formatters/storybook.js');
+        const sbFiles = formatStorybook(design);
+        const sbDir = join(outDir, `${prefix}-storybook`);
+        mkdirSync(sbDir, { recursive: true });
+        for (const [rel, content] of Object.entries(sbFiles)) {
+          const p = join(sbDir, rel);
+          mkdirSync(join(p, '..'), { recursive: true });
+          writeFileSync(p, content, 'utf-8');
+          platformFiles.push({ path: p, label: `Storybook (${rel})` });
         }
       }
 
@@ -1056,6 +1071,46 @@ program
       const path = join(resolve(opts.out), `visual-diff-${Date.now()}.html`);
       writeFileSync(path, html, 'utf8');
       spinner.succeed(`Visual diff written → ${path}`);
+    } catch (err) {
+      spinner.fail(err.message);
+      process.exit(1);
+    }
+  });
+
+// ── Replay — record a short WebM of motion from a URL ─────
+program
+  .command('replay <url>')
+  .description('Record a short WebM clip of a site\'s motion (scroll + hover). Optional MP4 if ffmpeg is on PATH.')
+  .option('-o, --out <dir>', 'output directory', './design-extract-output')
+  .option('-n, --name <name>', 'output file prefix', 'motion-replay')
+  .option('-d, --duration <s>', 'duration in seconds (2-15)', parseInt, 5)
+  .option('-w, --width <px>', 'viewport width', parseInt, 1280)
+  .option('--height <px>', 'viewport height', parseInt, 800)
+  .option('--mp4', 'also emit an MP4 (requires ffmpeg on PATH)')
+  .action(async (url, opts) => {
+    if (!url.startsWith('http')) url = `https://${url}`;
+    validateUrl(url);
+    const spinner = ora('Recording motion replay...').start();
+    try {
+      const { recordReplay } = await import('../src/replay.js');
+      const r = await recordReplay(url, {
+        out: opts.out,
+        prefix: opts.name,
+        duration: opts.duration,
+        width: opts.width,
+        height: opts.height,
+        mp4: opts.mp4,
+      });
+      if (!r.webm) {
+        spinner.fail('No video was produced. The browser may have blocked recording; try a different URL.');
+        process.exit(1);
+      }
+      spinner.succeed(`Replay captured (${r.duration}s)`);
+      console.log('');
+      console.log(`  ${chalk.green('✓')} ${chalk.cyan(r.webm)} — WebM`);
+      if (r.mp4) console.log(`  ${chalk.green('✓')} ${chalk.cyan(r.mp4)} — MP4`);
+      else if (opts.mp4) console.log(`  ${chalk.gray('note: ffmpeg not found on PATH; MP4 skipped')}`);
+      console.log('');
     } catch (err) {
       spinner.fail(err.message);
       process.exit(1);
