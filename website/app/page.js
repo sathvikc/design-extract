@@ -30,7 +30,7 @@ export default function Home() {
             <img src="/mark.svg" alt="" width={22} height={22} style={{ display: 'block' }} />
             <span className="mono" style={{ fontSize: 13, letterSpacing: '0.02em' }}>
               designlang
-              <span style={{ color: 'var(--ink-3)', marginLeft: 12 }}>v10</span>
+              <span style={{ color: 'var(--ink-3)', marginLeft: 12 }}>v11</span>
             </span>
           </span>
           <nav
@@ -89,9 +89,15 @@ export default function Home() {
         <HeroExtractor />
       </section>
 
-      {/* ── §00.5 v10 — INTENT · VISUAL DNA · PROMPT PACK ── */}
+      {/* ── §00.5 v11 — CLONE · CI · STUDIO ──────────────── */}
+      <section id="v11">
+        <Rule number="00" label="v11 — clone · ci · studio" />
+        <V11Showcase />
+      </section>
+
+      {/* ── §00.7 v10 — SEMANTIC INTELLIGENCE ────────────── */}
       <section id="v10">
-        <Rule number="00" label="v10 — intent · visual DNA · prompt pack" />
+        <Rule number="00" label="v10 — semantic intelligence" />
         <V10Capabilities />
       </section>
 
@@ -411,51 +417,14 @@ function SiteFooter() {
 }
 
 function V9Capabilities() {
-  const cardStyle = {
-    border: '1px solid var(--ink)',
-    padding: 'var(--r4)',
-    background: 'var(--paper)',
-  };
-  const tagStyle = {
-    fontFamily: 'var(--font-mono)',
-    fontSize: 10,
-    letterSpacing: '0.14em',
-    textTransform: 'uppercase',
-    color: 'var(--accent, #FF4800)',
-    marginBottom: 'var(--r2)',
-    display: 'block',
-  };
-  const titleStyle = {
-    fontSize: 22,
-    lineHeight: 1.1,
-    letterSpacing: '-0.02em',
-    marginBottom: 'var(--r3)',
-  };
-  const bodyStyle = {
-    fontSize: 14,
-    color: 'var(--ink-2)',
-    lineHeight: 1.55,
-    marginBottom: 'var(--r3)',
-  };
-  const codeStyle = {
-    fontFamily: 'var(--font-mono)',
-    fontSize: 11,
-    background: 'var(--ink)',
-    color: 'var(--paper)',
-    padding: 'var(--r2) var(--r3)',
-    display: 'block',
-    overflowX: 'auto',
-    whiteSpace: 'pre',
-  };
-
   const items = [
     {
       tag: 'A · motion',
       title: 'Motion language',
-      body: 'Easing families, springs, duration tokens, scroll-linked animation detection, keyframe classification. Emits *-motion-tokens.json.',
+      body: 'Easing families, springs, duration tokens, scroll-linked detection, keyframe classification. Emits *-motion-tokens.json.',
       code: `feel: springy
-durations: xs 150ms, sm 220ms, md 380ms
-easings: ease-out (61%), spring (18%)
+durations: xs 150ms · sm 220ms · md 380ms
+easings: ease-out 61% · spring 18%
 scroll-linked: yes`,
     },
     {
@@ -470,24 +439,6 @@ scroll-linked: yes`,
 }`,
     },
     {
-      tag: 'E · voice',
-      title: 'Brand voice',
-      body: 'Tone, pronoun posture, heading style, CTA verbs. The words that match the paint.',
-      code: `tone: technical
-pronoun: we→you
-headings: Sentence case (tight)
-cta: start (14), ship (8), deploy (5)`,
-    },
-    {
-      tag: 'F · lint',
-      title: 'designlang lint',
-      body: 'Audit your own tokens. Color sprawl, spacing variance, contrast. Exits non-zero. CI-ready.',
-      code: `$ designlang lint ./tokens.json
-Score 74/100 · Grade C
-ERROR [contrast-wcag-aa] 2 pairs fail
-WARN  [color-sprawl] 3 near-dupes`,
-    },
-    {
       tag: 'C · drift',
       title: 'designlang drift',
       body: 'Compare local tokens against a live site. Drifted, matched, unknown — verdict + ratio.',
@@ -499,38 +450,358 @@ Verdict: notable-drift (0.24)`,
     {
       tag: 'D · visual-diff',
       title: 'designlang visual-diff',
-      body: 'Two URLs, one HTML file. Embedded screenshots, size deltas, changed tokens. No server needed.',
+      body: 'Two URLs, one HTML file. Embedded screenshots, size deltas, changed tokens. No server.',
       code: `$ designlang visual-diff \\
   https://staging.app.com \\
   https://app.com`,
     },
+    {
+      tag: 'E · voice',
+      title: 'Brand voice',
+      body: 'Tone, pronoun posture, heading style, CTA verbs. The words that match the paint.',
+      code: `tone: technical
+pronoun: we → you
+headings: Sentence case (tight)
+cta: start 14 · ship 8 · deploy 5`,
+    },
+    {
+      tag: 'F · lint',
+      title: 'designlang lint',
+      body: 'Audit your own tokens. Color sprawl, spacing variance, contrast. Exits non-zero. CI-ready.',
+      code: `$ designlang lint ./tokens.json
+Score 74/100 · Grade C
+ERROR [contrast-wcag-aa] 2 pairs fail
+WARN  [color-sprawl] 3 near-dupes`,
+    },
   ];
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-        gap: 'var(--r3)',
-        padding: 'var(--r5) 0',
-      }}
-    >
-      {items.map((it) => (
-        <div key={it.title} style={cardStyle}>
-          <span style={tagStyle}>{it.tag}</span>
-          <h3 className="display" style={titleStyle}>{it.title}</h3>
-          <p style={bodyStyle}>{it.body}</p>
-          <pre style={codeStyle}>{it.code}</pre>
+    <div className="v9" style={{ padding: 'var(--r6) 0 var(--r7)' }}>
+      <div className="v9-head">
+        <div>
+          <span className="section-label" style={{ display: 'block', marginBottom: 'var(--r3)' }}>
+            <span>§00.9 — v9 · supporting tools</span>
+          </span>
+          <h2
+            className="display"
+            style={{ fontSize: 'clamp(32px, 4.4vw, 56px)', letterSpacing: '-0.025em', lineHeight: 1.02 }}
+          >
+            The <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>how</em> it looks. <br />
+            And how it moves, reads, <br /> and drifts.
+          </h2>
         </div>
-      ))}
+        <p
+          className="prose"
+          style={{ maxWidth: '38ch', fontSize: 15, lineHeight: 1.55, color: 'var(--ink-2)', alignSelf: 'end' }}
+        >
+          Six extractors that sit under v10 — motion, anatomy, drift,
+          visual-diff, voice, lint. Each writes a single file. Each exits non-zero
+          when it matters.
+        </p>
+      </div>
+
+      <ol className="v9-list">
+        {items.map((it, i) => (
+          <li key={it.title} className="v9-row">
+            <div className="v9-num mono">{String(i + 1).padStart(2, '0')}</div>
+            <div className="v9-text">
+              <div className="v9-tag mono">{it.tag}</div>
+              <h3 className="display v9-title">{it.title}</h3>
+              <p className="v9-body">{it.body}</p>
+            </div>
+            <pre className="v9-code mono">{it.code}</pre>
+          </li>
+        ))}
+      </ol>
+
+      <style>{`
+        .v9-head {
+          display: grid;
+          grid-template-columns: 1.3fr 1fr;
+          gap: var(--r6);
+          align-items: end;
+          padding-bottom: var(--r6);
+          border-bottom: 1px solid var(--ink);
+        }
+        .v9-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+        .v9-row {
+          display: grid;
+          grid-template-columns: 56px minmax(0, 1.1fr) minmax(0, 1fr);
+          gap: var(--r5);
+          align-items: start;
+          padding: var(--r5) 0;
+          border-bottom: 1px solid var(--paper-3);
+        }
+        .v9-row:last-child { border-bottom: 1px solid var(--ink); }
+        .v9-num {
+          font-size: 40px;
+          line-height: 1;
+          color: var(--ink-3);
+          letter-spacing: -0.02em;
+          font-variant-numeric: tabular-nums;
+        }
+        .v9-tag {
+          font-size: 10px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--accent);
+          margin-bottom: 6px;
+        }
+        .v9-title {
+          font-size: 26px;
+          line-height: 1.05;
+          letter-spacing: -0.02em;
+          margin-bottom: 8px;
+        }
+        .v9-body {
+          font-size: 14px;
+          line-height: 1.55;
+          color: var(--ink-2);
+          max-width: 42ch;
+        }
+        .v9-code {
+          font-size: 11px;
+          line-height: 1.7;
+          background: var(--ink);
+          color: var(--paper);
+          padding: var(--r3) var(--r4);
+          overflow-x: auto;
+          white-space: pre;
+          margin: 0;
+          align-self: start;
+        }
+        @media (max-width: 900px) {
+          .v9-head { grid-template-columns: 1fr; gap: var(--r4); }
+          .v9-row { grid-template-columns: 40px 1fr; }
+          .v9-code { grid-column: 1 / -1; margin-top: var(--r3); }
+          .v9-num { font-size: 28px; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function V11Showcase() {
+  const tracks = [
+    {
+      num: '01',
+      tag: 'clone',
+      headline: 'A working Next.js repo. From any URL. In one command.',
+      kicker: 'v0, Lovable, Locofy, Builder — all hand you prompts or styled scaffolds. We hand you a project.',
+      command: '$ npx designlang clone stripe.com',
+      effect: [
+        'Reading intent . . . . . . . . . pricing (0.87)',
+        'Reading sections . . . . hero → logo-wall',
+        '                         → feature-grid → pricing',
+        '                         → faq → cta → footer',
+        'Reading voice  . . . . . . . . . technical · we→you',
+        'Writing package.json, globals.css, layout.js,',
+        '        page.js (7 sections), README.md',
+        '',
+        'cd cloned-design && npm install && npm run dev',
+      ].join('\n'),
+      kill: 'Paid peers: $200+/mo · output = styled scaffold. designlang: $0 · output = the repo.',
+    },
+    {
+      num: '02',
+      tag: 'ci',
+      headline: 'A design regression bot. On every pull request. Free.',
+      kicker: 'Chromatic for a design system you don\'t own yet. Drift + score + markdown comment. Any CI — GitHub, GitLab, CircleCI, local.',
+      command: '$ npx designlang ci app.yoursite.com \\\n    --tokens ./tokens.json \\\n    --fail-on notable-drift',
+      effect: [
+        '## designlang · regression guard',
+        '',
+        'Overall  🟢 92/100  grade A',
+        'Drift    ≠ notable-drift (ratio 0.24)',
+        '',
+        '| token          | local   | live    |',
+        '|----------------|---------|---------|',
+        '| color.primary  | #3b82f6 | #533afd |',
+        '| radius.md      | 6px     | 8px     |',
+        '',
+        '→ wrote .designlang-ci/ci-report.md (exit 1)',
+      ].join('\n'),
+      kill: 'No dashboard. No subscription. No account. The report is a file you can paste anywhere.',
+    },
+    {
+      num: '03',
+      tag: 'studio',
+      headline: 'A local studio. For the extraction you just ran.',
+      kicker: 'Click swatches to copy hex. Read your reading order. Inspect voice, motion, DNA. All on localhost, all from the last extraction on disk.',
+      command: '$ npx designlang studio',
+      effect: [
+        '  designlang studio',
+        '  serving ./design-extract-output',
+        '  prefix: stripe-com',
+        '',
+        '  → http://localhost:4837',
+        '',
+        '  §01 DNA      pricing · brutalist · shadcn',
+        '  §02 Tokens   48 colors · 12 sizes · 7 radii',
+        '  §03 Voice    technical · we→you · start·ship',
+        '  §04 Motion   ease-out 61% · 220ms · springy',
+      ].join('\n'),
+      kill: 'Figma Tokens Studio is $100+/seat. This is zero-dep Node + your browser.',
+    },
+  ];
+
+  return (
+    <div style={{ padding: 'var(--r5) 0 var(--r7)' }}>
+      <div className="v11-head">
+        <div>
+          <span className="mono" style={{ fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--accent)' }}>
+            The release that kills the competition
+          </span>
+          <h2
+            className="display"
+            style={{ fontSize: 'clamp(44px, 7vw, 88px)', letterSpacing: '-0.035em', lineHeight: 0.98, marginTop: 'var(--r4)' }}
+          >
+            Stop shipping <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>tokens</em>.<br />
+            Start shipping the <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>outcome</em>.
+          </h2>
+        </div>
+        <p
+          className="prose"
+          style={{ maxWidth: '42ch', fontSize: 17, lineHeight: 1.5, color: 'var(--ink-2)', alignSelf: 'end', fontFamily: 'var(--font-display)', fontStyle: 'italic' }}
+        >
+          v11 is three commands that end three paid categories.
+          A working clone. A regression bot. A local studio.
+          One CLI, no account, no keys.
+        </p>
+      </div>
+
+      <div className="v11-tracks">
+        {tracks.map((t) => (
+          <article key={t.num} className="v11-track">
+            <div className="v11-meta">
+              <div className="v11-num mono">{t.num}</div>
+              <div className="v11-tag mono">designlang {t.tag}</div>
+            </div>
+            <div className="v11-body">
+              <h3 className="display v11-headline">{t.headline}</h3>
+              <p className="v11-kicker">{t.kicker}</p>
+              <pre className="v11-cmd mono">{t.command}</pre>
+              <pre className="v11-effect mono">{t.effect}</pre>
+              <p className="v11-kill mono">{t.kill}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="v11-coda">
+        <p className="display" style={{ fontSize: 'clamp(22px, 2.4vw, 30px)', lineHeight: 1.3, fontStyle: 'italic', maxWidth: '46ch' }}>
+          Everyone else sells the <span style={{ color: 'var(--accent)' }}>inputs</span>. designlang ships the <span style={{ color: 'var(--accent)' }}>outputs</span>.
+        </p>
+        <div className="mono" style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
+          $0 · MIT · one CLI · no account
+        </div>
+      </div>
+
+      <style>{`
+        .v11-head {
+          display: grid;
+          grid-template-columns: 1.4fr 1fr;
+          gap: var(--r6);
+          align-items: end;
+          padding: var(--r5) 0 var(--r6);
+          border-bottom: 2px solid var(--ink);
+        }
+        .v11-tracks { display: block; }
+        .v11-track {
+          display: grid;
+          grid-template-columns: 140px 1fr;
+          gap: var(--r5);
+          padding: var(--r6) 0;
+          border-bottom: 1px solid var(--ink);
+          align-items: start;
+        }
+        .v11-meta { display: flex; flex-direction: column; gap: var(--r3); position: sticky; top: 24px; }
+        .v11-num {
+          font-size: 72px;
+          line-height: 0.9;
+          font-weight: 400;
+          letter-spacing: -0.04em;
+          color: var(--ink);
+          font-variant-numeric: tabular-nums;
+        }
+        .v11-tag {
+          font-size: 11px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--accent);
+        }
+        .v11-body { display: grid; gap: var(--r4); min-width: 0; }
+        .v11-headline {
+          font-size: clamp(26px, 3.4vw, 44px);
+          letter-spacing: -0.025em;
+          line-height: 1.05;
+          max-width: 22ch;
+          margin: 0;
+        }
+        .v11-kicker {
+          font-size: 16px;
+          line-height: 1.55;
+          color: var(--ink-2);
+          max-width: 58ch;
+          margin: 0;
+        }
+        .v11-cmd {
+          font-size: 13px;
+          line-height: 1.6;
+          background: var(--ink);
+          color: var(--accent);
+          padding: var(--r4) var(--r5);
+          white-space: pre;
+          overflow-x: auto;
+          margin: var(--r2) 0 0;
+        }
+        .v11-effect {
+          font-size: 12px;
+          line-height: 1.65;
+          background: var(--paper-2);
+          color: var(--ink);
+          padding: var(--r4) var(--r5);
+          white-space: pre;
+          overflow-x: auto;
+          border-left: 2px solid var(--accent);
+          margin: 0;
+        }
+        .v11-kill {
+          font-size: 11px;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          color: var(--ink-2);
+          border-top: 1px solid var(--paper-3);
+          padding-top: var(--r3);
+          margin: var(--r2) 0 0;
+          line-height: 1.7;
+        }
+        .v11-coda {
+          display: flex;
+          justify-content: space-between;
+          align-items: end;
+          gap: var(--r5);
+          padding: var(--r7) 0 var(--r3);
+          flex-wrap: wrap;
+        }
+        @media (max-width: 860px) {
+          .v11-head { grid-template-columns: 1fr; gap: var(--r4); }
+          .v11-track { grid-template-columns: 1fr; gap: var(--r4); }
+          .v11-meta { position: static; flex-direction: row; align-items: baseline; gap: var(--r4); }
+          .v11-num { font-size: 48px; }
+        }
+      `}</style>
     </div>
   );
 }
 
 function V10Capabilities() {
-  // v10 takes the front page — six new extractors, one orchestrator, one
-  // prompt pack. The design mirrors V9Capabilities but leads with a headline
-  // because v10 is the current release.
+  // v10 is now supporting intelligence beneath the v11 trio. Compact
+  // editorial strip — not a uniform card grid.
   const items = [
     {
       tag: 'A · intent',
@@ -618,86 +889,106 @@ fallback: heuristic (still prints)`,
     },
   ];
 
-  const cardStyle = {
-    border: '1px solid var(--ink)',
-    padding: 'var(--r4)',
-    background: 'var(--paper)',
-  };
-  const tagStyle = {
-    fontFamily: 'var(--font-mono)',
-    fontSize: 10,
-    letterSpacing: '0.14em',
-    textTransform: 'uppercase',
-    color: 'var(--accent)',
-    marginBottom: 'var(--r2)',
-    display: 'block',
-  };
-  const titleStyle = {
-    fontSize: 22,
-    lineHeight: 1.1,
-    letterSpacing: '-0.02em',
-    marginBottom: 'var(--r3)',
-  };
-  const bodyStyle = {
-    fontSize: 14,
-    color: 'var(--ink-2)',
-    lineHeight: 1.55,
-    marginBottom: 'var(--r3)',
-  };
-  const codeStyle = {
-    fontFamily: 'var(--font-mono)',
-    fontSize: 11,
-    background: 'var(--ink)',
-    color: 'var(--paper)',
-    padding: 'var(--r2) var(--r3)',
-    display: 'block',
-    overflowX: 'auto',
-    whiteSpace: 'pre',
-  };
-
   return (
-    <div style={{ padding: 'var(--r5) 0' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: 'var(--r5)',
-          marginBottom: 'var(--r5)',
-          flexWrap: 'wrap',
-        }}
-      >
-        <h2
-          className="display"
-          style={{ fontSize: 'clamp(40px, 6vw, 72px)', letterSpacing: '-0.03em', lineHeight: 1 }}
-        >
-          The <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>Intent</em> release.
-        </h2>
-        <p
-          className="prose"
-          style={{ maxWidth: '42ch', fontSize: 16, lineHeight: 1.55, color: 'var(--ink-2)' }}
-        >
-          Everything else captures <em>how</em> a site looks. v10 captures <em>what it is</em> —
-          the semantic layer an LLM needs to rebuild a site faithfully, not just restyle a
-          generic scaffold.
+    <div style={{ padding: 'var(--r5) 0 var(--r6)' }}>
+      <div className="v10-head">
+        <div>
+          <span className="mono" style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
+            powers v11 from the inside
+          </span>
+          <h2
+            className="display"
+            style={{ fontSize: 'clamp(28px, 3.6vw, 44px)', letterSpacing: '-0.02em', lineHeight: 1.05, marginTop: 'var(--r3)' }}
+          >
+            The <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>semantic</em> layer.
+          </h2>
+        </div>
+        <p className="prose" style={{ maxWidth: '42ch', fontSize: 15, lineHeight: 1.55, color: 'var(--ink-2)', alignSelf: 'end' }}>
+          What clone, ci, and studio read under the hood: nine classifiers
+          that label <em>what a site is</em>, not just how it looks.
         </p>
       </div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: 'var(--r3)',
-        }}
-      >
-        {items.map((it) => (
-          <div key={it.title} style={cardStyle}>
-            <span style={tagStyle}>{it.tag}</span>
-            <h3 className="display" style={titleStyle}>{it.title}</h3>
-            <p style={bodyStyle}>{it.body}</p>
-            <pre style={codeStyle}>{it.code}</pre>
-          </div>
-        ))}
-      </div>
+
+      <ol className="v10-list">
+        {items.map((it) => {
+          const [letter, name] = it.tag.split(' · ');
+          return (
+            <li key={it.title} className="v10-row">
+              <div className="v10-letter mono">{letter}</div>
+              <div className="v10-text">
+                <div className="v10-tag mono">{name}</div>
+                <h3 className="display v10-title">{it.title}</h3>
+                <p className="v10-body">{it.body}</p>
+              </div>
+              <pre className="v10-code mono">{it.code}</pre>
+            </li>
+          );
+        })}
+      </ol>
+
+      <style>{`
+        .v10-head {
+          display: grid;
+          grid-template-columns: 1.2fr 1fr;
+          gap: var(--r5);
+          align-items: end;
+          padding-bottom: var(--r5);
+          border-bottom: 1px solid var(--ink);
+        }
+        .v10-list { list-style: none; padding: 0; margin: 0; }
+        .v10-row {
+          display: grid;
+          grid-template-columns: 48px minmax(0, 1.1fr) minmax(0, 1fr);
+          gap: var(--r4);
+          align-items: start;
+          padding: var(--r4) 0;
+          border-bottom: 1px solid var(--paper-3);
+        }
+        .v10-row:last-child { border-bottom: 1px solid var(--ink); }
+        .v10-letter {
+          font-size: 24px;
+          line-height: 1;
+          color: var(--accent);
+          letter-spacing: -0.02em;
+        }
+        .v10-tag {
+          font-size: 10px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--ink-3);
+          margin-bottom: 4px;
+        }
+        .v10-title {
+          font-size: 20px;
+          line-height: 1.1;
+          letter-spacing: -0.02em;
+          margin-bottom: 6px;
+        }
+        .v10-body {
+          font-size: 13px;
+          line-height: 1.55;
+          color: var(--ink-2);
+          max-width: 48ch;
+        }
+        .v10-code {
+          font-size: 10.5px;
+          line-height: 1.7;
+          background: var(--paper-2);
+          color: var(--ink);
+          padding: var(--r3) var(--r4);
+          overflow-x: auto;
+          white-space: pre;
+          margin: 0;
+          border-left: 1px solid var(--ink);
+          align-self: start;
+        }
+        @media (max-width: 900px) {
+          .v10-head { grid-template-columns: 1fr; gap: var(--r4); }
+          .v10-row { grid-template-columns: 36px 1fr; }
+          .v10-code { grid-column: 1 / -1; margin-top: var(--r2); }
+          .v10-letter { font-size: 18px; }
+        }
+      `}</style>
     </div>
   );
 }

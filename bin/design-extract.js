@@ -1056,6 +1056,66 @@ program
     }
   });
 
+// ── CI command — single PR-comment-ready report ────────────
+program
+  .command('ci <url>')
+  .description('One-shot design regression report — drift + score + PR-ready markdown. Works in any CI.')
+  .option('--tokens <file>', 'local tokens file (.json or .css) to compare against the live site')
+  .option('--baseline <url>', 'baseline URL for a before/after visual diff')
+  .option('--tolerance <n>', 'color distance tolerance (0-50)', parseInt, 8)
+  .option('--fail-on <level>', 'exit non-zero on: minor-drift | notable-drift | major-drift', 'notable-drift')
+  .option('-o, --out <dir>', 'output directory', '.designlang-ci')
+  .option('--quiet', 'suppress stdout (still writes files)')
+  .action(async (url, opts) => {
+    if (!url.startsWith('http')) url = `https://${url}`;
+    validateUrl(url);
+    const spinner = opts.quiet ? { start() { return this; }, succeed() {}, fail() {}, set text(v) {} } : ora('Running CI report...').start();
+    try {
+      const { runCi } = await import('../src/ci.js');
+      const r = await runCi(url, opts);
+      spinner.succeed(`CI report written → ${r.mdPath}`);
+      if (!opts.quiet) {
+        console.log('');
+        console.log(r.md);
+      }
+      if (r.shouldFail) process.exit(1);
+    } catch (err) {
+      spinner.fail(err.message);
+      process.exit(1);
+    }
+  });
+
+// ── Studio — local web studio over the latest extraction ──
+program
+  .command('studio')
+  .description('Launch a local web studio over the latest extraction (editorial token browser, voice, motion, DNA).')
+  .option('-d, --dir <path>', 'extraction directory', './design-extract-output')
+  .option('-p, --port <n>', 'port', parseInt, 4837)
+  .option('--prefix <name>', 'extraction prefix (default: newest *-design-tokens.json)')
+  .option('--no-open', 'do not auto-open the browser')
+  .action(async (opts) => {
+    try {
+      const { runStudio } = await import('../src/studio.js');
+      const { port, dir, prefix } = await runStudio(opts);
+      console.log('');
+      console.log(chalk.bold('  designlang studio'));
+      console.log(chalk.gray(`  serving ${dir}`));
+      console.log(chalk.gray(`  prefix: ${prefix}`));
+      console.log('');
+      console.log(`  ${chalk.green('→')} ${chalk.cyan(`http://localhost:${port}`)}`);
+      console.log('');
+      console.log(chalk.gray('  Ctrl+C to stop.'));
+      if (opts.open !== false) {
+        const { spawn } = await import('child_process');
+        const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+        try { spawn(cmd, [`http://localhost:${port}`], { stdio: 'ignore', detached: true }).unref(); } catch {}
+      }
+    } catch (err) {
+      console.error(chalk.red(`\n  ${err.message}\n`));
+      process.exit(1);
+    }
+  });
+
 // ── MCP server command ─────────────────────────────────────
 program
   .command('mcp')

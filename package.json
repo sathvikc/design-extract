@@ -1,7 +1,7 @@
 {
   "name": "designlang",
-  "version": "10.5.0",
-  "description": "Extract the complete design language from any website — colors, typography, spacing, shadows, motion, component anatomy, brand voice, page intent, section roles, material language, component library, imagery style, and logo. Outputs AI-optimized markdown, W3C design tokens, motion tokens, typed component stubs, Tailwind config, and ready-to-paste v0 / Lovable / Cursor / Claude-Artifacts prompts.",
+  "version": "11.0.0",
+  "description": "Extract the complete design language from any website and ship it — clone to a working Next.js starter, guard tokens with a CI drift bot, or browse everything in a local studio. Outputs W3C DTCG tokens, motion tokens, typed anatomy stubs, Tailwind config, and ready-to-paste v0 / Lovable / Cursor / Claude-Artifacts prompts.",
   "type": "module",
   "bin": {
     "designlang": "./bin/design-extract.js"
