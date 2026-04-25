@@ -1,0 +1,63 @@
+# designlang
+
+> Open-source CLI that reverse-engineers any website into a complete design system. Outputs DTCG W3C tokens, Tailwind config, CSS variables, Figma variables, motion tokens, typed component anatomy, brand voice, and a single agent-native DESIGN.md. Multi-platform emitters for iOS SwiftUI, Android Compose, Flutter, and WordPress. Ships a stdio MCP server, a CI drift bot, a clone command that generates a working Next.js repo, and a local studio. $0, MIT, no signup.
+
+## Primary surfaces
+
+- [Homepage](https://designlang.app/): paste a URL, see the extraction live.
+- [Features](https://designlang.app/features): every capability on one page — v11 (clone · ci · studio), v10 (intent · sections · material · library), v9 (motion · anatomy · voice), DTCG token browser, MCP server, multi-platform emitters, CSS health audit, A11y remediation, region + component clustering, install tracks.
+- [vs design-extractor.com](https://designlang.app/vs/design-extractor): honest feature comparison — designlang ships their DESIGN.md format too, plus everything else, with no signup.
+
+## Install in one command
+
+```
+npx designlang <url>                          # extract everything
+npx designlang clone <url>                    # generate a working Next.js repo
+npx designlang ci <url> --tokens ./tokens.json  # PR-comment regression bot
+npx designlang studio                         # local web studio at localhost:4837
+npx designlang replay <url>                   # WebM motion replay
+npx designlang mcp                            # stdio MCP server for Claude Code / Cursor
+npx designlang widgets                        # print the curated widget-ignore list
+```
+
+## Output formats
+
+- `*-DESIGN.md` — single-file, 8-section, YAML front matter (Overview · Colors · Typography · Layout · Elevation and Depth · Shapes · Components · Do's and Don'ts)
+- `*-design-tokens.json` — W3C DTCG (primitive, semantic, composite)
+- `*-tailwind.config.js` — Tailwind v4 ready
+- `*-variables.css` — CSS custom properties
+- `*-figma-variables.json` — importable via the bundled Figma plugin
+- `*-shadcn-theme.css`, `*-theme.js`, `*-vue-theme.js`, `*-svelte-theme.css`
+- `ios/DesignTokens.swift`, `android/Color.kt + Type.kt + Theme.kt`, `flutter/design_tokens.dart`
+- `wordpress-theme/` — full block-theme scaffold
+- `*-anatomy.tsx` — typed React stubs derived from variant × size × state matrices
+- `*-motion-tokens.json` — easings, durations, springs
+- `*-voice.json` — tone, pronoun posture, CTA verbs, heading style
+- `*-intent.json` — page type classifier (landing · pricing · docs · blog · product)
+- `*-visual-dna.json` — material language (brutalist · glass · flat · soft-ui · …) and imagery style
+- `*-library.json` — detected component library (shadcn/ui · Radix · MUI · Chakra · Mantine · Ant · Tailwind UI)
+- `*-mcp.json` — companion served by the MCP server
+- `*-prompts/` — ready-to-paste prompts for v0, Lovable, Cursor, Claude Artifacts
+
+## Source
+
+- [GitHub](https://github.com/Manavarya09/design-extract): MIT-licensed source, issues, releases.
+- [npm](https://www.npmjs.com/package/designlang): published as `designlang`.
+- [CHANGELOG](https://github.com/Manavarya09/design-extract/blob/main/CHANGELOG.md)
+
+## Running on your own machine
+
+```
+node >= 20
+npx designlang <url>
+```
+
+First run downloads Chromium (~150MB via Playwright). 3–6 seconds per page on a modern laptop. Auth-gated pages supported via `--cookie-file`.
+
+## Compared to design-extractor.com
+
+design-extractor.com pioneered the single-file `DESIGN.md` agent artifact. designlang ships that exact format and adds: CLI, MCP server, multi-platform emitters, anatomy stubs, motion tokens, voice classification, CI drift bot, clone-to-Next.js, local studio, and a Figma plugin. No signup. Free forever.
+
+## Author
+
+Manav Arya Singh — <https://manavaryasingh.com>

@@ -1,14 +1,4 @@
-import Rule from './components/Rule';
-import Marginalia from './components/Marginalia';
 import HeroExtractor from './components/HeroExtractor';
-import TokenBrowser from './components/TokenBrowser';
-import McpSection from './components/McpSection';
-import PlatformTabs from './components/PlatformTabs';
-import CssHealth from './components/CssHealth';
-import A11ySlider from './components/A11ySlider';
-import RegionsComponents from './components/RegionsComponents';
-import Specimens from './components/Specimens';
-import Comparison from './components/Comparison';
 
 export default function Home() {
   return (
@@ -37,10 +27,7 @@ export default function Home() {
             className="mono"
             style={{ display: 'flex', gap: 'var(--r5)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.1em' }}
           >
-            <a href="#extract" style={{ borderBottom: 0 }}>Extract</a>
-            <a href="#features" style={{ borderBottom: 0 }}>Features</a>
-            <a href="#specimens" style={{ borderBottom: 0 }}>Specimens</a>
-            <a href="#install" style={{ borderBottom: 0 }}>Install</a>
+            <a href="/features" style={{ borderBottom: 0 }}>Features</a>
             <a href="/vs/design-extractor" style={{ borderBottom: 0, color: 'var(--accent)' }}>vs</a>
             <a href="https://github.com/Manavarya09/design-extract" style={{ borderBottom: 0 }}>GitHub</a>
             <a href="https://www.npmjs.com/package/designlang" style={{ borderBottom: 0 }}>npm</a>
@@ -48,121 +35,80 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── §00 HERO ──────────────────────────────────────── */}
-      <section id="extract" style={{ paddingBlock: 'var(--r7) var(--r8)', borderTop: 0 }}>
-        <div className="with-margin">
-          <div>
-            <div className="section-label" style={{ marginBottom: 'var(--r6)' }}>
-              <span>§00 — Entry</span>
-            </div>
-            <h1
-              className="display hero-title"
-              style={{ marginBottom: 'var(--r7)' }}
-            >
-              A website<br />
-              reads as a<br />
-              <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>design system</em>.
-            </h1>
-            <p className="prose" style={{ fontSize: 20, lineHeight: 1.4, maxWidth: '46ch' }}>
-              designlang crawls any URL and returns its complete design language —
-              tokens, typography, spacing, shadows, components, regions, health,
-              remediations — in W3C DTCG format, with native emitters for iOS,
-              Android, Flutter and WordPress, and a live MCP server your editor can read.
-            </p>
-          </div>
-          <Marginalia>
-            <div>extraction runtime</div>
-            <div>
-              <code>Playwright 1.59</code>
-              <br />
-              <code>@sparticuz/chromium</code>
-            </div>
-            <hr style={{ margin: '12px 0', border: 0, borderTop: '1px solid var(--ink-3)' }} />
-            <div>default invocation</div>
-            <div><code>$ npx designlang &lt;url&gt;</code></div>
-            <p className="foot" style={{ marginTop: 12 }}>
-              Works without install. Playwright fetches Chromium on first run;
-              ≈ 3–6 seconds per page on a modern laptop.
-            </p>
-          </Marginalia>
+      {/* ── HERO — single anchor, paste a URL, see the system ─ */}
+      <section
+        id="extract"
+        style={{ paddingBlock: 'var(--r8) var(--r7)', textAlign: 'center', borderTop: 0 }}
+      >
+        <div className="mono" style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 'var(--r4)' }}>
+          $0 · MIT · no account · CLI + MCP + studio
         </div>
+        <h1
+          className="display hero-title"
+          style={{ marginBottom: 'var(--r5)', fontSize: 'clamp(48px, 8vw, 104px)', letterSpacing: '-0.035em', lineHeight: 0.95 }}
+        >
+          Extract any website&rsquo;s<br />
+          <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>design system</em>.
+        </h1>
+        <p
+          className="prose"
+          style={{ fontSize: 19, lineHeight: 1.5, maxWidth: '52ch', margin: '0 auto var(--r6)', color: 'var(--ink-2)' }}
+        >
+          Paste a URL. Get DTCG tokens, Tailwind config, CSS vars, Figma variables,
+          motion, anatomy, voice — and a single agent-native <code className="mono">DESIGN.md</code> —
+          back in seconds. <a href="/features" style={{ color: 'var(--ink)' }}>See everything →</a>
+        </p>
 
         <HeroExtractor />
-      </section>
 
-      {/* ── §00.5 v11 — CLONE · CI · STUDIO ──────────────── */}
-      <section id="v11">
-        <Rule number="00" label="v11 — clone · ci · studio" />
-        <V11Showcase />
-      </section>
-
-      {/* ── §00.7 v10 — SEMANTIC INTELLIGENCE ────────────── */}
-      <section id="v10">
-        <Rule number="00" label="v10 — semantic intelligence" />
-        <V10Capabilities />
-      </section>
-
-      {/* ── §00.9 v9 — MOTION · ANATOMY · VOICE ──────────── */}
-      <section id="v9">
-        <Rule number="00" label="v9 — motion · anatomy · voice" />
-        <V9Capabilities />
-      </section>
-
-      {/* ── §01 DTCG BROWSER ──────────────────────────────── */}
-      <section id="features">
-        <Rule number="01" label="DTCG token browser" />
-        <div style={{ padding: 'var(--r6) 0' }}>
-          <TokenBrowser />
+        <div className="mono" style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 'var(--r5)' }}>
+          1 free demo per day · unlimited via <code style={{ color: 'var(--ink)' }}>npx designlang &lt;url&gt;</code>
         </div>
       </section>
 
-      {/* ── §02 MCP ───────────────────────────────────────── */}
-      <section>
-        <Rule number="02" label="MCP server" />
-        <McpSection />
-      </section>
+      {/* ── CTA STRIP — three doors into the deeper site ─── */}
+      <section style={{ paddingBlock: 'var(--r6) var(--r9)', borderTop: '1px solid var(--ink)' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: 0,
+            borderBottom: '1px solid var(--ink)',
+          }}
+        >
+          {[
+            { num: '01', tag: 'features', headline: 'Every capability, one page', href: '/features' },
+            { num: '02', tag: 'vs', headline: 'vs. design-extractor.com', href: '/vs/design-extractor' },
+            { num: '03', tag: 'install', headline: 'CLI · MCP · agent rules · Chrome', href: '/features#install' },
+          ].map((c, i) => (
+            <a
+              key={c.num}
+              href={c.href}
+              style={{
+                display: 'block',
+                padding: 'var(--r5) var(--r4)',
+                borderLeft: i === 0 ? 'none' : '1px solid var(--ink)',
+                borderBottom: 0,
+              }}
+            >
+              <div className="mono" style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
+                {c.num} · {c.tag}
+              </div>
+              <div className="display" style={{ fontSize: 24, letterSpacing: '-0.02em', lineHeight: 1.1, marginTop: 8 }}>
+                {c.headline} <span style={{ color: 'var(--accent)' }}>→</span>
+              </div>
+            </a>
+          ))}
+        </div>
 
-      {/* ── §03 MULTI-PLATFORM ────────────────────────────── */}
-      <section>
-        <Rule number="03" label="Multi-platform emitters" />
-        <PlatformTabs />
+        <div
+          className="mono"
+          style={{ fontSize: 11, color: 'var(--ink-3)', letterSpacing: '0.04em', paddingTop: 'var(--r5)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}
+        >
+          <div>v11.2 · MIT · Manav Arya Singh · 2026</div>
+          <div>Extracted, not generated.</div>
+        </div>
       </section>
-
-      {/* ── §04 HEALTH ────────────────────────────────────── */}
-      <section>
-        <CssHealth />
-      </section>
-
-      {/* ── §05 REMEDIATION ───────────────────────────────── */}
-      <section>
-        <A11ySlider />
-      </section>
-
-      {/* ── §06 REGIONS + COMPONENTS ──────────────────────── */}
-      <section>
-        <RegionsComponents />
-      </section>
-
-      {/* ── §07 SPECIMENS ─────────────────────────────────── */}
-      <section id="specimens">
-        <Rule number="07" label="Specimens" />
-        <Specimens />
-      </section>
-
-      {/* ── §08 COMPARISON ────────────────────────────────── */}
-      <section>
-        <Rule number="08" label="Compared" />
-        <Comparison />
-      </section>
-
-      {/* ── §09 INSTALL ───────────────────────────────────── */}
-      <section id="install" style={{ paddingBottom: 'var(--r9)' }}>
-        <Rule number="09" label="Install" />
-        <InstallTracks />
-      </section>
-
-      {/* ── FOOTER ───────────────────────────────────────── */}
-      <SiteFooter />
     </main>
   );
 }

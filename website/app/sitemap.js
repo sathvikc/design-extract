@@ -2,17 +2,15 @@ import { SITE_URL } from './seo-config';
 
 export default function sitemap() {
   const now = new Date();
-  const anchors = [
-    '',
-    '#extract',
-    '#features',
-    '#specimens',
-    '#install',
+  const routes = [
+    { path: '',                       priority: 1.0,  freq: 'daily'  },
+    { path: '/features',              priority: 0.9,  freq: 'weekly' },
+    { path: '/vs/design-extractor',   priority: 0.9,  freq: 'weekly' },
   ];
-  return anchors.map((hash) => ({
-    url: `${SITE_URL}/${hash}`,
+  return routes.map(({ path, priority, freq }) => ({
+    url: `${SITE_URL}${path}`,
     lastModified: now,
-    changeFrequency: 'weekly',
-    priority: hash === '' ? 1 : 0.8,
+    changeFrequency: freq,
+    priority,
   }));
 }

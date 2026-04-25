@@ -81,7 +81,8 @@ export default function VsDesignExtractor() {
           </a>
           <nav className="mono" style={{ display: 'flex', gap: 'var(--r5)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             <a href="/" style={{ borderBottom: 0 }}>Home</a>
-            <a href="/#install" style={{ borderBottom: 0 }}>Install</a>
+            <a href="/features" style={{ borderBottom: 0 }}>Features</a>
+            <a href="/features#install" style={{ borderBottom: 0 }}>Install</a>
             <a href="https://github.com/Manavarya09/design-extract" style={{ borderBottom: 0 }}>GitHub</a>
             <a href="https://www.npmjs.com/package/designlang" style={{ borderBottom: 0 }}>npm</a>
           </nav>
