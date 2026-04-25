@@ -21,7 +21,11 @@ function dedupeConsecutive(order) {
 }
 
 function sanitize(str, fallback = '') {
-  return String(str ?? fallback).replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+  // Escape backslash FIRST so the subsequent escapes don't get re-escaped.
+  return String(str ?? fallback)
+    .replace(/\\/g, '\\\\')
+    .replace(/`/g, '\\`')
+    .replace(/\$\{/g, '\\${');
 }
 
 function titleFromUrl(url = '') {
@@ -352,7 +356,7 @@ button { font-family: inherit; }
 
   // layout.js
   writeFileSync(join(projectDir, 'src/app/layout.js'), `export const metadata = {
-  title: '${(design.meta.title || 'Cloned Design').replace(/'/g, "\\'")} · cloned',
+  title: '${(design.meta.title || 'Cloned Design').replace(/\\/g, '\\\\').replace(/'/g, "\\'")} · cloned',
   description: 'Design cloned from ${url} with designlang.',
 };
 

@@ -51,11 +51,13 @@ function shadowComplexity(shadowValues) {
   if (!shadowValues.length) return { profile: 'none', avgBlur: 0, maxBlur: 0, insetCount: 0, hardShadowCount: 0, hasPair: false };
   let insetCount = 0, hardShadowCount = 0, totalBlur = 0, maxBlur = 0, pairCount = 0;
   for (const v of shadowValues) {
-    const raw = typeof v === 'string' ? v : (v.value || '');
+    // Cap to defang ReDoS on adversarial CSS shadow values. Real values are <500 chars.
+    const raw = (typeof v === 'string' ? v : (v.value || '')).slice(0, 2000);
     if (/inset/i.test(raw)) insetCount++;
     // Blur is the third length in `offset-x offset-y blur [spread] color`. The
     // `px` unit is common but optional — `0 0` is a valid zero-blur shadow.
-    const blurs = [...raw.matchAll(/(-?\d+(?:\.\d+)?)(?:px)?\s+(-?\d+(?:\.\d+)?)(?:px)?\s+(\d+(?:\.\d+)?)(?:px)?/g)];
+    // Bounded digit counts prevent polynomial backtracking on long digit runs.
+    const blurs = [...raw.matchAll(/(-?\d{1,8}(?:\.\d{1,4})?)(?:px)?\s+(-?\d{1,8}(?:\.\d{1,4})?)(?:px)?\s+(\d{1,8}(?:\.\d{1,4})?)(?:px)?/g)];
     for (const m of blurs) {
       const blur = parseFloat(m[3]);
       totalBlur += blur;

@@ -92,18 +92,25 @@ export function extractMotion(computedStyles, keyframes = []) {
 
   for (const el of computedStyles) {
     let isAnimating = false;
-    if (el.transition && el.transition !== 'all 0s ease 0s' && el.transition !== 'none') {
-      transitions.add(el.transition);
+    // Cap inputs to defang any pathological CSS that could trigger
+    // polynomial-time regex backtracking. Real values are <200 chars.
+    const transition = (el.transition || '').slice(0, 2000);
+    if (transition && transition !== 'all 0s ease 0s' && transition !== 'none') {
+      transitions.add(transition);
       isAnimating = true;
-      for (const m of el.transition.matchAll(/(?<![(\d])(\d+\.?\d*m?s)(?![)\w])/g)) durations.push(MS(m[1]));
-      for (const m of el.transition.matchAll(/(ease|ease-in|ease-out|ease-in-out|linear|cubic-bezier\([^)]+\)|steps\([^)]+\))/g)) easingRaw.add(m[1]);
-      for (const part of el.transition.split(',')) {
+      // Tightened: bounded \d{1,8} and bounded fractional part — no nested quantifiers.
+      for (const m of transition.matchAll(/(?<![(\d])(\d{1,8}(?:\.\d{1,4})?m?s)(?![)\w])/g)) durations.push(MS(m[1]));
+      // Tightened: limit cubic-bezier/steps inner content to 64 chars.
+      for (const m of transition.matchAll(/(ease|ease-in|ease-out|ease-in-out|linear|cubic-bezier\([^)]{1,64}\)|steps\([^)]{1,64}\))/g)) easingRaw.add(m[1]);
+      for (const part of transition.split(',')) {
         const prop = part.trim().split(/\s+/)[0];
         if (prop && prop !== 'all') transitionedProps[prop] = (transitionedProps[prop] || 0) + 1;
       }
     }
-    if (el.animation && el.animation !== 'none 0s ease 0s 1 normal none running' && el.animation !== 'none') {
-      const nameMatch = el.animation.match(/([a-zA-Z_][\w-]*)\s*$/) || el.animation.match(/^([a-zA-Z_][\w-]*)/);
+    const animation = (el.animation || '').slice(0, 2000);
+    if (animation && animation !== 'none 0s ease 0s 1 normal none running' && animation !== 'none') {
+      // Tightened: bound the identifier length so backtracking is linear.
+      const nameMatch = animation.match(/([a-zA-Z_][\w-]{0,127})$/) || animation.match(/^([a-zA-Z_][\w-]{0,127})/);
       if (nameMatch) {
         const name = nameMatch[1];
         if (name !== 'none' && name !== 'running' && name !== 'paused') {

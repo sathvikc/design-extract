@@ -733,7 +733,7 @@ export function formatMarkdown(design) {
     lines.push('| # | Role | Heading | Confidence |');
     lines.push('|---|------|---------|------------|');
     for (const s of design.sectionRoles.sections.slice(0, 20)) {
-      const h = (s.heading || '').replace(/\|/g, '\\|').slice(0, 80);
+      const h = (s.heading || '').replace(/\\/g, '\\\\').replace(/\|/g, '\\|').slice(0, 80);
       lines.push(`| ${s.index} | ${s.role}${s.subrole ? ` · ${s.subrole}` : ''} | ${h || '—'} | ${s.confidence} |`);
     }
     lines.push('');

@@ -7,18 +7,29 @@
 // Pure function — reads `rawData.light.computedStyles`, which every extractor
 // already has access to, plus the `modernColors` and any collected svgs.
 
+// All pattern detectors operate on a length-capped string. Adversarial CSS
+// background-image values (data URIs in particular) can run several KB; cap
+// to 4KB so the regexes can never run quadratic over megabyte payloads.
+const MAX_BG_LEN = 4096;
+function cap(s) {
+  return typeof s === 'string' ? s.slice(0, MAX_BG_LEN) : '';
+}
+
 function looksLikeDotGrid(image) {
-  return /radial-gradient\(.*\)/i.test(image) && /repeat/i.test(image) && /(\d+px\s*\d+px)/.test(image);
+  const s = cap(image);
+  // Bounded inner content (.{0,256}) instead of unbounded .* — no nested quantifier risk.
+  return /radial-gradient\([^)]{0,256}\)/i.test(s) && /repeat/i.test(s) && /\d{1,4}px\s{0,4}\d{1,4}px/.test(s);
 }
 
 function looksLikeLineGrid(image) {
   // repeating-linear-gradient with a narrow colored band.
-  return /repeating-linear-gradient/i.test(image);
+  return /repeating-linear-gradient/i.test(cap(image));
 }
 
 function looksLikeNoise(image) {
-  // data URI SVG with feTurbulence filter, or a well-known noise png path.
-  return /feTurbulence|data:image\/svg.+fractalNoise/i.test(image) || /noise\.(png|svg|webp)/i.test(image);
+  const s = cap(image);
+  // Bounded character class instead of .+ — `.+` could backtrack on long data URIs.
+  return /feTurbulence|data:image\/svg[^"']{0,2048}fractalNoise/i.test(s) || /noise\.(png|svg|webp)/i.test(s);
 }
 
 function countRadialGradients(image) {

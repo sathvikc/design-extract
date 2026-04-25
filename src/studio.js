@@ -296,15 +296,25 @@ export async function runStudio(opts) {
       // Static passthrough — screenshots, preview.html, etc.
       const safe = pathname.replace(/\.\./g, '').replace(/^\//, '');
       const filePath = join(dir, safe);
-      if (filePath.startsWith(dir) && existsSync(filePath) && statSync(filePath).isFile()) {
-        const ext = extname(filePath).toLowerCase();
-        res.writeHead(200, { 'content-type': MIME[ext] || 'application/octet-stream' });
-        res.end(readFileSync(filePath));
+      // Path-traversal guard: must stay inside dir.
+      if (!filePath.startsWith(dir)) {
+        res.writeHead(404, { 'content-type': 'text/plain' });
+        res.end('not found');
         return;
       }
-
-      res.writeHead(404, { 'content-type': 'text/plain' });
-      res.end('not found');
+      // Race-safe read — single try/catch instead of exists→stat→read chain.
+      try {
+        if (!statSync(filePath).isFile()) throw new Error('not a file');
+        const body = readFileSync(filePath);
+        const ext = extname(filePath).toLowerCase();
+        res.writeHead(200, { 'content-type': MIME[ext] || 'application/octet-stream' });
+        res.end(body);
+        return;
+      } catch {
+        res.writeHead(404, { 'content-type': 'text/plain' });
+        res.end('not found');
+        return;
+      }
     } catch (e) {
       res.writeHead(500, { 'content-type': 'text/plain' });
       res.end(`error: ${e.message}`);
