@@ -43,8 +43,11 @@ export async function crawlPage(url, options = {}) {
   // Playwright-protocol WSS). Skips the @sparticuz/chromium 150MB cold-start
   // tax on Vercel Functions entirely.
   const usingRemote = !!wsEndpoint;
+  // Browserless v2 speaks CDP at the root endpoint — connectOverCDP works
+  // across Browserless and any other CDP-compatible service. connect() would
+  // require Playwright's protocol on a path like /playwright/chromium.
   const browser = usingRemote
-    ? await chromium.connect(wsEndpoint, { timeout: 30000 })
+    ? await chromium.connectOverCDP(wsEndpoint, { timeout: 30000 })
     : await chromium.launch({
         headless: true,
         ...(executablePath && { executablePath }),
