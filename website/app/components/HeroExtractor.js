@@ -71,6 +71,15 @@ export default function HeroExtractor() {
       case 'cache':
         setCached(true);
         break;
+      case 'permalink': {
+        // Rewrite the URL bar so a refresh / share lands on /x/<hash>.
+        // history.replaceState avoids a Next router navigation (we want to keep
+        // the live extraction state, just change the URL).
+        if (typeof window !== 'undefined' && event.hash) {
+          try { window.history.replaceState({}, '', `/x/${event.hash}`); } catch {}
+        }
+        break;
+      }
       case 'stage':
         setStage(event.name);
         break;

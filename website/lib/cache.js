@@ -71,3 +71,64 @@ export async function putCached(key, { design }) {
     console.error('[cache] write failed', err?.message);
   }
 }
+
+// ─── Public permalink helpers — used by /x/[hash] and /gallery ───
+//
+// Permalinks are forever (well, 24h while the Blob entry exists). The page
+// re-derives files from the cached `design` object on each request — same
+// pipeline the streaming /api/extract uses on a cache hit.
+
+export async function getCachedByHash(hash) {
+  if (!/^[a-f0-9]{64}$/.test(hash)) return null;
+  const cached = await getCached(hash);
+  return cached;
+}
+
+export async function listRecent(limit = 24) {
+  if (!hasBlob()) return [];
+  try {
+    const { list } = await import('@vercel/blob');
+    // Pull more than we need so we can drop expired ones.
+    const result = await list({ prefix: 'extract-cache/', limit: limit * 2 });
+    const entries = await Promise.all(
+      (result.blobs || [])
+        .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())
+        .slice(0, limit * 2)
+        .map(async (blob) => {
+          try {
+            const m = blob.pathname.match(/^extract-cache\/([a-f0-9]{64})\.json$/);
+            if (!m) return null;
+            const res = await fetch(blob.url, { cache: 'no-store' });
+            if (!res.ok) return null;
+            const payload = await res.json();
+            const generatedAt = typeof payload?.generatedAt === 'number' ? payload.generatedAt : 0;
+            if (Date.now() - generatedAt > TTL_MS) return null;
+            const design = payload?.design;
+            if (!design) return null;
+            return {
+              hash: m[1],
+              url: design.meta?.url || '',
+              title: design.meta?.title || '',
+              generatedAt,
+              colors: design.colors?.all?.length ?? 0,
+              primary: design.colors?.primary?.hex || null,
+              secondary: design.colors?.secondary?.hex || null,
+              accent: design.colors?.accent?.hex || null,
+              foreground: design.colors?.text?.[0] || null,
+              background: design.colors?.backgrounds?.[0] || null,
+              fontFamily: design.typography?.families?.[0]?.name || null,
+              intent: design.pageIntent?.type || null,
+              material: design.materialLanguage?.label || null,
+              library: design.componentLibrary?.library || null,
+              score: design.score?.overall ?? null,
+              grade: design.score?.grade ?? null,
+            };
+          } catch { return null; }
+        })
+    );
+    return entries.filter(Boolean).slice(0, limit);
+  } catch (err) {
+    console.error('[cache] listRecent failed', err?.message);
+    return [];
+  }
+}

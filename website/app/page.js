@@ -20,17 +20,18 @@ export default function Home() {
             <img src="/mark.svg" alt="" width={22} height={22} style={{ display: 'block' }} />
             <span className="mono" style={{ fontSize: 13, letterSpacing: '0.02em' }}>
               designlang
-              <span style={{ color: 'var(--ink-3)', marginLeft: 12 }}>v11</span>
+              <span style={{ color: 'var(--ink-3)', marginLeft: 12 }}>v12</span>
             </span>
           </span>
           <nav
             className="mono"
             style={{ display: 'flex', gap: 'var(--r5)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.1em' }}
           >
+            <a href="/gallery" style={{ borderBottom: 0 }}>Gallery</a>
+            <a href="/spec" style={{ borderBottom: 0 }}>Spec</a>
             <a href="/features" style={{ borderBottom: 0 }}>Features</a>
             <a href="/vs/design-extractor" style={{ borderBottom: 0, color: 'var(--accent)' }}>vs</a>
             <a href="https://github.com/Manavarya09/design-extract" style={{ borderBottom: 0 }}>GitHub</a>
-            <a href="https://www.npmjs.com/package/designlang" style={{ borderBottom: 0 }}>npm</a>
           </nav>
         </div>
       </header>

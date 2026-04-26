@@ -1085,6 +1085,21 @@ program
     }
   });
 
+// ── Chat — REPL over a live extraction (v12) ──────────────
+program
+  .command('chat <target>')
+  .description('Interactive REPL over an extraction. <target> is either a URL or a path to an existing *-design-tokens.json file.')
+  .option('-o, --out <dir>', 'output directory for `save`', './chat-output')
+  .action(async (target, opts) => {
+    try {
+      const { runChat } = await import('../src/chat.js');
+      await runChat(target, opts);
+    } catch (err) {
+      console.error(chalk.red(`\n  ${err.message}\n`));
+      process.exit(1);
+    }
+  });
+
 // ── Replay — record a short WebM of motion from a URL ─────
 program
   .command('replay <url>')

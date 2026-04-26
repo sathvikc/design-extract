@@ -9,24 +9,10 @@
 //   { type:'error', error }                      — terminal failure
 
 import { extractDesignLanguage } from '../../../../src/index.js';
-import { formatMarkdown } from '../../../../src/formatters/markdown.js';
-import { formatDesignMd } from '../../../../src/formatters/design-md.js';
-import { formatTailwind } from '../../../../src/formatters/tailwind.js';
-import { formatCssVars } from '../../../../src/formatters/css-vars.js';
-import { formatPreview } from '../../../../src/formatters/preview.js';
-import { formatFigma } from '../../../../src/formatters/figma.js';
-import { formatReactTheme, formatShadcnTheme } from '../../../../src/formatters/theme.js';
-import { formatWordPress, formatWordPressTheme } from '../../../../src/formatters/wordpress.js';
-import { formatDtcgTokens } from '../../../../src/formatters/dtcg-tokens.js';
-import { formatIosSwiftUI } from '../../../../src/formatters/ios-swiftui.js';
-import { formatAndroidCompose } from '../../../../src/formatters/android-compose.js';
-import { formatFlutterDart } from '../../../../src/formatters/flutter-dart.js';
-import { formatAgentRules } from '../../../../src/formatters/agent-rules.js';
-import { nameFromUrl } from '../../../../src/utils.js';
-
 import { validateTargetUrl } from '../../../../website/lib/url-safety.js';
 import { checkRate, checkRateBlob } from '../../../../website/lib/rate-limit.js';
 import { cacheKey, getCached, putCached } from '../../../../website/lib/cache.js';
+import { buildFiles, buildSummary } from '../../../../website/lib/build-files.js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -83,79 +69,6 @@ function* walkDtcgTokens(tree, path = []) {
   }
 }
 
-function buildSummary(design) {
-  return {
-    url: design.meta?.url,
-    title: design.meta?.title,
-    colors: design.colors?.all?.length ?? 0,
-    colorList: (design.colors?.all || []).slice(0, 20).map((c) => c.hex),
-    fonts: design.typography?.families?.map((f) => f.name).join(', ') || 'none detected',
-    spacingCount: design.spacing?.scale?.length ?? 0,
-    spacingBase: design.spacing?.base ?? null,
-    shadowCount: design.shadows?.values?.length ?? 0,
-    radiiCount: design.borders?.radii?.length ?? 0,
-    componentCount: Object.keys(design.components || {}).length,
-    cssVarCount: Object.values(design.variables || {}).reduce((s, v) => s + Object.keys(v).length, 0),
-    a11yScore: design.accessibility?.score ?? null,
-    a11yFailCount: design.accessibility?.failCount ?? 0,
-    score: design.score,
-  };
-}
-
-function buildFiles(design, targetUrl) {
-  const prefix = nameFromUrl(targetUrl);
-  const dtcg = formatDtcgTokens(design);
-  const dtcgJson = JSON.stringify(dtcg, null, 2);
-
-  const files = {
-    [`${prefix}-DESIGN.md`]: formatDesignMd(design),
-    [`${prefix}-design-language.md`]: formatMarkdown(design),
-    [`${prefix}-design-tokens.json`]: dtcgJson,
-    [`${prefix}-tailwind.config.js`]: formatTailwind(design),
-    [`${prefix}-variables.css`]: formatCssVars(design),
-    [`${prefix}-preview.html`]: formatPreview(design),
-    [`${prefix}-figma-variables.json`]: formatFigma(design),
-    [`${prefix}-theme.js`]: formatReactTheme(design),
-    [`${prefix}-shadcn-theme.css`]: formatShadcnTheme(design),
-    [`${prefix}-wordpress-theme.json`]: formatWordPress(design),
-  };
-
-  // MCP companion JSON — same subset the CLI writes.
-  files[`${prefix}-mcp.json`] = JSON.stringify({
-    colors: { all: design.colors?.all || [] },
-    regions: design.regions || [],
-    componentClusters: design.componentClusters || [],
-    accessibility: { remediation: design.accessibility?.remediation || [] },
-    cssHealth: design.cssHealth || null,
-  }, null, 2);
-
-  // iOS
-  files['ios/DesignTokens.swift'] = formatIosSwiftUI(dtcg);
-
-  // Android (returns { filename: content })
-  const android = formatAndroidCompose(dtcg);
-  for (const name of Object.keys(android)) {
-    files[`android/${name}`] = android[name];
-  }
-
-  // Flutter
-  files['flutter/design_tokens.dart'] = formatFlutterDart(dtcg);
-
-  // WordPress block theme (5 files)
-  const wpTheme = formatWordPressTheme(dtcg, design);
-  for (const name of Object.keys(wpTheme)) {
-    files[`wordpress-theme/${name}`] = wpTheme[name];
-  }
-
-  // Agent rules
-  const agentFiles = formatAgentRules({ design, tokens: dtcg, url: targetUrl });
-  for (const name of Object.keys(agentFiles)) {
-    files[name] = agentFiles[name];
-  }
-
-  return { files, dtcg };
-}
-
 function extractIp(request) {
   const xff = request.headers.get('x-forwarded-for');
   if (xff) return xff.split(',')[0].trim();
@@ -165,8 +78,11 @@ function extractIp(request) {
 }
 
 // Emit cached payload as a simulated stream so the hero paints consistently.
-async function streamCached(controller, cached, targetUrl) {
+async function streamCached(controller, cached, targetUrl, hash) {
   controller.enqueue(ndjson({ type: 'cache', cached: true }));
+  // Permalink up front — the client can rewrite the URL bar to /x/<hash>
+  // before any heavy paint, so refresh-and-share works during the stream.
+  controller.enqueue(ndjson({ type: 'permalink', hash }));
   for (const stage of STAGES) {
     controller.enqueue(ndjson({ type: 'stage', name: stage }));
     await new Promise((r) => setTimeout(r, 40));
@@ -231,12 +147,15 @@ export async function POST(request) {
     async start(controller) {
       try {
         if (cached) {
-          await streamCached(controller, cached, targetUrl);
+          await streamCached(controller, cached, targetUrl, key);
           controller.close();
           return;
         }
 
         // Pre-stage markers — best-effort progress since extraction is atomic.
+        // Emit the permalink hash early so the URL bar can rewrite to /x/<hash>
+        // before the heavy paint begins.
+        controller.enqueue(ndjson({ type: 'permalink', hash: key }));
         controller.enqueue(ndjson({ type: 'stage', name: 'crawl' }));
 
         const browserOpts = await getBrowserOptions();
