@@ -25,10 +25,17 @@ It also goes where extractors don't: **layout patterns**, **responsive behavior 
 ## Quick start
 
 ```bash
-npx designlang https://stripe.com           # extract everything
-npx designlang grade https://stripe.com     # shareable HTML report card  ← v12.1
-npx designlang clone https://stripe.com     # working Next.js starter
-npx designlang --full https://stripe.com    # screenshots + responsive + interactions
+npx designlang https://stripe.com                      # extract everything
+npx designlang grade https://stripe.com --badge        # report card + SVG badge  ← v12.2
+npx designlang battle stripe.com vercel.com            # head-to-head graded fight ← v12.2
+npx designlang clone https://stripe.com                # working Next.js starter
+npx designlang --full https://stripe.com               # screenshots + responsive + interactions
+```
+
+Drop a live design-score badge in any README:
+
+```markdown
+![Design Score](https://designlang.app/badge/stripe.com.svg)
 ```
 
 ## Install
@@ -56,6 +63,8 @@ Each run writes 17+ files to `./design-extract-output/`. The headline outputs:
 | `*-prompts/` | Paste-ready prompts for v0, Lovable, Cursor, Claude Artifacts |
 | `*-mcp.json` | Disk-backed MCP server payload |
 | `*-grade.html` | **v12.1** Shareable Design Report Card (letter grade + evidence) |
+| `*-grade.svg` | **v12.2** Shields.io-style design-score badge (drop into any README) |
+| `*-battle.html` | **v12.2** Head-to-head graded battle card from `designlang battle` |
 
 Multi-platform (`--platforms web,ios,android,flutter,wordpress,all`) adds `ios/`, `android/`, `flutter/`, and a WordPress block theme. `--emit-agent-rules` adds Cursor / Claude Code / generic agent rule files.
 
@@ -114,7 +123,9 @@ designlang mcp                              # stdio MCP server for Cursor / Clau
 | Apply | `designlang apply <url>` | Auto-detect framework and write tokens to your project |
 | Clone | `designlang clone <url>` | Generate a working Next.js starter with extracted design |
 | Score | `designlang score <url>` | Rate design quality with visual bar chart breakdown |
-| Grade (NEW v12.1) | `designlang grade <url>` | Generate a shareable HTML "Design Report Card" — letter grade, 8 dimensions, evidence (palette, type, rhythm), strengths + fixes |
+| Grade (v12.1) | `designlang grade <url>` | Shareable HTML "Design Report Card" — letter grade, 8 dimensions, evidence, strengths + fixes |
+| Battle (NEW v12.2) | `designlang battle <A> <B>` | Head-to-head graded battle card with verdict, dimension table, palette comparison |
+| Badge (NEW v12.2) | `designlang grade --badge` | Shields.io-style SVG badge — `design · B · 87` — drop into any README. Live endpoint: `designlang.app/badge/<host>.svg` |
 | Watch | `designlang watch <url>` | Monitor for design changes on interval |
 | Diff | `designlang diff <A> <B>` | Compare two sites (MD + HTML) |
 | Multi-brand | `designlang brands <urls...>` | N-site comparison matrix |
@@ -167,7 +178,8 @@ Commands:
   apply <url>                       Extract and apply design directly to your project
   clone <url>                       Generate a working Next.js starter from extracted design
   score <url>                       Rate design quality (7 categories, A-F, bar chart)
-  grade <url>                       Generate a shareable HTML Design Report Card (--format html|md|json|all, --open)
+  grade <url>                       Generate a shareable HTML Design Report Card (--format html|md|json|svg|all, --badge, --open)
+  battle <urlA> <urlB>              Head-to-head graded battle card (--format html|md|json|all, --open)
   watch <url>                       Monitor for design changes on interval
   diff <urlA> <urlB>                Compare two sites' design languages
   brands <urls...>                  Multi-brand comparison matrix

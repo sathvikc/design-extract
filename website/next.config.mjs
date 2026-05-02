@@ -10,6 +10,13 @@ const nextConfig = {
     }
     return config;
   },
+  // Friendly badge URLs: /badge/stripe.com → /api/badge/stripe.com
+  async rewrites() {
+    return [
+      { source: '/badge/:host', destination: '/api/badge/:host' },
+      { source: '/badge/:host.svg', destination: '/api/badge/:host' },
+    ];
+  },
 };
 
 export default nextConfig;

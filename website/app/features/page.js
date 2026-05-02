@@ -44,7 +44,7 @@ export default function Features() {
           <a href="/" className="mono" style={{ fontSize: 13, letterSpacing: '0.02em', borderBottom: 0, display: 'inline-flex', alignItems: 'center', gap: 10 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/mark.svg" alt="" width={22} height={22} style={{ display: 'block' }} />
-            designlang <span style={{ color: 'var(--ink-3)', marginLeft: 12 }}>v12.1</span>
+            designlang <span style={{ color: 'var(--ink-3)', marginLeft: 12 }}>v12.2</span>
           </a>
           <nav
             className="mono"
@@ -73,9 +73,55 @@ export default function Features() {
         </p>
       </section>
 
-      {/* ── §01 v12.1 — GRADE ────────────────────────────── */}
+      {/* ── §01 v12.2 — BATTLE + BADGE ───────────────────── */}
+      <section id="battle">
+        <Rule number="01" label="v12.2 — battle + badge" />
+        <div style={{ padding: 'var(--r6) 0', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'var(--r6)', alignItems: 'start' }}>
+          <div>
+            <h2 className="display" style={{ fontSize: 'clamp(32px, 4vw, 56px)', letterSpacing: '-0.02em', lineHeight: 1.04, marginBottom: 'var(--r4)' }}>
+              Pit two sites.<br /><em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>Stamp every README.</em>
+            </h2>
+            <p className="prose" style={{ fontSize: 17, lineHeight: 1.55, color: 'var(--ink-2)', marginBottom: 'var(--r4)', maxWidth: '46ch' }}>
+              <code className="mono">designlang battle &lt;A&gt; &lt;B&gt;</code> renders a head-to-head graded
+              card — eight dimensions, bar-by-bar, verdict line. <code className="mono">designlang grade --badge</code> writes a shields.io-style SVG. Or skip the
+              CLI: drop a live badge in any README from <code className="mono">designlang.app/badge/&lt;host&gt;.svg</code>.
+            </p>
+            <pre className="mono" style={{ background: 'var(--ink)', color: 'var(--paper)', padding: 'var(--r4) var(--r5)', fontSize: 13, lineHeight: 1.7, overflowX: 'auto' }}>
+{`$ npx designlang battle stripe.com vercel.com
+
+  B · 87 stripe.com
+  vs
+  C · 76 vercel.com
+
+  Verdict: stripe.com wins`}
+            </pre>
+            <p className="mono" style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 'var(--r3)', letterSpacing: '0.02em' }}>
+              Drop in any README:
+            </p>
+            <pre className="mono" style={{ background: 'var(--ink)', color: 'var(--paper)', padding: 'var(--r3) var(--r5)', fontSize: 12, lineHeight: 1.6, overflowX: 'auto', marginTop: 6 }}>
+{`![Design Score](https://designlang.app/badge/stripe.com.svg)`}
+            </pre>
+          </div>
+          <ul className="mono" style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 12, lineHeight: 1.7, letterSpacing: '0.02em' }}>
+            {[
+              ['Battle', 'parallel extraction · per-dimension bars · win / tie / loss tally · verdict'],
+              ['Badge SVG', 'shields.io style · color by grade · 5 tiers (A–F) · accessible (aria-label)'],
+              ['Live endpoint', '/badge/<host>.svg · blob-cached 24h · edge cached 6h · ~50ms repeat hits'],
+              ['Permanent link', 'every README adoption is a permanent backlink to a live grade'],
+              ['CLI flag', '--badge on any `grade` run also emits *-badge.svg locally'],
+            ].map(([k, v]) => (
+              <li key={k} style={{ paddingBlock: 'var(--r3)', borderTop: '1px solid var(--ink-3)' }}>
+                <span style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--ink-3)', fontSize: 10, display: 'block', marginBottom: 4 }}>{k}</span>
+                <span style={{ color: 'var(--ink)' }}>{v}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ── §02 v12.1 — GRADE ────────────────────────────── */}
       <section id="grade">
-        <Rule number="01" label="v12.1 — grade" />
+        <Rule number="02" label="v12.1 — grade" />
         <div style={{ padding: 'var(--r6) 0', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'var(--r6)', alignItems: 'start' }}>
           <div>
             <h2 className="display" style={{ fontSize: 'clamp(32px, 4vw, 56px)', letterSpacing: '-0.02em', lineHeight: 1.04, marginBottom: 'var(--r4)' }}>
@@ -115,25 +161,25 @@ export default function Features() {
 
       {/* ── §02 v11 — CLONE · CI · STUDIO ────────────────── */}
       <section id="v11">
-        <Rule number="02" label="v11 — clone · ci · studio" />
+        <Rule number="03" label="v11 — clone · ci · studio" />
         <V11Showcase />
       </section>
 
       {/* ── §02 v10 — SEMANTIC INTELLIGENCE ──────────────── */}
       <section id="v10">
-        <Rule number="03" label="v10 — semantic intelligence" />
+        <Rule number="04" label="v10 — semantic intelligence" />
         <V10Capabilities />
       </section>
 
       {/* ── §03 v9 — MOTION · ANATOMY · VOICE ────────────── */}
       <section id="v9">
-        <Rule number="04" label="v9 — motion · anatomy · voice" />
+        <Rule number="05" label="v9 — motion · anatomy · voice" />
         <V9Capabilities />
       </section>
 
       {/* ── §04 DTCG BROWSER ─────────────────────────────── */}
       <section id="tokens">
-        <Rule number="05" label="DTCG token browser" />
+        <Rule number="06" label="DTCG token browser" />
         <div style={{ padding: 'var(--r6) 0' }}>
           <TokenBrowser />
         </div>
@@ -141,13 +187,13 @@ export default function Features() {
 
       {/* ── §05 MCP ──────────────────────────────────────── */}
       <section id="mcp">
-        <Rule number="06" label="MCP server" />
+        <Rule number="07" label="MCP server" />
         <McpSection />
       </section>
 
       {/* ── §06 MULTI-PLATFORM ───────────────────────────── */}
       <section id="platforms">
-        <Rule number="07" label="multi-platform emitters" />
+        <Rule number="08" label="multi-platform emitters" />
         <PlatformTabs />
       </section>
 

@@ -1,5 +1,36 @@
 # Changelog
 
+## [12.2.0] — 2026-05-02
+
+**Battle cards + design score badges — distribution + virality on top of Grade.**
+
+### Added
+
+- **`designlang battle <urlA> <urlB>`** — head-to-head graded battle card.
+  Single shareable HTML pitting two sites against each other, dimension by
+  dimension, with a verdict line and a per-dimension bar table. Both sites
+  are extracted in parallel. Emits `*.battle.html`, `*.battle.md`, and
+  `*.battle.json`.
+- **`designlang grade --badge`** — also emit `*.grade.svg`, a shields.io-style
+  SVG badge (`design · B · 87`) coloured by letter grade. Drop into any
+  README.
+- **Live badge endpoint** at `https://designlang.app/badge/<host>.svg` (with
+  rewrites from `/badge/<host>` and `/api/badge/<host>`). Reuses the same
+  blob cache the `/api/extract` route writes to, so the first hit warms the
+  cache and every subsequent hit is served from edge cache in ~50ms. 6h
+  fresh / 24h stale-while-revalidate / 7d max — friendly to the GitHub image
+  proxy.
+- New formatters: `src/formatters/battle.js`, `src/formatters/badge.js`,
+  with exports `formatBattle`, `formatBattleMarkdown`, `compareScores`,
+  `formatBadge`, `formatScoreBadge`.
+- 13 new tests (battle markup, score comparison thresholds, SVG escaping,
+  grade-color mapping, missing-score handling).
+
+Why this exists: the v12.1 Grade card was the differentiator. Battle is the
+viral content layer ("Stripe vs Vercel — guess who lost"). The badge is the
+distribution layer — every README that adopts it is a permanent backlink to
+a public grade page.
+
 ## [12.1.0] — 2026-04-29
 
 **Design Report Card — a shareable audit page, generated from any URL.**

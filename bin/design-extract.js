@@ -46,6 +46,8 @@ import { watchSite } from '../src/watch.js';
 import { diffDarkMode } from '../src/darkdiff.js';
 import { applyDesign } from '../src/apply.js';
 import { formatGrade, formatGradeMarkdown } from '../src/formatters/grade.js';
+import { formatBattle, formatBattleMarkdown } from '../src/formatters/battle.js';
+import { formatScoreBadge } from '../src/formatters/badge.js';
 import { nameFromUrl } from '../src/utils.js';
 
 function validateUrl(url) {
@@ -941,7 +943,8 @@ program
   .description('Generate a shareable Design Report Card (HTML + JSON + Markdown)')
   .option('-o, --out <dir>', 'output directory', './design-extract-output')
   .option('-n, --name <name>', 'output file prefix (default: derived from URL)')
-  .option('--format <fmt>', 'output format: html, md, json, all', 'all')
+  .option('--format <fmt>', 'output format: html, md, json, svg, all', 'all')
+  .option('--badge', 'also emit *-badge.svg (shields.io-style) — implies adding svg to format')
   .option('--open', 'open the HTML report in the default browser')
   .action(async (url, opts) => {
     if (!url.startsWith('http')) url = `https://${url}`;
@@ -957,6 +960,7 @@ program
       mkdirSync(outDir, { recursive: true });
       const prefix = opts.name || nameFromUrl(url);
       const written = [];
+      const wantSvg = opts.badge || opts.format === 'svg' || opts.format === 'all';
 
       if (opts.format === 'all' || opts.format === 'html') {
         const html = formatGrade(design, { version: PKG_VERSION });
@@ -984,6 +988,12 @@ program
         }, null, 2));
         written.push(p);
       }
+      if (wantSvg) {
+        const svg = formatScoreBadge(s);
+        const p = join(outDir, `${prefix}.grade.svg`);
+        writeFileSync(p, svg);
+        written.push(p);
+      }
 
       spinner.stop();
       const gradeColor = s.grade === 'A' ? chalk.green : s.grade === 'B' ? chalk.cyan : s.grade === 'C' ? chalk.yellow : chalk.red;
@@ -1005,6 +1015,88 @@ program
       }
     } catch (err) {
       spinner.fail('Grade failed');
+      console.error(chalk.red(`\n  ${err.message}\n`));
+      process.exit(1);
+    }
+  });
+
+// ── Battle command — head-to-head graded comparison ────────
+program
+  .command('battle <urlA> <urlB>')
+  .description('Generate a head-to-head graded battle card (HTML + JSON + Markdown)')
+  .option('-o, --out <dir>', 'output directory', './design-extract-output')
+  .option('-n, --name <name>', 'output file prefix (default: a-vs-b)')
+  .option('--format <fmt>', 'output format: html, md, json, all', 'all')
+  .option('--open', 'open the battle card in the default browser')
+  .action(async (urlA, urlB, opts) => {
+    if (!urlA.startsWith('http')) urlA = `https://${urlA}`;
+    if (!urlB.startsWith('http')) urlB = `https://${urlB}`;
+    validateUrl(urlA);
+    validateUrl(urlB);
+
+    const spinner = ora(`Auditing ${urlA} and ${urlB} in parallel...`).start();
+    try {
+      const [designA, designB] = await Promise.all([
+        extractDesignLanguage(urlA),
+        extractDesignLanguage(urlB),
+      ]);
+      if (!designA.score || !designB.score) throw new Error('scoring failed for one or both sites');
+
+      const outDir = resolve(opts.out);
+      mkdirSync(outDir, { recursive: true });
+      const prefix = opts.name || `${nameFromUrl(urlA)}-vs-${nameFromUrl(urlB)}`;
+      const written = [];
+
+      if (opts.format === 'all' || opts.format === 'html') {
+        const html = formatBattle(designA, designB, { version: PKG_VERSION });
+        const p = join(outDir, `${prefix}.battle.html`);
+        writeFileSync(p, html);
+        written.push(p);
+      }
+      if (opts.format === 'all' || opts.format === 'md') {
+        const md = formatBattleMarkdown(designA, designB);
+        const p = join(outDir, `${prefix}.battle.md`);
+        writeFileSync(p, md);
+        written.push(p);
+      }
+      if (opts.format === 'all' || opts.format === 'json') {
+        const p = join(outDir, `${prefix}.battle.json`);
+        writeFileSync(p, JSON.stringify({
+          a: { url: designA.meta?.url, grade: designA.score.grade, overall: designA.score.overall, scores: designA.score.scores },
+          b: { url: designB.meta?.url, grade: designB.score.grade, overall: designB.score.overall, scores: designB.score.scores },
+          timestamp: new Date().toISOString(),
+        }, null, 2));
+        written.push(p);
+      }
+
+      spinner.stop();
+      const aGrade = designA.score.grade, bGrade = designB.score.grade;
+      const aColor = aGrade === 'A' ? chalk.green : aGrade === 'B' ? chalk.cyan : aGrade === 'C' ? chalk.yellow : chalk.red;
+      const bColor = bGrade === 'A' ? chalk.green : bGrade === 'B' ? chalk.cyan : bGrade === 'C' ? chalk.yellow : chalk.red;
+      console.log('');
+      console.log(`  ${aColor.bold(`${aGrade} · ${designA.score.overall}`)} ${chalk.gray(designA.meta?.url || urlA)}`);
+      console.log(`  ${chalk.gray('vs')}`);
+      console.log(`  ${bColor.bold(`${bGrade} · ${designB.score.overall}`)} ${chalk.gray(designB.meta?.url || urlB)}`);
+      console.log('');
+      const winner =
+        designA.score.overall - designB.score.overall >= 3 ? `${chalk.bold(designA.meta?.url || urlA)} wins`
+        : designB.score.overall - designA.score.overall >= 3 ? `${chalk.bold(designB.meta?.url || urlB)} wins`
+        : 'Too close to call';
+      console.log(`  Verdict: ${winner}`);
+      console.log('');
+      for (const f of written) console.log(`  ${chalk.green('✓')} ${chalk.gray(f)}`);
+      console.log('');
+
+      if (opts.open) {
+        const htmlPath = written.find(p => p.endsWith('.html'));
+        if (htmlPath) {
+          const { spawn } = await import('child_process');
+          const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+          spawn(cmd, [htmlPath], { detached: true, stdio: 'ignore' }).unref();
+        }
+      }
+    } catch (err) {
+      spinner.fail('Battle failed');
       console.error(chalk.red(`\n  ${err.message}\n`));
       process.exit(1);
     }
