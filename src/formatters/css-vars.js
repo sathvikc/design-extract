@@ -1,5 +1,3 @@
-import { pxToRem } from '../utils.js';
-
 export function formatCssVars(design) {
   const lines = [':root {'];
 

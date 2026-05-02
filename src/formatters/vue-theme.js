@@ -1,5 +1,3 @@
-import { rgbToHsl } from '../utils.js';
-
 export function formatVueTheme(design) {
   const { colors, typography, spacing, borders, shadows } = design;
   const lines = [];

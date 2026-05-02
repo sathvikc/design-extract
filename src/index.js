@@ -26,7 +26,7 @@ import { extractWideGamut } from './extractors/wide-gamut.js';
 import { extractTokenSources } from './extractors/token-sources.js';
 import { extractInteractionStates } from './extractors/interaction-states.js';
 import { extractMotion } from './extractors/motion.js';
-import { extractComponentAnatomy, formatAnatomyStubs } from './extractors/component-anatomy.js';
+import { extractComponentAnatomy } from './extractors/component-anatomy.js';
 import { extractVoice } from './extractors/voice.js';
 import { extractPageIntent } from './extractors/page-intent.js';
 import { extractSectionRoles } from './extractors/section-roles.js';
@@ -39,7 +39,6 @@ import { extractBackgroundPatterns } from './extractors/background-patterns.js';
 import { extractStackIntel } from './extractors/stack-intel.js';
 import { extractFormStates } from './extractors/form-states.js';
 import { formatDtcgTokens } from './formatters/dtcg-tokens.js';
-import { formatMotionTokens } from './formatters/motion-tokens.js';
 
 function safeExtract(fn, ...args) {
   try { return fn(...args); } catch { return null; }

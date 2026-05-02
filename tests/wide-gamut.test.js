@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { oklchToSrgb, oklabToSrgb, oklchLikeToHex, parseOklchOrOklab, rgbToHex } from '../src/utils/color-gamut.js';
+import { oklchLikeToHex, parseOklchOrOklab, rgbToHex } from '../src/utils/color-gamut.js';
 import { extractWideGamut } from '../src/extractors/wide-gamut.js';
 import { extractTokenSources } from '../src/extractors/token-sources.js';
 

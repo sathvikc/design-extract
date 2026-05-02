@@ -7,7 +7,6 @@ import { extractDesignLanguage } from './index.js';
 import { diffDesigns } from './diff.js';
 import { nameFromUrl } from './utils.js';
 import { statSync, existsSync, readFileSync } from 'fs';
-import { basename } from 'path';
 
 function fileKb(p) {
   try { return Math.round(statSync(p).size / 1024); } catch { return 0; }

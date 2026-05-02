@@ -5,7 +5,7 @@ import { formatTokens } from './formatters/tokens.js';
 import { formatTailwind } from './formatters/tailwind.js';
 import { formatCssVars } from './formatters/css-vars.js';
 import { saveSnapshot, getHistory } from './history.js';
-import { writeFileSync, readFileSync, statSync } from 'fs';
+import { writeFileSync, statSync } from 'fs';
 import { join } from 'path';
 
 // Race-safe "update only if file exists" — statSync inside try/catch

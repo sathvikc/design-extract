@@ -1,4 +1,4 @@
-import { rgbToHex, rgbToHsl } from '../utils.js';
+import { rgbToHsl } from '../utils.js';
 
 function generateColorScale(hex, parsed) {
   const { h, s } = parsed.hsl ?? rgbToHsl(parsed.rgb);
