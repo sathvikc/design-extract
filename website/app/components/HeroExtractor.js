@@ -32,7 +32,6 @@ export default function HeroExtractor() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [rateLimitMsg, setRateLimitMsg] = useState(null);
   const [downloadBusy, setDownloadBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
   const inputRef = useRef(null);
 
   // Accept ?url= query param (Chrome extension handoff, deep links). Only
@@ -63,7 +62,6 @@ export default function HeroExtractor() {
     setFiles(null);
     setErrorMsg(null);
     setRateLimitMsg(null);
-    setCopied(false);
   }, []);
 
   const handleEvent = useCallback((event) => {
@@ -202,19 +200,6 @@ export default function HeroExtractor() {
       setDownloadBusy(false);
     }
   }, [files, downloadBusy]);
-
-  const handleCopyMarkdown = useCallback(async () => {
-    if (!files) return;
-    const mdKey = Object.keys(files).find((k) => k.endsWith('-design-language.md'));
-    if (!mdKey) return;
-    try {
-      await navigator.clipboard.writeText(files[mdKey]);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {
-      // no-op
-    }
-  }, [files]);
 
   const stageLabel = stage ? STAGE_LABEL[stage] || stage : null;
   const streaming = status === 'streaming';

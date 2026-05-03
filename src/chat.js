@@ -22,20 +22,6 @@ function isHex(s) {
   return typeof s === 'string' && /^#[0-9a-f]{3,8}$/i.test(s.trim());
 }
 
-function hexToRgb(hex) {
-  const m = String(hex).trim().toLowerCase().replace(/^#/, '');
-  const full = m.length === 3 ? m.split('').map((c) => c + c).join('') : m.slice(0, 6);
-  return {
-    r: parseInt(full.slice(0, 2), 16) || 0,
-    g: parseInt(full.slice(2, 4), 16) || 0,
-    b: parseInt(full.slice(4, 6), 16) || 0,
-  };
-}
-
-function rgbToHex({ r, g, b }) {
-  return '#' + [r, g, b].map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
-}
-
 function opSharpenRadii(design, factor = 0.5) {
   const radii = design.borders?.radii || [];
   const next = radii.map((r) => ({ ...r, value: Math.max(0, Math.round((r.value || 0) * factor)) }));

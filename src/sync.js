@@ -5,17 +5,28 @@ import { formatTokens } from './formatters/tokens.js';
 import { formatTailwind } from './formatters/tailwind.js';
 import { formatCssVars } from './formatters/css-vars.js';
 import { saveSnapshot, getHistory } from './history.js';
-import { writeFileSync, statSync } from 'fs';
+import { openSync, closeSync, ftruncateSync, writeSync } from 'fs';
 import { join } from 'path';
 
-// Race-safe "update only if file exists" — statSync inside try/catch
-// closes the toctou window vs. existsSync→writeFileSync.
+// Race-free "update only if file exists" — open with 'r+' atomically
+// requires an existing file (throws ENOENT otherwise) and gives us a
+// write-capable descriptor in one syscall, eliminating the toctou window
+// that statSync→writeFileSync would have. Truncate then write through the
+// same fd so no other process can sneak between check and write.
 function updateIfExists(path, content) {
+  let fd;
   try {
-    if (!statSync(path).isFile()) return false;
-    writeFileSync(path, content, 'utf-8');
+    fd = openSync(path, 'r+');
+    ftruncateSync(fd, 0);
+    writeSync(fd, content, 0, 'utf-8');
     return true;
-  } catch { return false; }
+  } catch {
+    return false;
+  } finally {
+    if (fd !== undefined) {
+      try { closeSync(fd); } catch { /* best-effort close */ }
+    }
+  }
 }
 
 export async function syncDesign(url, options = {}) {

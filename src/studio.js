@@ -302,9 +302,9 @@ export async function runStudio(opts) {
         res.end('not found');
         return;
       }
-      // Race-safe read — single try/catch instead of exists→stat→read chain.
+      // Race-free read — let readFileSync surface ENOENT / EISDIR / EACCES
+      // in one syscall instead of a stat→read pair (which would TOCTOU).
       try {
-        if (!statSync(filePath).isFile()) throw new Error('not a file');
         const body = readFileSync(filePath);
         const ext = extname(filePath).toLowerCase();
         res.writeHead(200, { 'content-type': MIME[ext] || 'application/octet-stream' });
