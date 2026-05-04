@@ -26,8 +26,10 @@ It also goes where extractors don't: **layout patterns**, **responsive behavior 
 
 ```bash
 npx designlang https://stripe.com                      # extract everything
-npx designlang grade https://stripe.com --badge        # report card + SVG badge  ← v12.2
-npx designlang battle stripe.com vercel.com            # head-to-head graded fight ← v12.2
+npx designlang remix stripe.com --as cyberpunk         # restyle in another vocabulary  ← v12.3
+npx designlang remix stripe.com --all                  # emit all 6 vocabs at once     ← v12.3
+npx designlang grade https://stripe.com --badge        # report card + SVG badge       ← v12.2
+npx designlang battle stripe.com vercel.com            # head-to-head graded fight     ← v12.2
 npx designlang clone https://stripe.com                # working Next.js starter
 npx designlang --full https://stripe.com               # screenshots + responsive + interactions
 ```
@@ -65,6 +67,7 @@ Each run writes 17+ files to `./design-extract-output/`. The headline outputs:
 | `*-grade.html` | **v12.1** Shareable Design Report Card (letter grade + evidence) |
 | `*-grade.svg` | **v12.2** Shields.io-style design-score badge (drop into any README) |
 | `*-battle.html` | **v12.2** Head-to-head graded battle card from `designlang battle` |
+| `*-remix.<vocab>.html` | **v12.3** Site restyled in another vocabulary — brutalist / swiss / art-deco / cyberpunk / soft-ui / editorial |
 
 Multi-platform (`--platforms web,ios,android,flutter,wordpress,all`) adds `ios/`, `android/`, `flutter/`, and a WordPress block theme. `--emit-agent-rules` adds Cursor / Claude Code / generic agent rule files.
 
@@ -124,8 +127,9 @@ designlang mcp                              # stdio MCP server for Cursor / Clau
 | Clone | `designlang clone <url>` | Generate a working Next.js starter with extracted design |
 | Score | `designlang score <url>` | Rate design quality with visual bar chart breakdown |
 | Grade (v12.1) | `designlang grade <url>` | Shareable HTML "Design Report Card" — letter grade, 8 dimensions, evidence, strengths + fixes |
-| Battle (NEW v12.2) | `designlang battle <A> <B>` | Head-to-head graded battle card with verdict, dimension table, palette comparison |
-| Badge (NEW v12.2) | `designlang grade --badge` | Shields.io-style SVG badge — `design · B · 87` — drop into any README. Live endpoint: `designlang.app/badge/<host>.svg` |
+| Battle (v12.2) | `designlang battle <A> <B>` | Head-to-head graded battle card with verdict, dimension table, palette comparison |
+| Badge (v12.2) | `designlang grade --badge` | Shields.io-style SVG badge — `design · B · 87` — drop into any README. Live endpoint: `designlang.app/badge/<host>.svg` |
+| Remix (NEW v12.3) | `designlang remix <url> --as <vocab>` | Restyle the audited page in another vocabulary (brutalist / swiss / art-deco / cyberpunk / soft-ui / editorial). `--all` emits all 6 |
 | Watch | `designlang watch <url>` | Monitor for design changes on interval |
 | Diff | `designlang diff <A> <B>` | Compare two sites (MD + HTML) |
 | Multi-brand | `designlang brands <urls...>` | N-site comparison matrix |
@@ -180,6 +184,7 @@ Commands:
   score <url>                       Rate design quality (7 categories, A-F, bar chart)
   grade <url>                       Generate a shareable HTML Design Report Card (--format html|md|json|svg|all, --badge, --open)
   battle <urlA> <urlB>              Head-to-head graded battle card (--format html|md|json|all, --open)
+  remix <url>                       Restyle in another vocabulary (--as brutalist|swiss|art-deco|cyberpunk|soft-ui|editorial, --all, --list, --open)
   watch <url>                       Monitor for design changes on interval
   diff <urlA> <urlB>                Compare two sites' design languages
   brands <urls...>                  Multi-brand comparison matrix

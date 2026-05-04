@@ -17,6 +17,8 @@ import { formatAgentRules } from '../src/formatters/agent-rules.js';
 import { formatGrade, formatGradeMarkdown } from '../src/formatters/grade.js';
 import { formatBattle, formatBattleMarkdown, compareScores } from '../src/formatters/battle.js';
 import { formatBadge, formatScoreBadge } from '../src/formatters/badge.js';
+import { formatRemix } from '../src/formatters/remix.js';
+import { VOCABULARIES, getVocabulary, listVocabularies } from '../src/vocabularies/index.js';
 
 // ── Shared mock design object ───────────────────────────────────
 
@@ -875,5 +877,159 @@ describe('formatScoreBadge', () => {
   it('returns an em-dash badge when score is missing', () => {
     const svg = formatScoreBadge(null);
     assert.ok(svg.includes('—'));
+  });
+});
+
+// ── Vocabularies registry ───────────────────────────────────────
+
+describe('vocabularies', () => {
+  it('exposes six built-in vocabularies', () => {
+    const ids = Object.keys(VOCABULARIES);
+    assert.deepEqual(ids.sort(), ['art-deco', 'brutalist', 'cyberpunk', 'editorial', 'soft-ui', 'swiss']);
+  });
+
+  it('listVocabularies returns id + name + blurb for each', () => {
+    const list = listVocabularies();
+    assert.equal(list.length, 6);
+    for (const v of list) {
+      assert.ok(v.id, 'must have id');
+      assert.ok(v.name, 'must have name');
+      assert.ok(v.blurb, 'must have blurb');
+    }
+  });
+
+  it('every vocabulary defines tokens, fonts, and css', () => {
+    for (const [id, v] of Object.entries(VOCABULARIES)) {
+      assert.ok(v.tokens, `${id}: tokens missing`);
+      assert.ok(v.tokens.paper && v.tokens.ink && v.tokens.accent, `${id}: core color tokens missing`);
+      assert.ok(v.fonts?.display && v.fonts?.body, `${id}: font stack missing`);
+      assert.ok(typeof v.css === 'string' && v.css.length > 0, `${id}: signature css missing`);
+    }
+  });
+
+  it('getVocabulary returns the vocab by id', () => {
+    assert.equal(getVocabulary('brutalist').name, 'Brutalist');
+    assert.equal(getVocabulary('art-deco').name, 'Art Deco');
+  });
+
+  it('getVocabulary throws on unknown id with a helpful message', () => {
+    assert.throws(() => getVocabulary('vaporwave'), /unknown vocabulary "vaporwave"/);
+    assert.throws(() => getVocabulary('vaporwave'), /available:.*brutalist.*swiss/);
+  });
+});
+
+// ── formatRemix (vocabulary-styled page render) ─────────────────
+
+describe('formatRemix', () => {
+  // mockDesign doesn't carry sectionRoles by default — synthesize for these tests.
+  const remixDesign = {
+    ...mockDesign,
+    pageIntent: { type: 'landing', confidence: 0.9, signals: [] },
+    voice: {
+      tone: 'technical',
+      ctaVerbs: ['Get started', 'Learn more', 'Try free'],
+      sampleHeadings: ['Build the future', 'Ship faster', 'Designed for scale', 'Join thousands'],
+    },
+    sectionRoles: {
+      sections: [
+        { role: 'hero', heading: 'Build the future', buttonCount: 2, slots: { lede: 'A platform for the next generation.' } },
+        { role: 'feature-grid', heading: 'What you get', buttonCount: 0, slots: {} },
+        { role: 'pricing-table', heading: 'Simple pricing', buttonCount: 3, slots: {} },
+        { role: 'cta', heading: '', buttonCount: 1, slots: {} },
+        { role: 'footer', heading: '', buttonCount: 0, slots: {} },
+      ],
+      counts: {},
+      readingOrder: ['hero', 'feature-grid', 'pricing-table', 'cta', 'footer'],
+    },
+  };
+
+  it('returns a self-contained HTML document with the host name and vocab name', () => {
+    const html = formatRemix(remixDesign, getVocabulary('brutalist'), { vocabId: 'brutalist' });
+    assert.ok(html.startsWith('<!doctype html>'));
+    assert.ok(html.includes('example.com'), 'host must render');
+    assert.ok(html.includes('Brutalist'), 'vocab name must render');
+    assert.ok(html.includes('Build the future'), 'extracted heading must render');
+  });
+
+  it('embeds vocabulary tokens as CSS custom properties', () => {
+    const brutalist = formatRemix(remixDesign, getVocabulary('brutalist'));
+    const cyberpunk = formatRemix(remixDesign, getVocabulary('cyberpunk'));
+    // Brutalist accent is orange, cyberpunk is magenta — different vocabs, different output.
+    assert.match(brutalist, /--accent: #ff4800/);
+    assert.match(cyberpunk, /--accent: #ff2bd6/);
+  });
+
+  it('imports each vocabulary\'s display font from Google Fonts', () => {
+    const editorial = formatRemix(remixDesign, getVocabulary('editorial'));
+    assert.match(editorial, /fonts\.googleapis\.com.*Instrument\+Serif/);
+  });
+
+  it('omits nav and footer sections from the body', () => {
+    const html = formatRemix(remixDesign, getVocabulary('swiss'));
+    // Footer section had no heading; should not produce a stray <h2>Footer</h2>.
+    const h2Count = (html.match(/<h2/g) || []).length;
+    assert.ok(h2Count <= 4, `expected ≤4 h2 elements, got ${h2Count}`);
+  });
+
+  it('dedupes sections that share a heading (real-world SPA pattern)', () => {
+    const dup = {
+      ...remixDesign,
+      sectionRoles: {
+        sections: [
+          { role: 'hero', heading: 'Same Heading', buttonCount: 1, slots: {} },
+          { role: 'pricing-table', heading: 'Same Heading', buttonCount: 1, slots: {} },
+          { role: 'cta', heading: 'Different', buttonCount: 1, slots: {} },
+        ],
+        counts: {}, readingOrder: [],
+      },
+    };
+    const html = formatRemix(dup, getVocabulary('swiss'));
+    const sameHeadingCount = (html.match(/Same Heading/g) || []).length;
+    assert.equal(sameHeadingCount, 1, 'duplicate heading should appear exactly once');
+  });
+
+  it('does not re-shift a section heading from the voice pool (no duplicate render)', () => {
+    // Repro for the bug fixed before tests landed: a heading-less section
+    // (cta, footer band) used to pull a heading from voice.sampleHeadings
+    // that was already claimed by another section, producing duplicate h2s.
+    const aliased = {
+      ...remixDesign,
+      voice: { ...remixDesign.voice, sampleHeadings: ['Build the future', 'Ship faster'] },
+      sectionRoles: {
+        sections: [
+          { role: 'cta', heading: '', buttonCount: 1, slots: {} }, // heading-less
+          { role: 'pricing-table', heading: 'Build the future', buttonCount: 2, slots: {} },
+        ],
+        counts: {}, readingOrder: [],
+      },
+    };
+    const html = formatRemix(aliased, getVocabulary('brutalist'));
+    const buildFutureCount = (html.match(/Build the future/g) || []).length;
+    assert.equal(buildFutureCount, 1, 'pool heading already on a section must not be re-shifted');
+  });
+
+  it('synthesizes a believable artifact when no sections are extracted', () => {
+    const noSections = { ...remixDesign, sectionRoles: { sections: [], counts: {}, readingOrder: [] } };
+    const html = formatRemix(noSections, getVocabulary('cyberpunk'));
+    assert.ok(html.includes('Build the future') || html.includes('example.com'));
+    assert.ok(html.includes('<section'), 'must still render sections');
+  });
+
+  it('escapes user-controlled section content', () => {
+    const evil = {
+      ...remixDesign,
+      sectionRoles: {
+        sections: [{ role: 'hero', heading: '<script>alert(1)</script>', buttonCount: 1, slots: {} }],
+        counts: {}, readingOrder: [],
+      },
+    };
+    const html = formatRemix(evil, getVocabulary('brutalist'));
+    assert.ok(!html.includes('<script>alert(1)'));
+    assert.ok(html.includes('&lt;script&gt;'));
+  });
+
+  it('throws clear errors on missing inputs', () => {
+    assert.throws(() => formatRemix(null, getVocabulary('brutalist')), /design/i);
+    assert.throws(() => formatRemix(remixDesign, null), /vocabulary/i);
   });
 });

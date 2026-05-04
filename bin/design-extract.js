@@ -47,6 +47,8 @@ import { applyDesign } from '../src/apply.js';
 import { formatGrade, formatGradeMarkdown } from '../src/formatters/grade.js';
 import { formatBattle, formatBattleMarkdown } from '../src/formatters/battle.js';
 import { formatScoreBadge } from '../src/formatters/badge.js';
+import { formatRemix } from '../src/formatters/remix.js';
+import { VOCABULARIES, getVocabulary, listVocabularies } from '../src/vocabularies/index.js';
 import { nameFromUrl } from '../src/utils.js';
 
 function validateUrl(url) {
@@ -1096,6 +1098,75 @@ program
       }
     } catch (err) {
       spinner.fail('Battle failed');
+      console.error(chalk.red(`\n  ${err.message}\n`));
+      process.exit(1);
+    }
+  });
+
+// ── Remix command — restyle an extracted page in another vocabulary ─
+program
+  .command('remix <url>')
+  .description('Restyle a site in a different design vocabulary (brutalist, swiss, art-deco, cyberpunk, soft-ui, editorial)')
+  .option('-o, --out <dir>', 'output directory', './design-extract-output')
+  .option('-n, --name <name>', 'output file prefix (default: derived from URL)')
+  .option('--as <vocab>', 'vocabulary id (run `designlang remix --list` to see all)', 'brutalist')
+  .option('--list', 'list all vocabularies and exit')
+  .option('--all', 'emit one HTML per vocabulary (six files at once)')
+  .option('--open', 'open the result in the default browser')
+  .action(async (url, opts) => {
+    if (opts.list) {
+      console.log('');
+      console.log(chalk.bold('  Vocabularies'));
+      console.log('');
+      for (const v of listVocabularies()) {
+        console.log(`  ${chalk.cyan(v.id.padEnd(14))} ${chalk.gray(v.blurb)}`);
+      }
+      console.log('');
+      console.log(chalk.gray(`  Use: designlang remix <url> --as <id>`));
+      console.log('');
+      return;
+    }
+    if (!url.startsWith('http')) url = `https://${url}`;
+    validateUrl(url);
+
+    const vocabIds = opts.all ? Object.keys(VOCABULARIES) : [opts.as];
+    // Validate vocab early so we fail before extraction.
+    for (const id of vocabIds) getVocabulary(id);
+
+    const spinner = ora(`Extracting ${url}...`).start();
+    try {
+      const design = await extractDesignLanguage(url);
+
+      const outDir = resolve(opts.out);
+      mkdirSync(outDir, { recursive: true });
+      const prefix = opts.name || nameFromUrl(url);
+      const written = [];
+
+      for (const id of vocabIds) {
+        spinner.text = `Rendering ${id}...`;
+        const vocab = getVocabulary(id);
+        const html = formatRemix(design, vocab, { vocabId: id, version: PKG_VERSION });
+        const p = join(outDir, `${prefix}.remix.${id}.html`);
+        writeFileSync(p, html);
+        written.push(p);
+      }
+
+      spinner.stop();
+      console.log('');
+      console.log(`  ${chalk.bold('Remixed')} ${chalk.gray('·')} ${chalk.cyan(vocabIds.join(', '))} ${chalk.gray('·')} ${chalk.gray(url)}`);
+      console.log('');
+      for (const f of written) console.log(`  ${chalk.green('✓')} ${chalk.gray(f)}`);
+      console.log('');
+      console.log(chalk.gray(`  Open the .html in a browser. One file per vocabulary, fully self-contained.`));
+      console.log('');
+
+      if (opts.open && written.length > 0) {
+        const { spawn } = await import('child_process');
+        const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+        spawn(cmd, [written[0]], { detached: true, stdio: 'ignore' }).unref();
+      }
+    } catch (err) {
+      spinner.fail('Remix failed');
       console.error(chalk.red(`\n  ${err.message}\n`));
       process.exit(1);
     }

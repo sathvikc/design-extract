@@ -1,5 +1,45 @@
 # Changelog
 
+## [12.3.0] — 2026-05-05
+
+**Remix — restyle any site in a different design vocabulary.**
+
+A genuinely new product surface: take an extracted page-shape (sections,
+voice, page-intent, anatomy) and re-render it under one of six
+opinionated design vocabularies. "What would stripe.com look like if it
+had been designed brutalist? Or art-deco? Or cyberpunk?"
+
+### Added
+
+- **`designlang remix <url> --as <vocab>`** — re-renders the audited page
+  using the host's *own copy* (headings, ledes, CTA verbs from voice) but
+  styled in another vocabulary. Six built-ins:
+  - `brutalist` — hard edges, mono type, single screaming accent
+  - `swiss` — Helvetica, grids, restraint (post-Bauhaus default)
+  - `art-deco` — gold on ink, geometric ornament, vertical type
+  - `cyberpunk` — neon on midnight, scanlines, mono with glitch energy
+  - `soft-ui` — cushioned shapes, low contrast, Vision-OS-adjacent
+  - `editorial` — broadsheet serifs, generous whitespace, ink on paper
+- `--all` flag emits one HTML per vocabulary in a single extraction.
+- `--list` prints the vocabulary registry with blurbs.
+- New formatter: `src/formatters/remix.js` — maps every section role
+  (hero, feature-grid, pricing-table, stats, testimonial, faq,
+  logo-wall, steps, cta) to vocabulary-styled markup.
+- New module: `src/vocabularies/` — six self-contained vocab definitions
+  (tokens + font stack + signature CSS) plus `index.js` registry.
+- Hero-deduplication: real-world section walkers (especially on SPA
+  marketing pages) often emit a hero wrapper + an inner hero with the
+  same h1. Remix now dedupes by heading and excludes claimed headings
+  from the voice pool, so heading-less sections (cta bands, logo walls)
+  don't re-render an already-claimed heading.
+- 14 new tests (350 total, all passing). Cover registry shape,
+  per-vocab token validity, dedup, XSS escaping, missing-input errors.
+
+Why: Grade (v12.1) is the audit, Battle (v12.2) is the comparison,
+Remix is the *transformation*. Pure visual moat — no competitor
+(Dembrandt, Superposition, html.to.design, Builder Visual Copilot)
+ships site-shape-preserving vocabulary swap.
+
 ## [12.2.0] — 2026-05-02
 
 **Battle cards + design score badges — distribution + virality on top of Grade.**
