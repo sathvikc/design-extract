@@ -1,15 +1,15 @@
 {
-  "name": "design-extract",
+  "name": "designlang",
   "owner": {
     "name": "Manavarya Singh",
     "url": "https://github.com/Manavarya09"
   },
   "plugins": [
     {
-      "name": "design-extract",
+      "name": "designlang",
       "source": "./",
-      "description": "Extract the complete design language from any website — colors, typography, spacing, shadows, components, and more. Outputs AI-optimized markdown, W3C design tokens, Tailwind config, and CSS variables.",
-      "version": "1.0.0",
+      "description": "Five slash commands wrapping the designlang CLI: /extract (full design language → DTCG, Tailwind, Figma), /grade (shareable HTML report card + SVG badge), /battle (head-to-head graded comparison), /remix (restyle in 6 vocabularies — brutalist, swiss, art-deco, cyberpunk, soft-ui, editorial), /pack (one downloadable design-system bundle).",
+      "version": "12.5.0",
       "author": {
         "name": "Manavarya Singh"
       },
@@ -17,11 +17,19 @@
       "tags": [
         "design-system",
         "design-tokens",
-        "css",
+        "dtcg",
         "tailwind",
+        "shadcn",
+        "figma",
         "typography",
         "colors",
-        "web-scraping"
+        "motion",
+        "grade",
+        "battle",
+        "remix",
+        "pack",
+        "mcp",
+        "playwright"
       ]
     }
   ]

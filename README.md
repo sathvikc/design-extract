@@ -235,16 +235,37 @@ designlang ships surfaces beyond the CLI:
 | **GitHub Action** | [`github-action/`](github-action/) | "Design regression guard" — diffs tokens on every PR and comments. |
 | **Chrome extension** | [`chrome-extension/`](chrome-extension/) | One-click handoff from any tab (MV3, `activeTab` only). |
 | **MCP server** | `npx designlang mcp` | Exposes the extracted design as MCP resources + tools for Cursor, Claude Code, Windsurf, etc. See [`docs/MCP-REGISTRY.md`](docs/MCP-REGISTRY.md). |
+| **Claude Code plugin** | [`.claude-plugin/`](.claude-plugin/) | Five slash commands inside Claude Code — `/extract`, `/grade`, `/battle`, `/remix`, `/pack`. |
 
-## Agent Skill
+## Claude Code plugin
 
-Works with **Claude Code, Cursor, Codex, and 40+ AI coding agents** via the skills ecosystem:
+Drop designlang straight into Claude Code as a plugin. Every CLI command becomes a slash command:
+
+```bash
+/plugin install Manavarya09/design-extract
+```
+
+Then inside any Claude Code session:
+
+| Slash command | What it does |
+|---|---|
+| `/extract <url>` | Full extraction → DTCG tokens, Tailwind, Figma vars, motion, voice |
+| `/grade <url>` | Shareable HTML "Design Report Card" (+ `--badge` for an SVG) |
+| `/battle <urlA> <urlB>` | Head-to-head graded battle card |
+| `/remix <url> --as <vocab>` | Restyle in brutalist / swiss / art-deco / cyberpunk / soft-ui / editorial |
+| `/pack <url>` | Bundle every output into one design-system directory |
+
+Manifest: [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) · marketplace: [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) · commands: [`commands/`](commands/) · skills: [`skills/`](skills/).
+
+## Agent skill (other ecosystems)
+
+Works with **Cursor, Codex, and 40+ AI coding agents** via the skills ecosystem:
 
 ```bash
 npx skills add Manavarya09/design-extract
 ```
 
-In Claude Code, use `/extract-design <url>`.
+In Cursor / Codex / etc., use `/extract-design <url>`.
 
 ## Website
 
