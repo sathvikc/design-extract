@@ -1,5 +1,41 @@
 # Changelog
 
+## [12.4.0] — 2026-05-05
+
+**Pack — one command, one polished design-system bundle.**
+
+\`designlang pack <url>\` runs the full extraction once and writes every
+emitter output into a single, signed, layered directory. One artifact a
+designer or dev can clone, drop into a project, or zip up and send to a
+client. Closes [#59](https://github.com/Manavarya09/design-extract/issues/59).
+
+### Added
+
+- New CLI command: \`designlang pack <url> [-o <dir>] [--with-clone] [--open]\`
+- New module \`src/pack.js\` exporting \`buildPack(design, opts)\`
+- Layout:
+  \`\`\`
+  <host>-design-system/
+  ├── README.md           — bespoke, "Built from <host>" + grade + at-a-glance stats
+  ├── LICENSE.txt         — provenance + usage guidance
+  ├── tokens/             — DTCG + Tailwind + CSS vars + Figma vars + motion + theme.js
+  ├── components/         — typed React stubs (anatomy.tsx)
+  ├── storybook/          — runnable Storybook project
+  ├── starter/            — minimal HTML starter wired to tokens/variables.css
+  ├── prompts/            — v0.txt · lovable.txt · cursor.md · claude-artifacts.md
+  │   └── recipes/        — recipe-<component>.md cards (named, no longer indexed)
+  └── extras/             — voice.json + prompt-pack.md rollup
+  \`\`\`
+- 7 new tests covering directory shape, valid JSON outputs, README content,
+  starter wiring, recipe filenames, and a regression test for the
+  double-stringify bug that broke first integration.
+
+### Why
+
+The 17+ loose files designlang already emits are the right pieces, but
+asking a user to zip them themselves is friction. \`pack\` is the same
+artifacts as one polished, downloadable, cite-able bundle.
+
 ## [12.3.0] — 2026-05-05
 
 **Remix — restyle any site in a different design vocabulary.**

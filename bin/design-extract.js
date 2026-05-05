@@ -49,6 +49,7 @@ import { formatBattle, formatBattleMarkdown } from '../src/formatters/battle.js'
 import { formatScoreBadge } from '../src/formatters/badge.js';
 import { formatRemix } from '../src/formatters/remix.js';
 import { VOCABULARIES, getVocabulary, listVocabularies } from '../src/vocabularies/index.js';
+import { buildPack } from '../src/pack.js';
 import { nameFromUrl } from '../src/utils.js';
 
 function validateUrl(url) {
@@ -1167,6 +1168,58 @@ program
       }
     } catch (err) {
       spinner.fail('Remix failed');
+      console.error(chalk.red(`\n  ${err.message}\n`));
+      process.exit(1);
+    }
+  });
+
+// ── Pack command — bundle every emitter into one design-system directory
+program
+  .command('pack <url>')
+  .description('Bundle every output (tokens, components, storybook, prompts, starter) into a single design-system directory')
+  .option('-o, --out <dir>', 'output directory (default: ./<host>-design-system)')
+  .option('--with-clone', 'include the full Next.js clone as the starter (slower; otherwise emits a minimal HTML starter)')
+  .option('--open', 'open the starter index.html in the default browser')
+  .action(async (url, opts) => {
+    if (!url.startsWith('http')) url = `https://${url}`;
+    validateUrl(url);
+
+    const spinner = ora(`Extracting ${url}...`).start();
+    try {
+      const design = await extractDesignLanguage(url);
+
+      const defaultDirName = `${nameFromUrl(url)}-design-system`;
+      const outDir = resolve(opts.out || defaultDirName);
+
+      spinner.text = 'Packing artifacts...';
+      const { files } = buildPack(design, {
+        outDir,
+        version: PKG_VERSION,
+        withClone: !!opts.withClone,
+      });
+
+      spinner.stop();
+      console.log('');
+      console.log(`  ${chalk.bold('Packed')} ${chalk.gray('·')} ${chalk.cyan(files.length)} files ${chalk.gray('·')} ${chalk.gray(url)}`);
+      console.log('');
+      console.log(`  ${chalk.green('✓')} ${chalk.bold(outDir)}`);
+      console.log('');
+      console.log(chalk.gray('  Top-level layout:'));
+      const top = ['README.md', 'LICENSE.txt', 'tokens/', 'components/', 'storybook/', 'starter/', 'prompts/', 'extras/'];
+      for (const t of top) console.log(`    ${chalk.gray('·')} ${t}`);
+      console.log('');
+      console.log(chalk.gray(`  Zip it:    cd ${outDir} && zip -r ../${defaultDirName}.zip .`));
+      console.log(chalk.gray(`  Storybook: cd ${outDir}/storybook && npm install && npm run storybook`));
+      console.log('');
+
+      if (opts.open) {
+        const starter = join(outDir, 'starter', 'index.html');
+        const { spawn } = await import('child_process');
+        const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+        spawn(cmd, [starter], { detached: true, stdio: 'ignore' }).unref();
+      }
+    } catch (err) {
+      spinner.fail('Pack failed');
       console.error(chalk.red(`\n  ${err.message}\n`));
       process.exit(1);
     }

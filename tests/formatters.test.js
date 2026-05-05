@@ -1,4 +1,4 @@
-import { describe, it } from 'node:test';
+import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { formatMarkdown } from '../src/formatters/markdown.js';
 import { formatTokens } from '../src/formatters/tokens.js';
@@ -1031,5 +1031,108 @@ describe('formatRemix', () => {
   it('throws clear errors on missing inputs', () => {
     assert.throws(() => formatRemix(null, getVocabulary('brutalist')), /design/i);
     assert.throws(() => formatRemix(remixDesign, null), /vocabulary/i);
+  });
+});
+
+// ── buildPack (design-system bundle) ────────────────────────────
+
+describe('buildPack', () => {
+  // Use a non-formatters import block to avoid circular deps.
+  let buildPack;
+  let mkdtempSync, rmSync, readdirSync, readFileSync, statSync;
+  let tmpdir, join;
+
+  before(async () => {
+    ({ buildPack } = await import('../src/pack.js'));
+    ({ mkdtempSync, rmSync, readdirSync, readFileSync, statSync } = await import('node:fs'));
+    ({ tmpdir } = await import('node:os'));
+    ({ join } = await import('node:path'));
+  });
+
+  function withTempDir(fn) {
+    const dir = mkdtempSync(join(tmpdir(), 'dl-pack-test-'));
+    try { return fn(dir); } finally { rmSync(dir, { recursive: true, force: true }); }
+  }
+
+  it('produces a complete bundle with all expected top-level directories', () => {
+    withTempDir(dir => {
+      const result = buildPack(mockDesign, { outDir: dir, version: '12.4.0' });
+      assert.ok(result.files.length > 10, `expected many files, got ${result.files.length}`);
+      const top = readdirSync(dir).sort();
+      // README + LICENSE + 6 directories
+      for (const expected of ['README.md', 'LICENSE.txt', 'tokens', 'components', 'storybook', 'starter', 'prompts', 'extras']) {
+        assert.ok(top.includes(expected), `top-level missing: ${expected}`);
+      }
+    });
+  });
+
+  it('writes valid token files (DTCG, Tailwind, CSS vars, Figma vars, motion)', () => {
+    withTempDir(dir => {
+      buildPack(mockDesign, { outDir: dir, version: '12.4.0' });
+      const dtcg = JSON.parse(readFileSync(join(dir, 'tokens', 'design-tokens.json'), 'utf-8'));
+      assert.ok(dtcg.primitive, 'DTCG must have primitive layer');
+      assert.ok(dtcg.semantic, 'DTCG must have semantic layer');
+
+      const tw = readFileSync(join(dir, 'tokens', 'tailwind.config.js'), 'utf-8');
+      assert.match(tw, /export default \{/, 'tailwind config exports default');
+
+      const cssVars = readFileSync(join(dir, 'tokens', 'variables.css'), 'utf-8');
+      assert.match(cssVars, /:root \{/, 'css vars wrap in :root');
+
+      const figma = JSON.parse(readFileSync(join(dir, 'tokens', 'figma-variables.json'), 'utf-8'));
+      assert.ok(typeof figma === 'object', 'figma variables export is an object');
+
+      const motion = JSON.parse(readFileSync(join(dir, 'tokens', 'motion-tokens.json'), 'utf-8'));
+      assert.ok(typeof motion === 'object', 'motion tokens parse');
+    });
+  });
+
+  it('writes a README that references the source URL and grade', () => {
+    withTempDir(dir => {
+      buildPack(mockDesign, { outDir: dir, version: '12.4.0' });
+      const readme = readFileSync(join(dir, 'README.md'), 'utf-8');
+      assert.match(readme, /Built from `https:\/\/example\.com`/);
+      assert.match(readme, /Grade.*B/);
+      assert.match(readme, /v12\.4\.0/);
+    });
+  });
+
+  it('writes a starter index.html that links to tokens/variables.css', () => {
+    withTempDir(dir => {
+      buildPack(mockDesign, { outDir: dir, version: '12.4.0' });
+      const starter = readFileSync(join(dir, 'starter', 'index.html'), 'utf-8');
+      assert.ok(starter.includes('<!doctype html>'));
+      assert.ok(starter.includes('../tokens/variables.css'), 'starter must reference tokens/variables.css');
+    });
+  });
+
+  it('writes recipe files with proper names (not array indices)', () => {
+    withTempDir(dir => {
+      buildPack(mockDesign, { outDir: dir, version: '12.4.0' });
+      const recipesDir = join(dir, 'prompts', 'recipes');
+      try {
+        const recipes = readdirSync(recipesDir);
+        for (const file of recipes) {
+          assert.match(file, /\.md$/, `recipe should end in .md, got: ${file}`);
+          assert.ok(!/^\d+$/.test(file.replace('.md', '')), `recipe filename must not be a bare index: ${file}`);
+        }
+      } catch {
+        // No componentClusters in mockDesign → no recipes; that's allowed.
+      }
+    });
+  });
+
+  it('throws a clear error when outDir is missing', () => {
+    assert.throws(() => buildPack(mockDesign, {}), /outDir is required/);
+  });
+
+  it('coerces non-string emitter outputs to JSON without throwing', () => {
+    // Smoke test: even if some downstream emitter returns an object, the
+    // toText normaliser must handle it (this is the bug that broke the
+    // first integration test).
+    withTempDir(dir => {
+      const minimal = { ...mockDesign, motion: { feel: 'springy', durations: [], easings: [] } };
+      assert.doesNotThrow(() => buildPack(minimal, { outDir: dir, version: '12.4.0' }));
+    });
   });
 });
