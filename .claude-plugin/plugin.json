@@ -1,24 +1,35 @@
 {
-  "name": "design-extract",
-  "description": "Extract the complete design language from any website. Produces W3C design tokens, AI-optimized markdown, Tailwind config, and CSS custom properties.",
-  "version": "1.0.0",
+  "name": "designlang",
+  "description": "Extract any website's design language and ship it. Five slash commands — /extract, /grade, /battle, /remix, /pack — wrap the designlang CLI to pull DTCG tokens, Tailwind/shadcn/Figma vars, motion + voice, generate shareable graded report cards, head-to-head battle pages, six-vocabulary remixes, and full downloadable design-system bundles.",
+  "version": "12.5.0",
   "author": {
     "name": "Manavarya Singh",
     "url": "https://github.com/Manavarya09"
   },
-  "homepage": "https://github.com/Manavarya09/design-extract",
+  "homepage": "https://designlang.app",
   "repository": "https://github.com/Manavarya09/design-extract",
   "license": "MIT",
   "keywords": [
     "design-system",
     "design-tokens",
     "design-language",
-    "css",
+    "dtcg",
     "tailwind",
+    "shadcn",
+    "figma-variables",
+    "css",
     "playwright",
     "extraction",
     "colors",
-    "typography"
+    "typography",
+    "motion",
+    "grade",
+    "battle",
+    "remix",
+    "pack",
+    "claude-plugin",
+    "mcp"
   ],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "commands": "./commands/"
 }

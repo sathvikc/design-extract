@@ -1,5 +1,42 @@
 # Changelog
 
+## [12.5.0] — 2026-05-06
+
+**Claude Code plugin — five slash commands wrapping the CLI.**
+
+designlang is now a first-class Claude Code plugin. Drop it into any
+session and every CLI verb becomes a slash command:
+
+\`\`\`bash
+/plugin install Manavarya09/design-extract
+\`\`\`
+
+| Command | What it does |
+|---|---|
+| \`/extract <url>\` | Full extraction → DTCG, Tailwind, Figma, motion, voice |
+| \`/grade <url>\` | Shareable HTML Design Report Card (+ \`--badge\`) |
+| \`/battle <urlA> <urlB>\` | Head-to-head graded battle card |
+| \`/remix <url> --as <vocab>\` | Restyle in 6 vocabularies |
+| \`/pack <url>\` | Bundle every output into one design-system directory |
+
+### Added
+
+- \`commands/extract.md\`, \`commands/grade.md\`, \`commands/battle.md\`,
+  \`commands/remix.md\`, \`commands/pack.md\` — five slash-command
+  manifests with \`description\` + \`argument-hint\` frontmatter and prompt
+  bodies that wrap the CLI and surface tight summaries.
+- Refreshed \`.claude-plugin/plugin.json\` (was stale at v1.0.0) — name
+  bumped to \`designlang\`, description rewritten around all v12 surfaces,
+  added \`commands\` directory pointer + expanded keywords.
+- Refreshed \`.claude-plugin/marketplace.json\` — same updates plus
+  marketplace tags.
+- New README section "Claude Code plugin" documenting install + the
+  five slash commands. Existing skills-ecosystem section retained for
+  Cursor / Codex / 40+ other agents.
+
+No CLI behavior change. The slash commands are pure wrappers — they
+shell out to \`npx designlang …\` and read the same output files.
+
 ## [12.4.0] — 2026-05-05
 
 **Pack — one command, one polished design-system bundle.**
