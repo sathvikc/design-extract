@@ -1,5 +1,57 @@
 # Changelog
 
+## [12.6.0] — 2026-05-06
+
+**Theme-swap — recolour any extracted design around your brand primary.**
+
+\`designlang theme-swap <url> --primary <hex>\` takes the existing
+extraction and rotates the brand palette around a new primary while
+preserving everything else: type scale, spacing rhythm, neutrals, motion,
+component anatomy. Closes
+[#57](https://github.com/Manavarya09/design-extract/issues/57).
+
+\`\`\`bash
+npx designlang theme-swap stripe.com --primary "#ff4800"
+\`\`\`
+
+\`\`\`
+#533afd → #ff4800 · 91 colours · https://stripe.com
+Hue shift: 118.5° · neutrals preserved · type/spacing/motion untouched
+
+✓ stripe-com-themeswap-ff4800.themeswap.html
+✓ stripe-com-themeswap-ff4800.themeswap.md
+✓ stripe-com-themeswap-ff4800.themeswap.json
+✓ stripe-com-themeswap-ff4800.themeswap.tokens.json
+\`\`\`
+
+### Added
+
+- New CLI command: \`designlang theme-swap <url> --primary <hex>\`
+  with \`--from\`, \`-o\`, \`-n\`, \`--format\`, \`--open\` flags.
+- New module \`src/recolor.js\` exporting \`recolorDesign(design, opts)\`.
+  Operates in OKLCH so perceptual lightness stays constant — only hue
+  rotates. Auto-detects the source primary; pin it with \`--from\`.
+  Neutrals (chroma < 0.04 in OKLCH) are explicitly preserved so body
+  text, surfaces, and rule lines stay readable.
+- New formatter \`src/formatters/theme-swap.js\` exporting
+  \`formatThemeSwap\` (HTML side-by-side preview) and
+  \`formatThemeSwapMarkdown\`.
+- New OKLCH inverse helpers in \`src/utils/color-gamut.js\`:
+  \`srgbToOklab\`, \`srgbToOklch\`, \`hexToOklch\`, \`oklchToHex\` —
+  with chroma fallback for out-of-gamut colours.
+- The recoloured design is fed through every existing emitter (DTCG,
+  Tailwind, shadcn, Figma vars, CSS vars), so the swap propagates
+  for free.
+- 10 new tests covering primary-pinning, neutral preservation,
+  hue rotation, error paths, \`--from\` override, HTML/markdown shapes,
+  and XSS escaping.
+
+### Why
+
+People keep asking *"what would Stripe look like in our brand colors?"*.
+\`theme-swap\` answers it in 30 seconds. Bridges \`remix\` (full-vocab
+restyle) and \`apply\` (token write-through to a project).
+
 ## [12.5.0] — 2026-05-06
 
 **Claude Code plugin — five slash commands wrapping the CLI.**

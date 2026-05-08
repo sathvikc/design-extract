@@ -1,7 +1,7 @@
 {
   "name": "designlang",
-  "description": "Extract any website's design language and ship it. Five slash commands — /extract, /grade, /battle, /remix, /pack — wrap the designlang CLI to pull DTCG tokens, Tailwind/shadcn/Figma vars, motion + voice, generate shareable graded report cards, head-to-head battle pages, six-vocabulary remixes, and full downloadable design-system bundles.",
-  "version": "12.5.0",
+  "description": "Extract any website's design language and ship it. Six slash commands — /extract, /grade, /battle, /remix, /pack, /theme-swap — wrap the designlang CLI to pull DTCG tokens, Tailwind/shadcn/Figma vars, motion + voice, generate shareable graded report cards, head-to-head battle pages, six-vocabulary remixes, downloadable design-system bundles, and OKLCH-correct theme recolouring.",
+  "version": "12.6.0",
   "author": {
     "name": "Manavarya Singh",
     "url": "https://github.com/Manavarya09"

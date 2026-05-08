@@ -50,6 +50,8 @@ import { formatScoreBadge } from '../src/formatters/badge.js';
 import { formatRemix } from '../src/formatters/remix.js';
 import { VOCABULARIES, getVocabulary, listVocabularies } from '../src/vocabularies/index.js';
 import { buildPack } from '../src/pack.js';
+import { recolorDesign } from '../src/recolor.js';
+import { formatThemeSwap, formatThemeSwapMarkdown } from '../src/formatters/theme-swap.js';
 import { nameFromUrl } from '../src/utils.js';
 
 function validateUrl(url) {
@@ -1220,6 +1222,90 @@ program
       }
     } catch (err) {
       spinner.fail('Pack failed');
+      console.error(chalk.red(`\n  ${err.message}\n`));
+      process.exit(1);
+    }
+  });
+
+// ── Theme-swap command — recolour an extracted design around a new primary
+program
+  .command('theme-swap <url>')
+  .description('Recolour the extracted design around a new brand primary (preserves type, spacing, neutrals)')
+  .requiredOption('--primary <hex>', 'target primary colour as hex (e.g. "#ff4800")')
+  .option('--from <hex>', 'override the auto-detected source primary (e.g. when the extractor misclassifies)')
+  .option('-o, --out <dir>', 'output directory', './design-extract-output')
+  .option('-n, --name <name>', 'output file prefix (default: derived from URL + target hex)')
+  .option('--format <fmt>', 'output format: html, md, json, tokens, all', 'all')
+  .option('--open', 'open the HTML preview in the default browser')
+  .action(async (url, opts) => {
+    if (!url.startsWith('http')) url = `https://${url}`;
+    validateUrl(url);
+
+    const spinner = ora(`Extracting ${url}...`).start();
+    try {
+      const original = await extractDesignLanguage(url);
+      spinner.text = `Recolouring around ${opts.primary}...`;
+      const { design: recoloured, summary } = recolorDesign(original, {
+        primary: opts.primary,
+        fromPrimary: opts.from,
+      });
+
+      const outDir = resolve(opts.out);
+      mkdirSync(outDir, { recursive: true });
+      const targetSlug = String(opts.primary).replace(/^#/, '').toLowerCase();
+      const prefix = opts.name || `${nameFromUrl(url)}-themeswap-${targetSlug}`;
+      const written = [];
+
+      if (opts.format === 'all' || opts.format === 'html') {
+        const html = formatThemeSwap(original, recoloured, { version: PKG_VERSION });
+        const p = join(outDir, `${prefix}.themeswap.html`);
+        writeFileSync(p, html);
+        written.push(p);
+      }
+      if (opts.format === 'all' || opts.format === 'md') {
+        const md = formatThemeSwapMarkdown(original, recoloured);
+        const p = join(outDir, `${prefix}.themeswap.md`);
+        writeFileSync(p, md);
+        written.push(p);
+      }
+      if (opts.format === 'all' || opts.format === 'json') {
+        const p = join(outDir, `${prefix}.themeswap.json`);
+        writeFileSync(p, JSON.stringify({
+          url: original.meta?.url,
+          from: summary.from,
+          to: summary.to,
+          hueShift: summary.hueShift,
+          changedColors: summary.changes.length,
+          changes: summary.changes,
+          timestamp: new Date().toISOString(),
+        }, null, 2));
+        written.push(p);
+      }
+      if (opts.format === 'all' || opts.format === 'tokens') {
+        const tokens = formatDtcgTokens(recoloured);
+        const p = join(outDir, `${prefix}.themeswap.tokens.json`);
+        writeFileSync(p, typeof tokens === 'string' ? tokens : JSON.stringify(tokens, null, 2));
+        written.push(p);
+      }
+
+      spinner.stop();
+      console.log('');
+      console.log(`  ${chalk.bold(`${summary.from} → ${summary.to}`)} ${chalk.gray('·')} ${chalk.cyan(summary.changes.length)} colours ${chalk.gray('·')} ${chalk.gray(url)}`);
+      console.log(`  ${chalk.gray(`Hue shift: ${(summary.hueShift).toFixed(1)}° · neutrals preserved · type/spacing/motion untouched`)}`);
+      console.log('');
+      for (const f of written) console.log(`  ${chalk.green('✓')} ${chalk.gray(f)}`);
+      console.log('');
+
+      if (opts.open) {
+        const htmlPath = written.find(p => p.endsWith('.html'));
+        if (htmlPath) {
+          const { spawn } = await import('child_process');
+          const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+          spawn(cmd, [htmlPath], { detached: true, stdio: 'ignore' }).unref();
+        }
+      }
+    } catch (err) {
+      spinner.fail('Theme-swap failed');
       console.error(chalk.red(`\n  ${err.message}\n`));
       process.exit(1);
     }

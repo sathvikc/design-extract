@@ -1136,3 +1136,107 @@ describe('buildPack', () => {
     });
   });
 });
+
+// ── recolorDesign / formatThemeSwap ─────────────────────────────
+
+describe('recolorDesign', () => {
+  let recolorDesign, formatThemeSwap, formatThemeSwapMarkdown;
+  before(async () => {
+    ({ recolorDesign } = await import('../src/recolor.js'));
+    ({ formatThemeSwap, formatThemeSwapMarkdown } = await import('../src/formatters/theme-swap.js'));
+  });
+
+  it('pins the source primary slot to the user\'s exact target hex', () => {
+    const { design, summary } = recolorDesign(mockDesign, { primary: '#ff4800' });
+    assert.equal(design.colors.primary.hex, '#ff4800', 'primary must be exact target');
+    assert.equal(summary.from, '#0066cc', 'auto-detected source primary');
+    assert.equal(summary.to, '#ff4800');
+  });
+
+  it('preserves spacing, typography, and neutrals untouched', () => {
+    const { design } = recolorDesign(mockDesign, { primary: '#ff4800' });
+    assert.deepEqual(design.spacing.scale, mockDesign.spacing.scale, 'spacing must not change');
+    assert.deepEqual(design.typography.scale.map(s => s.size), mockDesign.typography.scale.map(s => s.size), 'type sizes must not change');
+    // Greys should stay grey-ish.
+    const before = mockDesign.colors.neutrals.map(n => n.hex);
+    const after = design.colors.neutrals.map(n => n.hex);
+    assert.deepEqual(after, before, 'neutrals should be left alone');
+  });
+
+  it('rotates non-neutral colours by the hue delta', () => {
+    const { design, summary } = recolorDesign(mockDesign, { primary: '#ff4800' });
+    // The blue accent #00cc66 should have moved (it had real chroma).
+    const accent = design.colors.accent?.hex || design.colors.all.find(c => c.hex !== '#ff4800' && c.hex !== '#0066cc')?.hex;
+    assert.ok(summary.changes.length >= 1, 'at least one colour should change');
+    assert.ok(typeof summary.hueShift === 'number' && Math.abs(summary.hueShift) > 0, 'hue shift should be non-zero');
+  });
+
+  it('throws a clear error when --primary is missing or malformed', () => {
+    assert.throws(() => recolorDesign(mockDesign, {}), /invalid --primary/);
+    assert.throws(() => recolorDesign(mockDesign, { primary: 'orange' }), /invalid --primary/);
+    assert.throws(() => recolorDesign(mockDesign, { primary: '#zzz' }), /invalid --primary/);
+  });
+
+  it('respects --from override when source primary is misclassified', () => {
+    const odd = JSON.parse(JSON.stringify(mockDesign));
+    delete odd.colors.primary;
+    const { summary } = recolorDesign(odd, { primary: '#ff4800', fromPrimary: '#0066cc' });
+    assert.equal(summary.from, '#0066cc');
+  });
+
+  it('records the swap in design.meta.themeSwap', () => {
+    const { design } = recolorDesign(mockDesign, { primary: '#ff4800' });
+    assert.ok(design.meta?.themeSwap, 'meta.themeSwap must exist');
+    assert.equal(design.meta.themeSwap.from, '#0066cc');
+    assert.equal(design.meta.themeSwap.to, '#ff4800');
+    assert.ok(typeof design.meta.themeSwap.hueShift === 'number');
+  });
+});
+
+describe('formatThemeSwap', () => {
+  let recolorDesign, formatThemeSwap, formatThemeSwapMarkdown;
+  before(async () => {
+    ({ recolorDesign } = await import('../src/recolor.js'));
+    ({ formatThemeSwap, formatThemeSwapMarkdown } = await import('../src/formatters/theme-swap.js'));
+  });
+
+  it('renders both palettes and a verdict line in self-contained HTML', () => {
+    const { design } = recolorDesign(mockDesign, { primary: '#ff4800' });
+    const html = formatThemeSwap(mockDesign, design, { version: '12.6.0' });
+    assert.ok(html.startsWith('<!doctype html>'), 'must be a complete HTML document');
+    assert.ok(html.includes('#0066cc'), 'source hex must render');
+    assert.ok(html.includes('#ff4800'), 'target hex must render');
+    assert.ok(html.includes('example.com'), 'host must render');
+    assert.match(html, /hue shift/i);
+  });
+
+  it('escapes user-controlled content', () => {
+    const malicious = JSON.parse(JSON.stringify(mockDesign));
+    malicious.meta.url = 'https://<script>alert(1)</script>.com';
+    // recolor first so meta.themeSwap exists
+    const { design } = recolorDesign(malicious, { primary: '#ff4800' });
+    const html = formatThemeSwap(malicious, design);
+    assert.ok(!html.includes('<script>alert(1)'), 'must escape script');
+  });
+
+  it('throws when either design is missing', () => {
+    assert.throws(() => formatThemeSwap(null, mockDesign), /both designs required/);
+    assert.throws(() => formatThemeSwap(mockDesign, null), /both designs required/);
+  });
+});
+
+describe('formatThemeSwapMarkdown', () => {
+  let recolorDesign, formatThemeSwapMarkdown;
+  before(async () => {
+    ({ recolorDesign } = await import('../src/recolor.js'));
+    ({ formatThemeSwapMarkdown } = await import('../src/formatters/theme-swap.js'));
+  });
+
+  it('produces a markdown report with from→to header and palette diff table', () => {
+    const { design } = recolorDesign(mockDesign, { primary: '#ff4800' });
+    const md = formatThemeSwapMarkdown(mockDesign, design);
+    assert.match(md, /^# Theme swap — example\.com/m);
+    assert.match(md, /\*\*#0066cc → #ff4800\*\*/);
+    assert.match(md, /\| Original \| Recoloured \|/);
+  });
+});

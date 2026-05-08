@@ -80,3 +80,67 @@ export function oklchLikeToHex(raw) {
     : oklabToSrgb(parsed.L, parsed.a, parsed.b);
   return rgbToHex(r, g, b);
 }
+
+// ── Inverse direction (sRGB → OKLab → OKLCH) ───────────────────
+// Forward Björn Ottosson formulas. Used by the recolor pipeline so we can
+// hue-rotate brand palettes while preserving perceptual lightness.
+
+function srgbToLinear(x) {
+  if (x <= 0.04045) return x / 12.92;
+  return Math.pow((x + 0.055) / 1.055, 2.4);
+}
+
+export function srgbToOklab(r, g, b) {
+  // sRGB inputs in 0..1, gamma-encoded.
+  const rl = srgbToLinear(r);
+  const gl = srgbToLinear(g);
+  const bl = srgbToLinear(b);
+
+  const l = 0.4122214708 * rl + 0.5363325363 * gl + 0.0514459929 * bl;
+  const m = 0.2119034982 * rl + 0.6806995451 * gl + 0.1073969566 * bl;
+  const s = 0.0883024619 * rl + 0.2817188376 * gl + 0.6299787005 * bl;
+
+  const l_ = Math.cbrt(l);
+  const m_ = Math.cbrt(m);
+  const s_ = Math.cbrt(s);
+
+  return [
+    0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_,
+    1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_,
+    0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_,
+  ];
+}
+
+export function srgbToOklch(r, g, b) {
+  const [L, a, bx] = srgbToOklab(r, g, b);
+  const C = Math.sqrt(a * a + bx * bx);
+  let h = Math.atan2(bx, a) * 180 / Math.PI;
+  if (h < 0) h += 360;
+  return { L, C, h };
+}
+
+// Hex string → { L, C, h } in OKLCH. Returns null on parse failure.
+export function hexToOklch(hex) {
+  if (typeof hex !== 'string') return null;
+  const m = hex.replace(/^#/, '').match(/^([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (!m) return null;
+  let s = m[1];
+  if (s.length === 3) s = s.split('').map(c => c + c).join('');
+  const r = parseInt(s.slice(0, 2), 16) / 255;
+  const g = parseInt(s.slice(2, 4), 16) / 255;
+  const b = parseInt(s.slice(4, 6), 16) / 255;
+  return srgbToOklch(r, g, b);
+}
+
+// { L, C, h } → hex string. Clamps to sRGB gamut by reducing chroma if the
+// colour falls outside displayable range.
+export function oklchToHex({ L, C, h }) {
+  // Try the requested chroma, then back off if any channel goes out of range.
+  for (let factor = 1; factor >= 0; factor -= 0.05) {
+    const [r, g, b] = oklchToSrgb(L, C * factor, h);
+    if (r >= -1e-4 && r <= 1.0001 && g >= -1e-4 && g <= 1.0001 && b >= -1e-4 && b <= 1.0001) {
+      return rgbToHex(r, g, b);
+    }
+  }
+  return rgbToHex(...oklchToSrgb(L, 0, h));
+}

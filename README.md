@@ -26,6 +26,7 @@ It also goes where extractors don't: **layout patterns**, **responsive behavior 
 
 ```bash
 npx designlang https://stripe.com                      # extract everything
+npx designlang theme-swap stripe.com --primary "#ff4800"  # recolour around your brand        ← v12.6
 npx designlang pack stripe.com                         # one polished design-system directory ← v12.4
 npx designlang remix stripe.com --as cyberpunk         # restyle in another vocabulary       ← v12.3
 npx designlang remix stripe.com --all                  # emit all 6 vocabs at once           ← v12.3
@@ -131,7 +132,8 @@ designlang mcp                              # stdio MCP server for Cursor / Clau
 | Battle (v12.2) | `designlang battle <A> <B>` | Head-to-head graded battle card with verdict, dimension table, palette comparison |
 | Badge (v12.2) | `designlang grade --badge` | Shields.io-style SVG badge — `design · B · 87` — drop into any README. Live endpoint: `designlang.app/badge/<host>.svg` |
 | Remix (v12.3) | `designlang remix <url> --as <vocab>` | Restyle the audited page in another vocabulary (brutalist / swiss / art-deco / cyberpunk / soft-ui / editorial). `--all` emits all 6 |
-| Pack (NEW v12.4) | `designlang pack <url>` | Bundle every output (tokens / components / Storybook / starter / prompts) into one polished design-system directory |
+| Pack (v12.4) | `designlang pack <url>` | Bundle every output (tokens / components / Storybook / starter / prompts) into one polished design-system directory |
+| Theme-swap (NEW v12.6) | `designlang theme-swap <url> --primary <hex>` | Recolour the extracted design around a new brand primary. OKLCH hue rotation, neutrals preserved, type/spacing/motion untouched |
 | Watch | `designlang watch <url>` | Monitor for design changes on interval |
 | Diff | `designlang diff <A> <B>` | Compare two sites (MD + HTML) |
 | Multi-brand | `designlang brands <urls...>` | N-site comparison matrix |
@@ -188,6 +190,7 @@ Commands:
   battle <urlA> <urlB>              Head-to-head graded battle card (--format html|md|json|all, --open)
   remix <url>                       Restyle in another vocabulary (--as brutalist|swiss|art-deco|cyberpunk|soft-ui|editorial, --all, --list, --open)
   pack <url>                        Bundle every output into one design-system directory (--with-clone, --open)
+  theme-swap <url> --primary <hex>  Recolour around a new brand primary (--from, --format html|md|json|tokens|all, --open)
   watch <url>                       Monitor for design changes on interval
   diff <urlA> <urlB>                Compare two sites' design languages
   brands <urls...>                  Multi-brand comparison matrix

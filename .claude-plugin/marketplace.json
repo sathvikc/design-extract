@@ -8,8 +8,8 @@
     {
       "name": "designlang",
       "source": "./",
-      "description": "Five slash commands wrapping the designlang CLI: /extract (full design language → DTCG, Tailwind, Figma), /grade (shareable HTML report card + SVG badge), /battle (head-to-head graded comparison), /remix (restyle in 6 vocabularies — brutalist, swiss, art-deco, cyberpunk, soft-ui, editorial), /pack (one downloadable design-system bundle).",
-      "version": "12.5.0",
+      "description": "Six slash commands wrapping the designlang CLI: /extract (full design language → DTCG, Tailwind, Figma), /grade (shareable HTML report card + SVG badge), /battle (head-to-head graded comparison), /remix (restyle in 6 vocabularies — brutalist, swiss, art-deco, cyberpunk, soft-ui, editorial), /pack (one downloadable design-system bundle), /theme-swap (OKLCH-correct recolour around a new brand primary).",
+      "version": "12.6.0",
       "author": {
         "name": "Manavarya Singh"
       },
