@@ -32,9 +32,43 @@ export async function runCi(url, opts) {
   out.push(`## designlang · design regression guard`);
   out.push(`\n**URL:** \`${url}\`  \n**Run:** ${new Date().toISOString()}\n`);
 
-  // 1. Extract
+  // 1. Extract — guard the throw site so CI artifacts never come back empty.
+  // Playwright can crash on flaky networks, ad-walled URLs, or self-signed
+  // proxies; when that happens we still want a report file + a summary.json
+  // so downstream jobs (artifact uploads, status comments, dashboards) have
+  // something to point at. We preserve the original error via `cause` so the
+  // stack survives — losing the trace was a real problem with #76's draft.
   const { extractDesignLanguage } = await import('./index.js');
-  const design = await extractDesignLanguage(url);
+  let design;
+  try {
+    design = await extractDesignLanguage(url);
+  } catch (err) {
+    const stack = err?.stack || String(err);
+    out.push(section('Extraction', [
+      `_failed — ${err.message}_`,
+      '',
+      '```',
+      stack,
+      '```',
+    ].join('\n')));
+    const md = out.join('\n');
+    const mdPath = join(outDir, 'ci-report.md');
+    writeFileSync(mdPath, md, 'utf-8');
+    const summary = {
+      url,
+      score: null,
+      grade: null,
+      driftVerdict: 'unknown',
+      extractionFailed: true,
+      error: err.message,
+      timestamp: new Date().toISOString(),
+    };
+    writeFileSync(join(outDir, 'ci-summary.json'), JSON.stringify(summary, null, 2), 'utf-8');
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      try { writeFileSync(process.env.GITHUB_STEP_SUMMARY, md, { flag: 'a' }); } catch {}
+    }
+    return { mdPath, md, summary, shouldFail: true, cause: err };
+  }
 
   // 2. Score block
   if (design.score) {
