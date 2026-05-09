@@ -1240,3 +1240,87 @@ describe('formatThemeSwapMarkdown', () => {
     assert.match(md, /\| Original \| Recoloured \|/);
   });
 });
+
+// ── formatBrandBook (full editorial guidelines) ────────────────
+
+describe('formatBrandBook', () => {
+  let formatBrandBook, formatBrandBookMarkdown;
+  before(async () => {
+    ({ formatBrandBook, formatBrandBookMarkdown } = await import('../src/formatters/brand-book.js'));
+  });
+
+  it('returns a self-contained HTML document with all 13 chapter sections', () => {
+    const html = formatBrandBook(mockDesign, { version: '12.7.0' });
+    assert.ok(html.startsWith('<!doctype html>'), 'must be a complete HTML document');
+    for (const id of ['cover', 'about', 'logo', 'color', 'type', 'spacing', 'shape', 'iconography', 'motion', 'components', 'voice', 'accessibility', 'tokens', 'usage']) {
+      assert.ok(html.includes(`id="${id}"`), `must include section #${id}`);
+    }
+  });
+
+  it('renders the host name + brand colors + type scale from the design', () => {
+    const html = formatBrandBook(mockDesign, { version: '12.7.0' });
+    assert.ok(html.includes('example.com'), 'host must render');
+    assert.ok(html.includes('#0066cc'), 'primary hex must render');
+    assert.ok(html.includes('Inter'), 'display family must render');
+    assert.match(html, /Brand Guidelines/);
+  });
+
+  it('escapes user-controlled strings to prevent HTML injection', () => {
+    const malicious = JSON.parse(JSON.stringify(mockDesign));
+    malicious.meta.title = '<script>alert(1)</script>';
+    malicious.meta.url = 'https://<script>alert(2)</script>.com';
+    const html = formatBrandBook(malicious);
+    assert.ok(!html.includes('<script>alert(1)'), 'must escape title script');
+    assert.ok(!html.includes('<script>alert(2)'), 'must escape URL script');
+    assert.ok(html.includes('&lt;script&gt;'));
+  });
+
+  it('handles missing/sparse design fields without throwing', () => {
+    const minimal = {
+      meta: { url: 'https://min.example' },
+      colors: { all: [] },
+      typography: { families: [], scale: [] },
+      spacing: { scale: [] },
+      shadows: { values: [] },
+      borders: { radii: [] },
+      motion: {},
+      voice: {},
+      accessibility: {},
+      score: { grade: 'C', overall: 70, scores: {} },
+    };
+    assert.doesNotThrow(() => formatBrandBook(minimal));
+  });
+
+  it('coerces non-array slot/variant fields without crashing (real extractor returns mixed shapes)', () => {
+    const wonky = JSON.parse(JSON.stringify(mockDesign));
+    wonky.componentAnatomy = [
+      { kind: 'button', slots: { label: true, icon: true }, props: { variant: 'primary,secondary', size: ['sm', 'md'] } },
+      { kind: 'card',   slots: 'header,body,footer',         props: { variant: { primary: 1, ghost: 1 } } },
+    ];
+    assert.doesNotThrow(() => formatBrandBook(wonky));
+    const html = formatBrandBook(wonky);
+    assert.ok(html.includes('button'));
+    assert.ok(html.includes('card'));
+  });
+
+  it('throws a clear error when design is missing', () => {
+    assert.throws(() => formatBrandBook(null), /design is required/);
+  });
+});
+
+describe('formatBrandBookMarkdown', () => {
+  let formatBrandBookMarkdown;
+  before(async () => {
+    ({ formatBrandBookMarkdown } = await import('../src/formatters/brand-book.js'));
+  });
+
+  it('produces a multi-section markdown document', () => {
+    const md = formatBrandBookMarkdown(mockDesign);
+    assert.match(md, /^# example\.com — Brand guidelines/m);
+    assert.match(md, /## 01 · About/);
+    assert.match(md, /## 03 · Colour/);
+    assert.match(md, /## 04 · Typography/);
+    assert.match(md, /## 11 · Accessibility/);
+    assert.match(md, /\*\*Primary:\*\* `#0066cc`/);
+  });
+});
