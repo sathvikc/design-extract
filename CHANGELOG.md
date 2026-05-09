@@ -1,5 +1,63 @@
 # Changelog
 
+## [12.7.0] — 2026-05-09
+
+**Brand book — full editorial design-guidelines document for any URL.**
+
+\`designlang brand <url>\` produces a self-contained, print-ready HTML
+"brand guidelines book" that documents every dimension of an extracted
+design system. Cover, table of contents, 13 chapters: about, logo,
+colour, typography, spacing, shape, iconography, motion, components,
+voice, accessibility, tokens, how-to-use. Editorial layout, dark-mode
+toggle, smooth-scroll TOC, drop-in code blocks per stack.
+
+\`\`\`bash
+npx designlang brand stripe.com
+\`\`\`
+
+\`\`\`
+Brand book · 54 tokens · 3 fonts · grade B · https://stripe.com
+✓ stripe-com.brand.html
+✓ stripe-com.brand.md
+✓ stripe-com.brand.json
+\`\`\`
+
+### Why this is different from \`pack\`, \`grade\`, and \`design-language.md\`
+
+| Output | Audience | Format |
+|---|---|---|
+| \`pack\` (v12.4) | Devs picking up a design system | Directory of files (tokens, components, Storybook, starter) |
+| \`grade\` (v12.1) | Audit / share | Single audit page with score + verdict |
+| \`design-language.md\` | LLMs | AI-optimized markdown (data-dense) |
+| **\`brand\` (v12.7)** | **Designers + handoff** | **Editorial brand-guidelines book — readable, print-ready, hand-off-ready** |
+
+### Added
+
+- New CLI command: \`designlang brand <url> [-o] [-n] [--format] [--open]\`.
+- New formatter \`src/formatters/brand-book.js\` exporting \`formatBrandBook\`
+  (HTML book) and \`formatBrandBookMarkdown\` (terse markdown summary).
+- 13 chapters with editorial typography (Instrument Serif display + Inter
+  body), generous whitespace, smooth-scroll anchors, dark-mode toggle,
+  print stylesheet with page breaks at chapter boundaries.
+- Per-colour section: large swatch + HEX/RGB/HSL/usage grid for brand
+  colours, mini-grid for neutrals + full palette.
+- Per-token section: drop-in code blocks for CSS variables, Tailwind
+  config, with cross-reference to \`pack\` for the full bundle.
+- Closing "How to use" chapter with six rules of thumb (hierarchy of
+  brand colour, two-family discipline, snap-to-scale spacing, tight
+  radius set, motion as feedback, accessibility as hard constraint).
+- 7 new tests covering chapter coverage, host/colour/font rendering,
+  XSS escaping, sparse-design fallback, and mixed-shape component
+  anatomy (the bug that broke the first integration — slots / variants
+  arrive as objects, strings, or arrays from the extractor).
+
+### Plugin
+
+\`/brand\` is the 7th slash command in the Claude Code plugin
+(\`/extract\`, \`/grade\`, \`/battle\`, \`/remix\`, \`/pack\`, \`/theme-swap\`,
+\`/brand\`). \`.claude-plugin/plugin.json\` and \`marketplace.json\`
+bumped to 12.7.0.
+
 ## [12.6.0] — 2026-05-06
 
 **Theme-swap — recolour any extracted design around your brand primary.**

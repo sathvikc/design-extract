@@ -26,6 +26,7 @@ It also goes where extractors don't: **layout patterns**, **responsive behavior 
 
 ```bash
 npx designlang https://stripe.com                      # extract everything
+npx designlang brand stripe.com                        # full brand-guidelines book (13 chapters)  ← v12.7
 npx designlang theme-swap stripe.com --primary "#ff4800"  # recolour around your brand        ← v12.6
 npx designlang pack stripe.com                         # one polished design-system directory ← v12.4
 npx designlang remix stripe.com --as cyberpunk         # restyle in another vocabulary       ← v12.3
@@ -133,7 +134,8 @@ designlang mcp                              # stdio MCP server for Cursor / Clau
 | Badge (v12.2) | `designlang grade --badge` | Shields.io-style SVG badge — `design · B · 87` — drop into any README. Live endpoint: `designlang.app/badge/<host>.svg` |
 | Remix (v12.3) | `designlang remix <url> --as <vocab>` | Restyle the audited page in another vocabulary (brutalist / swiss / art-deco / cyberpunk / soft-ui / editorial). `--all` emits all 6 |
 | Pack (v12.4) | `designlang pack <url>` | Bundle every output (tokens / components / Storybook / starter / prompts) into one polished design-system directory |
-| Theme-swap (NEW v12.6) | `designlang theme-swap <url> --primary <hex>` | Recolour the extracted design around a new brand primary. OKLCH hue rotation, neutrals preserved, type/spacing/motion untouched |
+| Theme-swap (v12.6) | `designlang theme-swap <url> --primary <hex>` | Recolour the extracted design around a new brand primary. OKLCH hue rotation, neutrals preserved, type/spacing/motion untouched |
+| Brand book (NEW v12.7) | `designlang brand <url>` | Full editorial brand-guidelines document (13 chapters: cover, about, logo, colour, type, spacing, shape, iconography, motion, components, voice, a11y, tokens, how-to-use). Print-ready, dark-mode toggle, hand-off-ready |
 | Watch | `designlang watch <url>` | Monitor for design changes on interval |
 | Diff | `designlang diff <A> <B>` | Compare two sites (MD + HTML) |
 | Multi-brand | `designlang brands <urls...>` | N-site comparison matrix |
@@ -191,6 +193,7 @@ Commands:
   remix <url>                       Restyle in another vocabulary (--as brutalist|swiss|art-deco|cyberpunk|soft-ui|editorial, --all, --list, --open)
   pack <url>                        Bundle every output into one design-system directory (--with-clone, --open)
   theme-swap <url> --primary <hex>  Recolour around a new brand primary (--from, --format html|md|json|tokens|all, --open)
+  brand <url>                       Generate a full editorial brand-guidelines book (--format html|md|json|all, --open)
   watch <url>                       Monitor for design changes on interval
   diff <urlA> <urlB>                Compare two sites' design languages
   brands <urls...>                  Multi-brand comparison matrix

@@ -52,6 +52,7 @@ import { VOCABULARIES, getVocabulary, listVocabularies } from '../src/vocabulari
 import { buildPack } from '../src/pack.js';
 import { recolorDesign } from '../src/recolor.js';
 import { formatThemeSwap, formatThemeSwapMarkdown } from '../src/formatters/theme-swap.js';
+import { formatBrandBook, formatBrandBookMarkdown } from '../src/formatters/brand-book.js';
 import { nameFromUrl } from '../src/utils.js';
 
 function validateUrl(url) {
@@ -1306,6 +1307,100 @@ program
       }
     } catch (err) {
       spinner.fail('Theme-swap failed');
+      console.error(chalk.red(`\n  ${err.message}\n`));
+      process.exit(1);
+    }
+  });
+
+// ── Brand command — full editorial brand-guidelines book ────
+program
+  .command('brand <url>')
+  .description('Generate a full brand-guidelines book — colour, type, spacing, motion, voice, components, accessibility, tokens, and how-to-use guidance')
+  .option('-o, --out <dir>', 'output directory', './design-extract-output')
+  .option('-n, --name <name>', 'output file prefix (default: derived from URL)')
+  .option('--format <fmt>', 'output format: html, md, json, all', 'all')
+  .option('--open', 'open the HTML book in the default browser')
+  .action(async (url, opts) => {
+    if (!url.startsWith('http')) url = `https://${url}`;
+    validateUrl(url);
+
+    const spinner = ora(`Building brand guidelines for ${url}...`).start();
+    try {
+      // The brand book leans on the full extraction (logo, motion, voice,
+      // anatomy, accessibility), so default to --full unless the caller has
+      // explicitly opted out via env.
+      const design = await extractDesignLanguage(url, {
+        screenshots: true,
+        responsive: false,
+        interactions: false,
+        deepInteract: true,
+      });
+
+      const outDir = resolve(opts.out);
+      mkdirSync(outDir, { recursive: true });
+      const prefix = opts.name || `${nameFromUrl(url)}.brand`;
+      const written = [];
+
+      if (opts.format === 'all' || opts.format === 'html') {
+        const html = formatBrandBook(design, { version: PKG_VERSION });
+        const p = join(outDir, `${prefix}.html`);
+        writeFileSync(p, html);
+        written.push(p);
+      }
+      if (opts.format === 'all' || opts.format === 'md') {
+        const md = formatBrandBookMarkdown(design);
+        const p = join(outDir, `${prefix}.md`);
+        writeFileSync(p, md);
+        written.push(p);
+      }
+      if (opts.format === 'all' || opts.format === 'json') {
+        // A trimmed JSON of the most-used surfaces in the book — useful for
+        // programmatic consumption without re-running extraction.
+        const p = join(outDir, `${prefix}.json`);
+        writeFileSync(p, JSON.stringify({
+          url: design.meta?.url,
+          title: design.meta?.title,
+          timestamp: design.meta?.timestamp,
+          intent: design.pageIntent,
+          material: design.materialLanguage,
+          imagery: design.imageryStyle,
+          library: design.componentLibrary,
+          stack: design.stack,
+          voice: design.voice,
+          colors: design.colors,
+          typography: design.typography,
+          spacing: design.spacing,
+          shadows: design.shadows,
+          borders: design.borders,
+          motion: design.motion,
+          accessibility: design.accessibility,
+          score: design.score,
+        }, null, 2));
+        written.push(p);
+      }
+
+      spinner.stop();
+      const colorCount = (design.colors?.all || []).length;
+      const fontCount = (design.typography?.families || []).length;
+      const grade = design.score?.grade || '—';
+      console.log('');
+      console.log(`  ${chalk.bold('Brand book')} ${chalk.gray('·')} ${chalk.cyan(colorCount + ' tokens')} ${chalk.gray('·')} ${chalk.cyan(fontCount + ' fonts')} ${chalk.gray('·')} ${chalk.cyan('grade ' + grade)} ${chalk.gray('·')} ${chalk.gray(url)}`);
+      console.log('');
+      for (const f of written) console.log(`  ${chalk.green('✓')} ${chalk.gray(f)}`);
+      console.log('');
+      console.log(chalk.gray(`  Open the .html — it's a self-contained, print-ready guidelines book.`));
+      console.log('');
+
+      if (opts.open) {
+        const htmlPath = written.find(p => p.endsWith('.html'));
+        if (htmlPath) {
+          const { spawn } = await import('child_process');
+          const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+          spawn(cmd, [htmlPath], { detached: true, stdio: 'ignore' }).unref();
+        }
+      }
+    } catch (err) {
+      spinner.fail('Brand book failed');
       console.error(chalk.red(`\n  ${err.message}\n`));
       process.exit(1);
     }
