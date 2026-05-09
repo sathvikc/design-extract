@@ -1,5 +1,52 @@
 # Changelog
 
+## [12.7.1] — 2026-05-09
+
+**Brand book — visual polish pass.**
+
+The v12.7.0 brand book had a real-data deficit: the cover used a generic
+grade-coloured accent strip, every section opened with a philosophical
+lede ("the felt pace of an interface", "form follows feeling"), and
+components were a metadata table instead of a real mock. This pass
+replaces all of that with the extracted values themselves.
+
+Changes:
+
+- **Cover** now leads with the brand's actual primary as a full-bleed
+  band (auto-detected, falls back through secondary/accent/most-used).
+  Asymmetric layout — band + label + hex above, host name in massive
+  serif below.
+- **Lede paragraphs replaced with one-line data summaries.**
+  "1 primary · 1 secondary · 1 accent · 27 neutrals · 88 total" instead
+  of "Brand colours carry meaning. Neutrals carry structure."
+- **Type specimen** now uses real headlines extracted from the site's
+  voice (`design.voice.sampleHeadings`). Falls back to a single neutral
+  pangram only when those are absent. The recycled aphorisms ("quiet
+  authority of restraint", "form follows feeling") are gone.
+- **Colour chapter** — primary at full-width hero card, secondary +
+  accent at half-width below, neutrals as a flush horizontal strip,
+  full palette grid below. Hex labels render *inside* the swatch in
+  high-contrast text (auto black/white).
+- **Components chapter** — renders an actual primary + secondary
+  button using the extracted brand colour and radius, plus a card
+  mockup using extracted surface + text colours. Metadata table moved
+  below the visual mock.
+- **Accessibility chapter** — failing pairs render as actual stacked
+  colour blocks (foreground text on background with ratio inline),
+  not a pure table. Big score number on top.
+- **Tokens chapter** — code blocks now have a header bar with the
+  language label and target filename.
+- **"How to use"** trimmed from six rules of thumb to four punchy
+  ones, drops the "rule of thumb" framing.
+- **Layout** — section padding moved into the wrap (no more gutter
+  around the hero band), TOC now sits on a tinted sub-paper background,
+  chapter headers are thinner with a bottom rule.
+
+Same 13 chapters, same public API. No breaking changes.
+
+378/378 tests pass (one assertion updated for the new lowercase
+"Brand guidelines" cover label).
+
 ## [12.7.0] — 2026-05-09
 
 **Brand book — full editorial design-guidelines document for any URL.**

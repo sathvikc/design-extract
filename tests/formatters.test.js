@@ -1262,7 +1262,7 @@ describe('formatBrandBook', () => {
     assert.ok(html.includes('example.com'), 'host must render');
     assert.ok(html.includes('#0066cc'), 'primary hex must render');
     assert.ok(html.includes('Inter'), 'display family must render');
-    assert.match(html, /Brand Guidelines/);
+    assert.match(html, /Brand guidelines/i, 'cover band label must render');
   });
 
   it('escapes user-controlled strings to prevent HTML injection', () => {

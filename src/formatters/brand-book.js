@@ -1,15 +1,21 @@
 // designlang brand-book — full editorial brand-guidelines document.
 //
-// Hand-off-ready single-HTML book that documents every dimension of an
-// extracted design system: cover, about, colour, typography, spacing,
-// shape, iconography, motion, components, voice, accessibility, tokens,
-// and "how to use" guidance. Editorial layout, print-ready, dark-mode
-// toggle, TOC with anchor links. Self-contained — no external assets
-// except Google Fonts.
+// A single self-contained HTML book that documents an extracted design
+// system the way a hand-off doc would: cover, table of contents, 13
+// chapters. The layout is editorial (Stripe Press / Pentagram-leaning),
+// not data-dump — each chapter shows the actual values, not just lists.
+//
+// Two design rules:
+//   1. The brand's primary colour leads the cover. It's the first thing
+//      anyone sees, full bleed. Everything else dials down from there.
+//   2. Real text from the site whenever possible. The voice extractor
+//      surfaces real headings — use them. No filler aphorisms.
 
 const FONT_DISPLAY = 'Instrument Serif';
 const FONT_BODY = 'Inter';
 const FONT_MONO = 'JetBrains Mono';
+
+// ── Helpers ────────────────────────────────────────────────────
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -19,10 +25,14 @@ function host(url) {
   try { return new URL(url).hostname; } catch { return String(url || ''); }
 }
 
+function familyName(f) {
+  if (!f) return '';
+  if (typeof f === 'string') return f;
+  return f.name || f.family || '';
+}
+
 // Coerce *anything* into a list of strings. The component-anatomy
-// extractor sometimes returns slots/props as an object keyed by name,
-// sometimes as an array, sometimes as a single string. Real-world data
-// gives us all three in one extraction.
+// extractor returns slots/props as objects, arrays, or strings.
 function asList(v) {
   if (v == null) return [];
   if (Array.isArray(v)) return v.filter(x => x != null);
@@ -31,24 +41,11 @@ function asList(v) {
   return [String(v)];
 }
 
-function familyName(f) {
-  if (!f) return '';
-  if (typeof f === 'string') return f;
-  return f.name || f.family || '';
-}
-
-function gradeAccent(grade) {
-  return ({ A: '#0a8a52', B: '#1f6feb', C: '#b08400', D: '#d2691e', F: '#c43d3d' })[grade] || '#1f1f1f';
-}
-
-// ── Color helpers ───────────────────────────────────────────────
-
 function hexToRgb(hex) {
   if (!hex) return null;
   const s = String(hex).trim().replace(/^#/, '');
   const full = s.length === 3 ? s.split('').map(c => c + c).join('') : s.slice(0, 6);
-  const m = full.match(/^[0-9a-f]{6}$/i);
-  if (!m) return null;
+  if (!/^[0-9a-f]{6}$/i.test(full)) return null;
   return {
     r: parseInt(full.slice(0, 2), 16),
     g: parseInt(full.slice(2, 4), 16),
@@ -79,67 +76,84 @@ function relLum({ r, g, b }) {
 }
 
 function bestTextOn(rgb) {
-  // Pick black or white text for readability against a swatch background.
   return relLum(rgb) > 0.5 ? '#0a0a0a' : '#ffffff';
 }
 
-function colorRow(c) {
-  const hex = (typeof c === 'string' ? c : c?.hex) || '';
-  const norm = String(hex).trim().toLowerCase();
-  const rgb = hexToRgb(norm);
-  if (!rgb) return '';
-  const hsl = rgbToHsl(rgb);
-  const fg = bestTextOn(rgb);
-  const usage = (typeof c === 'object' && (c?.contexts?.[0] || c?.role)) || '';
-  return `<div class="color-row">
-    <div class="swatch-large" style="background:${esc(norm)};color:${fg}"><span>${esc(norm)}</span></div>
-    <dl class="color-meta">
-      <div><dt>HEX</dt><dd><code>${esc(norm)}</code></dd></div>
-      <div><dt>RGB</dt><dd><code>${rgb.r}, ${rgb.g}, ${rgb.b}</code></dd></div>
-      <div><dt>HSL</dt><dd><code>${hsl.h}°, ${hsl.s}%, ${hsl.l}%</code></dd></div>
-      ${usage ? `<div><dt>Use</dt><dd>${esc(usage)}</dd></div>` : ''}
-    </dl>
-  </div>`;
+function pickAccent(design) {
+  // The cover band uses the brand's actual primary if we can detect one
+  // — that's the whole point. Fall back through secondary, accent, the
+  // most-used coloured token, then ink.
+  const candidates = [
+    design.colors?.primary?.hex,
+    design.colors?.secondary?.hex,
+    design.colors?.accent?.hex,
+    ...(design.colors?.all || []).map(c => c?.hex).filter(Boolean),
+  ];
+  for (const hex of candidates) {
+    const rgb = hexToRgb(hex);
+    if (!rgb) continue;
+    // Skip near-greys.
+    const max = Math.max(rgb.r, rgb.g, rgb.b);
+    const min = Math.min(rgb.r, rgb.g, rgb.b);
+    if (max - min > 24) return hex;
+  }
+  return '#141414';
 }
 
-// ── Section builders ───────────────────────────────────────────
+// Pull two real lines from the site for the type specimen. Falls back
+// to a neutral pangram only when the voice extractor came back empty.
+function specimenLines(design) {
+  const headings = (design.voice?.sampleHeadings || []).filter(h => typeof h === 'string' && h.trim().length > 4 && h.length < 120);
+  if (headings.length >= 2) return [headings[0], headings[1]];
+  if (headings.length === 1) return [headings[0], 'Quick brown fox jumps over the lazy dog.'];
+  return ['Quick brown fox jumps over the lazy dog.', 'AaBbCc 0123456789 ?!&'];
+}
 
-function buildCover(design) {
+// ── Section builders ──────────────────────────────────────────
+
+function buildCover(design, accent) {
   const meta = design.meta || {};
   const hostName = host(meta.url);
   const date = new Date(meta.timestamp || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const grade = design.score?.grade || '—';
   const overall = design.score?.overall ?? '—';
   const intent = design.pageIntent?.type || 'site';
+  const fg = bestTextOn(hexToRgb(accent) || { r: 0, g: 0, b: 0 });
   return `
-    <section class="cover" id="cover">
-      <p class="kicker">Brand Guidelines · v1 · ${esc(date)}</p>
-      <h1 class="cover-title">${esc(hostName)}</h1>
-      <p class="cover-sub">A complete reading of the visual language at <a href="${esc(meta.url || '')}" target="_blank" rel="noopener">${esc(meta.url || hostName)}</a> — every token, every rule, every component. Use this as a starting point for derivative work, internal handoffs, or design audits.</p>
-      <div class="cover-meta">
-        <span><strong>${esc(intent)}</strong>page intent</span>
-        <span><strong>${esc(grade)}</strong>system grade</span>
-        <span><strong>${esc(String(overall))}/100</strong>quality score</span>
-        <span><strong>${esc(String((design.colors?.all || []).length))}</strong>tokens</span>
+    <section class="cover" id="cover" aria-labelledby="cover-title">
+      <div class="cover-band" style="background:${esc(accent)};color:${fg}">
+        <span class="cover-band-label">Brand guidelines</span>
+        <span class="cover-band-hex"><code>${esc(accent)}</code></span>
+      </div>
+      <div class="cover-body">
+        <p class="kicker">${esc(date)}</p>
+        <h1 id="cover-title" class="cover-title">${esc(hostName)}</h1>
+        <p class="cover-sub">A reading of the visual language at <a href="${esc(meta.url || '')}" target="_blank" rel="noopener">${esc(meta.url || hostName)}</a>. Every token, every rule, every component — captured from the live site.</p>
+        <dl class="cover-meta">
+          <div><dt>Page intent</dt><dd>${esc(intent)}</dd></div>
+          <div><dt>System grade</dt><dd>${esc(grade)} <span class="muted">${esc(String(overall))}/100</span></dd></div>
+          <div><dt>Tokens</dt><dd>${(design.colors?.all || []).length} colours · ${(design.typography?.scale || []).length} sizes</dd></div>
+          <div><dt>Generated</dt><dd>designlang</dd></div>
+        </dl>
       </div>
     </section>`;
 }
 
 function buildToc() {
   const items = [
-    ['about', '01', 'About'],
-    ['logo', '02', 'Logo'],
-    ['color', '03', 'Colour'],
-    ['type', '04', 'Typography'],
-    ['spacing', '05', 'Spacing'],
-    ['shape', '06', 'Shape'],
-    ['iconography', '07', 'Iconography'],
-    ['motion', '08', 'Motion'],
-    ['components', '09', 'Components'],
-    ['voice', '10', 'Voice & tone'],
+    ['about',         '01', 'About'],
+    ['logo',          '02', 'Logo'],
+    ['color',         '03', 'Colour'],
+    ['type',          '04', 'Typography'],
+    ['spacing',       '05', 'Spacing'],
+    ['shape',         '06', 'Shape'],
+    ['iconography',   '07', 'Iconography'],
+    ['motion',        '08', 'Motion'],
+    ['components',    '09', 'Components'],
+    ['voice',         '10', 'Voice'],
     ['accessibility', '11', 'Accessibility'],
-    ['tokens', '12', 'Tokens'],
-    ['usage', '13', 'How to use'],
+    ['tokens',        '12', 'Tokens'],
+    ['usage',         '13', 'Usage'],
   ];
   return `
     <nav class="toc" aria-label="Table of contents">
@@ -148,6 +162,14 @@ function buildToc() {
         ${items.map(([id, n, label]) => `<li><a href="#${id}"><span class="toc-num">${n}</span><span class="toc-label">${label}</span></a></li>`).join('')}
       </ol>
     </nav>`;
+}
+
+function chapterHeader(num, title) {
+  return `
+    <header class="chapter-header">
+      <span class="sec-num">Chapter ${num}</span>
+      <h2>${esc(title)}</h2>
+    </header>`;
 }
 
 function buildAbout(design) {
@@ -159,10 +181,9 @@ function buildAbout(design) {
   const voice = design.voice || {};
   return `
     <section id="about">
-      <header><span class="sec-num">01</span><h2>About</h2></header>
-      <p class="lead">A short reading of what kind of site this is, what it's built on, and the broad visual posture of the brand.</p>
+      ${chapterHeader('01', 'About')}
       <dl class="meta-grid">
-        <div><dt>Page intent</dt><dd>${esc(intent.type || 'unknown')}${typeof intent.confidence === 'number' ? ` · ${(intent.confidence * 100).toFixed(0)}% confidence` : ''}</dd></div>
+        <div><dt>Page intent</dt><dd>${esc(intent.type || 'unknown')}${typeof intent.confidence === 'number' ? ` <span class="muted">${(intent.confidence * 100).toFixed(0)}% confidence</span>` : ''}</dd></div>
         <div><dt>Material language</dt><dd>${esc(material.label || 'unknown')}</dd></div>
         <div><dt>Imagery style</dt><dd>${esc(imagery.label || 'unknown')}</dd></div>
         <div><dt>Component library</dt><dd>${esc(lib.library || 'unknown')}</dd></div>
@@ -175,13 +196,13 @@ function buildAbout(design) {
 function buildLogo(design) {
   const logo = design.logo || {};
   const hasSvg = typeof logo.svg === 'string' && logo.svg.includes('<svg');
+  const hostName = host(design.meta?.url) || 'logo';
   return `
     <section id="logo">
-      <header><span class="sec-num">02</span><h2>Logo</h2></header>
-      <p class="lead">Captured from the live site. Treat the dimensions below as the recommended minimum clear-space and as a guide for placement against ${design.colors?.primary?.hex ? 'the primary brand colour' : 'a neutral surface'}.</p>
+      ${chapterHeader('02', 'Logo')}
       <div class="logo-card">
         <div class="logo-canvas" aria-label="Extracted logo on canvas">
-          ${hasSvg ? logo.svg : `<span class="logo-placeholder">${esc(host(design.meta?.url) || 'logo')}</span>`}
+          ${hasSvg ? logo.svg : `<span class="logo-placeholder">${esc(hostName)}</span>`}
         </div>
         <dl class="meta-grid logo-meta">
           <div><dt>Source</dt><dd>${esc(logo.source || 'inferred')}</dd></div>
@@ -193,6 +214,25 @@ function buildLogo(design) {
     </section>`;
 }
 
+function bigSwatch(name, c, role) {
+  if (!c?.hex) return '';
+  const rgb = hexToRgb(c.hex);
+  if (!rgb) return '';
+  const fg = bestTextOn(rgb);
+  const hsl = rgbToHsl(rgb);
+  return `
+    <article class="brand-color brand-color-${role}">
+      <div class="big-swatch" style="background:${esc(c.hex)};color:${fg}">
+        <span class="big-swatch-name">${esc(name)}</span>
+        <span class="big-swatch-hex">${esc(c.hex.toUpperCase())}</span>
+      </div>
+      <dl class="color-meta">
+        <div><dt>RGB</dt><dd><code>${rgb.r}, ${rgb.g}, ${rgb.b}</code></dd></div>
+        <div><dt>HSL</dt><dd><code>${hsl.h}°, ${hsl.s}%, ${hsl.l}%</code></dd></div>
+      </dl>
+    </article>`;
+}
+
 function buildColor(design) {
   const colors = design.colors || {};
   const primary = colors.primary;
@@ -201,53 +241,52 @@ function buildColor(design) {
   const neutrals = colors.neutrals || [];
   const all = colors.all || [];
   const a11y = design.accessibility || {};
-
-  const brandList = [
-    ['Primary', primary],
-    ['Secondary', secondary],
-    ['Accent', accent],
-  ].filter(([_, c]) => c?.hex);
+  const summary = [
+    primary?.hex && '1 primary',
+    secondary?.hex && '1 secondary',
+    accent?.hex && '1 accent',
+    `${neutrals.length} neutrals`,
+    `${all.length} total`,
+  ].filter(Boolean).join(' · ');
 
   return `
     <section id="color">
-      <header><span class="sec-num">03</span><h2>Colour</h2></header>
-      <p class="lead">The full palette as it appears on the live site. Brand colours carry meaning. Neutrals carry structure. Each swatch lists the exact values to use.</p>
+      ${chapterHeader('03', 'Colour')}
+      <p class="summary">${esc(summary)}</p>
 
-      ${brandList.length ? `
-        <h3 class="sub">Brand</h3>
-        ${brandList.map(([name, c]) => `
-          <article class="brand-color">
-            <h4>${esc(name)}</h4>
-            ${colorRow(c)}
-          </article>
-        `).join('')}
+      ${primary?.hex ? `<div class="brand-grid brand-grid-primary">${bigSwatch('Primary', primary, 'primary')}</div>` : ''}
+
+      ${(secondary?.hex || accent?.hex) ? `
+        <div class="brand-grid brand-grid-pair">
+          ${secondary?.hex ? bigSwatch('Secondary', secondary, 'secondary') : ''}
+          ${accent?.hex ? bigSwatch('Accent', accent, 'accent') : ''}
+        </div>
       ` : ''}
 
       ${neutrals.length ? `
         <h3 class="sub">Neutrals</h3>
-        <div class="palette-grid">
-          ${neutrals.slice(0, 12).map(c => `
-            <div class="mini-swatch" style="background:${esc(c.hex)};color:${bestTextOn(hexToRgb(c.hex) || { r: 0, g: 0, b: 0 })}">
-              <code>${esc(c.hex)}</code>
-            </div>
-          `).join('')}
+        <div class="neutral-strip">
+          ${neutrals.slice(0, 12).map(c => {
+            const rgb = hexToRgb(c.hex);
+            if (!rgb) return '';
+            const fg = bestTextOn(rgb);
+            return `<div class="neutral-cell" style="background:${esc(c.hex)};color:${fg}"><code>${esc(c.hex.toUpperCase())}</code></div>`;
+          }).join('')}
         </div>
       ` : ''}
 
-      <h3 class="sub">Full palette · ${all.length} tokens</h3>
+      <h3 class="sub">Full palette</h3>
       <div class="palette-grid">
-        ${all.slice(0, 24).map(c => `
-          <div class="mini-swatch" style="background:${esc(c.hex)};color:${bestTextOn(hexToRgb(c.hex) || { r: 0, g: 0, b: 0 })}">
-            <code>${esc(c.hex)}</code>
-          </div>
-        `).join('')}
+        ${all.slice(0, 28).map(c => {
+          const rgb = hexToRgb(c.hex);
+          if (!rgb) return '';
+          const fg = bestTextOn(rgb);
+          return `<div class="mini-swatch" style="background:${esc(c.hex)};color:${fg}"><code>${esc(c.hex.toUpperCase())}</code></div>`;
+        }).join('')}
       </div>
 
       ${a11y.score != null ? `
-        <div class="callout">
-          <span class="callout-label">Accessibility</span>
-          <p>WCAG score <strong>${a11y.score}%</strong> · ${a11y.passCount || 0} passing pairs · ${a11y.failCount || 0} failing. See §11 for remediation.</p>
-        </div>
+        <p class="callout"><strong>WCAG ${a11y.score}%</strong> · ${a11y.passCount || 0} passing pairs · ${a11y.failCount || 0} failing. Full breakdown in §11.</p>
       ` : ''}
     </section>`;
 }
@@ -260,42 +299,34 @@ function buildType(design) {
   const weights = (t.weights || []).map(w => typeof w === 'object' ? (w.weight || w.value) : w).filter(Boolean);
   const head = families[0];
   const body = families[1] || head;
-
+  const lines = specimenLines(design);
+  const headStack = head ? `${esc(head)}, '${FONT_DISPLAY}', serif` : `'${FONT_DISPLAY}', serif`;
   return `
     <section id="type">
-      <header><span class="sec-num">04</span><h2>Typography</h2></header>
-      <p class="lead">Two families typically — display for headlines, body for paragraph text. Hold the weight count tight (3–4 max) and let size carry hierarchy.</p>
+      ${chapterHeader('04', 'Typography')}
+      <p class="summary">${families.length || 0} families · ${sizes.length} sizes · ${weights.length} weights</p>
 
       <dl class="meta-grid">
-        <div><dt>Display family</dt><dd>${esc(head || '—')}</dd></div>
-        <div><dt>Body family</dt><dd>${esc(body || '—')}</dd></div>
-        <div><dt>Scale</dt><dd>${sizes.length} sizes</dd></div>
+        <div><dt>Display</dt><dd>${esc(head || '—')}</dd></div>
+        <div><dt>Body</dt><dd>${esc(body || '—')}</dd></div>
         <div><dt>Weights</dt><dd>${weights.join(', ') || '—'}</dd></div>
       </dl>
 
       <h3 class="sub">Specimen</h3>
-      <div class="specimen" style="font-family: ${head ? esc(head) + ',' : ''} '${FONT_DISPLAY}', serif;">
-        ${sizes.slice(0, 5).map((s, i) => {
-          const lines = [
-            'The quiet authority of restraint.',
-            'How the page reads at rest.',
-            'Form follows feeling.',
-            'Hierarchy is a craft.',
-            'Body text · 16px · 1.5 line-height.',
-          ];
-          return `<div class="spec-line" style="font-size:${Math.min(s, 72)}px">${lines[i] || lines[lines.length - 1]}</div>`;
-        }).join('')}
+      <div class="specimen" style="font-family: ${headStack};">
+        <div class="spec-line spec-display" style="font-size: ${Math.min(sizes[0] || 64, 80)}px">${esc(lines[0])}</div>
+        <div class="spec-line spec-body" style="font-size: 24px">${esc(lines[1])}</div>
       </div>
 
       <h3 class="sub">Scale</h3>
       <table class="scale-table">
-        <thead><tr><th>Step</th><th>Size</th><th>Sample</th></tr></thead>
+        <thead><tr><th class="t-step">Step</th><th class="t-size">Size</th><th class="t-sample">Sample</th></tr></thead>
         <tbody>
-          ${sizes.slice(0, 12).map((s, i) => `
+          ${sizes.slice(0, 10).map((s, i) => `
             <tr>
-              <td><code>t${i}</code></td>
-              <td><code>${s}px</code></td>
-              <td style="font-size:${Math.min(s, 36)}px; font-family: ${head ? esc(head) + ',' : ''} '${FONT_DISPLAY}', serif;">Aa</td>
+              <td class="t-step"><code>t${String(i).padStart(2, '0')}</code></td>
+              <td class="t-size"><code>${s}px</code></td>
+              <td class="t-sample" style="font-size:${Math.min(s, 56)}px; font-family: ${headStack}; line-height: 1;">${esc(lines[0].slice(0, 28))}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -306,29 +337,36 @@ function buildType(design) {
 function buildSpacing(design) {
   const sp = design.spacing || {};
   const raw = (sp.scale || []).map(v => typeof v === 'number' ? v : (v?.value ?? v?.size ?? 0)).filter(n => n > 0);
-  const scale = raw.slice().sort((a, b) => a - b).slice(0, 12);
+  const scale = raw.slice().sort((a, b) => a - b).slice(0, 10);
+  const base = sp.base || (scale[0] || 4);
   return `
     <section id="spacing">
-      <header><span class="sec-num">05</span><h2>Spacing</h2></header>
-      <p class="lead">A consistent spacing rhythm is what makes a page feel calm. Use these values for padding, margin, and gap. Resist one-off pixel values.</p>
-      <dl class="meta-grid">
-        <div><dt>Base unit</dt><dd>${sp.base ? `${sp.base}px` : '—'}</dd></div>
-        <div><dt>Scale length</dt><dd>${(sp.scale || []).length} values</dd></div>
-      </dl>
+      ${chapterHeader('05', 'Spacing')}
+      <p class="summary">Base ${base}px · ${(sp.scale || []).length} steps captured</p>
+
       <h3 class="sub">Rhythm</h3>
-      <div class="rhythm">
-        ${scale.map(v => `<div class="rhythm-bar" style="width:${Math.min(v * 1.6, 360)}px"><span>${v}px</span></div>`).join('')}
+      <div class="space-rhythm">
+        ${scale.map(v => `
+          <div class="space-step">
+            <div class="space-block" style="width:${Math.min(v * 1.6, 320)}px"></div>
+            <code>${v}px</code>
+          </div>
+        `).join('')}
       </div>
     </section>`;
 }
 
 function buildShape(design) {
-  const radii = (design.borders?.radii || []).map(r => typeof r === 'object' ? r.value : r).filter(n => n != null).sort((a, b) => a - b);
-  const shadows = (design.shadows?.values || []).slice(0, 6);
+  const radii = (design.borders?.radii || [])
+    .map(r => typeof r === 'object' ? r.value : r)
+    .filter(n => typeof n === 'number')
+    .sort((a, b) => a - b);
+  const shadowsRaw = (design.shadows?.values || []).slice(0, 6);
+  const shadowLabels = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'];
   return `
     <section id="shape">
-      <header><span class="sec-num">06</span><h2>Shape</h2></header>
-      <p class="lead">Corners and elevation set the tactile feel of a brand. Sharper radii read precise; softer radii read approachable. Shadow elevation builds hierarchy in z.</p>
+      ${chapterHeader('06', 'Shape')}
+      <p class="summary">${radii.length} radii · ${shadowsRaw.length} elevation tiers</p>
 
       <h3 class="sub">Border radii</h3>
       <div class="radii-row">
@@ -340,15 +378,21 @@ function buildShape(design) {
         `).join('')}
       </div>
 
-      <h3 class="sub">Elevation</h3>
-      <div class="shadows-row">
-        ${shadows.map((s, i) => `
-          <div class="shadow-card">
-            <div class="shadow-block" style="box-shadow:${esc(typeof s === 'string' ? s : (s?.raw || ''))}"></div>
-            <code>${esc(typeof s === 'string' ? s : (s?.label || `e${i}`))}</code>
-          </div>
-        `).join('')}
-      </div>
+      ${shadowsRaw.length ? `
+        <h3 class="sub">Elevation</h3>
+        <div class="shadows-row">
+          ${shadowsRaw.map((s, i) => {
+            const raw = typeof s === 'string' ? s : (s?.raw || '');
+            const label = shadowLabels[i] || `e${i}`;
+            return `
+              <div class="shadow-card">
+                <div class="shadow-block" style="box-shadow:${esc(raw)}"></div>
+                <code>${esc(label)}</code>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : ''}
     </section>`;
 }
 
@@ -357,14 +401,15 @@ function buildIconography(design) {
   const icons = (sys.icons || design.icons?.icons || []).slice(0, 24);
   return `
     <section id="iconography">
-      <header><span class="sec-num">07</span><h2>Iconography</h2></header>
-      <p class="lead">Every recognisable icon library has a fingerprint — stroke width, grid size, terminal style. Match the existing icon family or commit to a new one wholesale.</p>
+      ${chapterHeader('07', 'Iconography')}
+      <p class="summary">${esc(sys.library || 'unknown library')} · ${icons.length} captured</p>
+
       <dl class="meta-grid">
         <div><dt>Library</dt><dd>${esc(sys.library || 'unknown')}</dd></div>
         <div><dt>Confidence</dt><dd>${sys.confidence != null ? Math.round(sys.confidence * 100) + '%' : '—'}</dd></div>
-        <div><dt>Stroke style</dt><dd>${esc(sys.signals?.[0] || '—')}</dd></div>
-        <div><dt>Count</dt><dd>${icons.length} captured</dd></div>
+        <div><dt>Stroke style</dt><dd>${esc((sys.signals && sys.signals[0]) || '—')}</dd></div>
       </dl>
+
       ${icons.length ? `
         <div class="icon-grid">
           ${icons.map(i => `<div class="icon-cell">${i.svg ? i.svg : `<code>${esc(i.name || 'icon')}</code>`}</div>`).join('')}
@@ -373,29 +418,30 @@ function buildIconography(design) {
     </section>`;
 }
 
-function buildMotion(design) {
+function buildMotion(design, accent) {
   const m = design.motion || {};
   const durations = (m.durations || []).slice(0, 6);
   const easings = (m.easings || []).slice(0, 4);
   return `
     <section id="motion">
-      <header><span class="sec-num">08</span><h2>Motion</h2></header>
-      <p class="lead">Motion sets the felt pace of an interface. Stay inside this duration / easing vocabulary so transitions sing the same note.</p>
-      <dl class="meta-grid">
-        <div><dt>Feel</dt><dd>${esc(m.feel || 'unknown')}</dd></div>
-        <div><dt>Scroll-linked</dt><dd>${m.scrollLinked?.present ? 'yes' : 'no'}</dd></div>
-        <div><dt>Spring presence</dt><dd>${(m.springs || []).length ? 'yes' : 'no'}</dd></div>
-      </dl>
+      ${chapterHeader('08', 'Motion')}
+      <p class="summary">Feel: ${esc(m.feel || 'unknown')} · ${(m.durations || []).length} durations · ${(m.easings || []).length} easings</p>
 
-      <h3 class="sub">Durations</h3>
-      <div class="motion-row">
-        ${durations.map(d => `
-          <div class="motion-card">
-            <div class="motion-dot" style="--dur:${d.ms || d}ms"></div>
-            <code>${d.ms || d}ms${d.label ? ` · ${esc(d.label)}` : ''}</code>
-          </div>
-        `).join('')}
-      </div>
+      ${durations.length ? `
+        <h3 class="sub">Duration scale</h3>
+        <div class="motion-tempo">
+          ${durations.map(d => {
+            const ms = d.ms || (typeof d === 'number' ? d : 0);
+            const label = d.label ? esc(d.label) : '';
+            return `
+              <div class="tempo-item">
+                <div class="tempo-bar" style="--dur:${ms}ms; background:${esc(accent)}"></div>
+                <code>${ms}ms${label ? ' · ' + label : ''}</code>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : ''}
 
       ${easings.length ? `
         <h3 class="sub">Easings</h3>
@@ -406,26 +452,54 @@ function buildMotion(design) {
     </section>`;
 }
 
-function buildComponents(design) {
+function buildComponents(design, accent) {
   const lib = design.componentLibrary || {};
   const anatomy = design.componentAnatomy || [];
   const components = anatomy.slice(0, 6);
+  const radii = (design.borders?.radii || [])
+    .map(r => typeof r === 'object' ? r.value : r)
+    .filter(n => typeof n === 'number')
+    .sort((a, b) => a - b);
+  const radius = radii[1] || radii[0] || 6;
+  const accentRgb = hexToRgb(accent) || { r: 20, g: 20, b: 20 };
+  const accentFg = bestTextOn(accentRgb);
+  const neutral = (design.colors?.neutrals || [])[0]?.hex || '#1a1a1a';
+  const surface = (design.colors?.backgrounds || [])[1] || '#f7f5ef';
+  const text = (design.colors?.text || [])[0] || '#0a0a0a';
   return `
     <section id="components">
-      <header><span class="sec-num">09</span><h2>Components</h2></header>
-      <p class="lead">Reusable parts the auditor recognised on the site, with their slot anatomy. Use these as scaffolding — names + variants + sizes — when building new components.</p>
-      <p class="muted">Detected library: <code>${esc(lib.library || 'unknown')}</code></p>
+      ${chapterHeader('09', 'Components')}
+      <p class="summary">${esc(lib.library || 'unknown library')} · ${components.length} component patterns captured</p>
 
-      ${components.length ? components.map(c => `
-        <article class="component-card">
-          <h4>${esc(c.kind || c.name || 'component')}</h4>
-          <dl class="meta-grid">
-            <div><dt>Slots</dt><dd>${asList(c.slots).map(esc).join(', ') || '—'}</dd></div>
-            <div><dt>Variants</dt><dd>${asList(c.props && c.props.variant).map(esc).join(', ') || '—'}</dd></div>
-            <div><dt>Sizes</dt><dd>${asList(c.props && c.props.size).map(esc).join(', ') || '—'}</dd></div>
-          </dl>
-        </article>
-      `).join('') : '<p class="muted">No component anatomy captured. Run <code>designlang &lt;url&gt; --full</code> to enable component clustering.</p>'}
+      <h3 class="sub">Mocks</h3>
+      <div class="mock-grid">
+        <div class="mock-button">
+          <button type="button" class="m-btn m-btn-primary" style="background:${esc(accent)};color:${accentFg};border-radius:${radius}px">Primary action</button>
+          <button type="button" class="m-btn m-btn-secondary" style="border-radius:${radius}px;border-color:${esc(accent)};color:${esc(accent)}">Secondary</button>
+        </div>
+        <div class="mock-card" style="background:${esc(surface)};color:${esc(text)};border-radius:${radius * 1.5}px">
+          <span class="m-card-eyebrow">Card</span>
+          <h4 class="m-card-title">Built from these tokens</h4>
+          <p class="m-card-body">Radius, primary, surface, text — all sampled from the live site.</p>
+          <a class="m-card-link" href="#" style="color:${esc(accent)}">Read more →</a>
+        </div>
+      </div>
+
+      ${components.length ? `
+        <h3 class="sub">Detected patterns</h3>
+        <div class="component-list">
+          ${components.map(c => `
+            <article class="component-card">
+              <h4>${esc(c.kind || c.name || 'component')}</h4>
+              <dl class="meta-grid">
+                <div><dt>Slots</dt><dd>${asList(c.slots).map(esc).join(', ') || '—'}</dd></div>
+                <div><dt>Variants</dt><dd>${asList(c.props && c.props.variant).map(esc).join(', ') || '—'}</dd></div>
+                <div><dt>Sizes</dt><dd>${asList(c.props && c.props.size).map(esc).join(', ') || '—'}</dd></div>
+              </dl>
+            </article>
+          `).join('')}
+        </div>
+      ` : ''}
     </section>`;
 }
 
@@ -435,25 +509,24 @@ function buildVoice(design) {
   const verbs = (v.ctaVerbs || []).slice(0, 8);
   return `
     <section id="voice">
-      <header><span class="sec-num">10</span><h2>Voice &amp; tone</h2></header>
-      <p class="lead">Visual is half of brand. Voice is the other half. These signals were extracted from the live page copy.</p>
-      <dl class="meta-grid">
-        <div><dt>Tone</dt><dd>${esc(v.tone || 'neutral')}</dd></div>
-        <div><dt>Pronoun posture</dt><dd>${esc(v.pronounPosture || '—')}</dd></div>
-        <div><dt>Heading case</dt><dd>${esc(v.headingCase || '—')}</dd></div>
-      </dl>
+      ${chapterHeader('10', 'Voice')}
+      <p class="summary">${esc(v.tone || 'neutral')} · ${esc(v.pronounPosture || '—')} · ${esc(v.headingCase || '—')}</p>
 
-      ${verbs.length ? `
-        <h3 class="sub">Top CTA verbs</h3>
-        <ul class="cta-verbs">
-          ${verbs.map(v2 => `<li><code>${esc(typeof v2 === 'string' ? v2 : (v2.verb || ''))}</code>${typeof v2 === 'object' && v2.count ? ` <span class="muted">×${v2.count}</span>` : ''}</li>`).join('')}
+      ${headings.length ? `
+        <h3 class="sub">Headlines from the site</h3>
+        <ul class="quotes">
+          ${headings.map(h => `<li>${esc(h)}</li>`).join('')}
         </ul>
       ` : ''}
 
-      ${headings.length ? `
-        <h3 class="sub">Sample headings</h3>
-        <ul class="quotes">
-          ${headings.map(h => `<li>“${esc(h)}”</li>`).join('')}
+      ${verbs.length ? `
+        <h3 class="sub">CTA verbs</h3>
+        <ul class="cta-verbs">
+          ${verbs.map(v2 => {
+            const word = typeof v2 === 'string' ? v2 : (v2.verb || '');
+            const count = typeof v2 === 'object' ? v2.count : null;
+            return `<li><code>${esc(word)}</code>${count ? `<span class="muted">×${count}</span>` : ''}</li>`;
+          }).join('')}
         </ul>
       ` : ''}
     </section>`;
@@ -463,32 +536,41 @@ function buildAccessibility(design) {
   const a = design.accessibility || {};
   const failing = (a.failingPairs || []).slice(0, 5);
   const remediation = (a.remediation || []).slice(0, 5);
+  const score = a.score != null ? a.score : null;
   return `
     <section id="accessibility">
-      <header><span class="sec-num">11</span><h2>Accessibility</h2></header>
-      <p class="lead">WCAG 2.1 contrast scoring across every foreground/background pair detected on the live page. Failing pairs come with proposed replacement values.</p>
-      <dl class="meta-grid">
-        <div><dt>Score</dt><dd>${a.score != null ? `${a.score}%` : '—'}</dd></div>
-        <div><dt>Passing pairs</dt><dd>${a.passCount ?? '—'}</dd></div>
-        <div><dt>Failing pairs</dt><dd>${a.failCount ?? '—'}</dd></div>
-        <div><dt>Total pairs</dt><dd>${a.totalPairs ?? '—'}</dd></div>
-      </dl>
+      ${chapterHeader('11', 'Accessibility')}
+
+      <div class="a11y-score">
+        <span class="a11y-num">${score != null ? score : '—'}<span class="a11y-suffix">${score != null ? '%' : ''}</span></span>
+        <span class="a11y-label">WCAG 2.1 contrast<br>${a.passCount ?? '—'} passing · ${a.failCount ?? '—'} failing</span>
+      </div>
+
       ${failing.length ? `
         <h3 class="sub">Failing pairs</h3>
-        <table class="scale-table">
-          <thead><tr><th>Foreground</th><th>Background</th><th>Ratio</th><th>Rule</th></tr></thead>
-          <tbody>
-            ${failing.map(p => `
-              <tr>
-                <td><code>${esc(p.fg || p.foreground)}</code></td>
-                <td><code>${esc(p.bg || p.background)}</code></td>
-                <td><code>${(p.ratio || 0).toFixed(2)}</code></td>
-                <td><code>${esc(p.rule || 'AA')}</code></td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+        <div class="a11y-pairs">
+          ${failing.map(p => {
+            const fg = p.fg || p.foreground;
+            const bg = p.bg || p.background;
+            const ratio = (p.ratio || 0).toFixed(2);
+            const rule = p.rule || 'AA';
+            return `
+              <div class="a11y-pair">
+                <div class="a11y-stack" style="background:${esc(bg)};color:${esc(fg)}">
+                  <span class="a11y-Aa">Aa</span>
+                  <span class="a11y-ratio">${ratio}:1</span>
+                </div>
+                <dl>
+                  <div><dt>Foreground</dt><dd><code>${esc(fg)}</code></dd></div>
+                  <div><dt>Background</dt><dd><code>${esc(bg)}</code></dd></div>
+                  <div><dt>Rule</dt><dd>${esc(rule)}</dd></div>
+                </dl>
+              </div>
+            `;
+          }).join('')}
+        </div>
       ` : '<p class="muted">No failing contrast pairs detected.</p>'}
+
       ${remediation.length ? `
         <h3 class="sub">Suggested replacements</h3>
         <ul class="remediation">
@@ -502,51 +584,66 @@ function buildTokens(design) {
   const primary = design.colors?.primary?.hex || '#0066cc';
   const fontHead = familyName((design.typography?.families || [])[0]) || 'Inter';
   const space = design.spacing?.base || 4;
-  return `
-    <section id="tokens">
-      <header><span class="sec-num">12</span><h2>Tokens</h2></header>
-      <p class="lead">Drop-in code for the most common stacks. All values pulled directly from the extraction.</p>
-
-      <h3 class="sub">CSS variables</h3>
-      <pre class="codeblock"><code>:root {
-  --color-primary: ${esc(primary)};
-  --font-display: "${esc(fontHead)}";
+  const radii = (design.borders?.radii || [])
+    .map(r => typeof r === 'object' ? r.value : r)
+    .filter(n => typeof n === 'number')
+    .sort((a, b) => a - b);
+  const radiusMd = radii[1] || radii[0] || 8;
+  const hostName = host(design.meta?.url) || '<url>';
+  const cssVars = `:root {
+  --color-primary: ${primary};
+  --font-display: "${fontHead}";
   --space-base: ${space}px;
-  --radius-md: ${(design.borders?.radii || []).map(r => typeof r === 'object' ? r.value : r).filter(n => n != null).sort((a, b) => a - b)[1] || 8}px;
-}</code></pre>
-
-      <h3 class="sub">Tailwind config (extend)</h3>
-      <pre class="codeblock"><code>// tailwind.config.js
+  --radius-md: ${radiusMd}px;
+}`;
+  const tailwind = `// tailwind.config.js
 module.exports = {
   theme: {
     extend: {
-      colors: { brand: '${esc(primary)}' },
-      fontFamily: { display: ['${esc(fontHead)}', 'serif'] },
+      colors: { brand: '${primary}' },
+      fontFamily: { display: ['${fontHead}', 'serif'] },
       spacing: { base: '${space}px' },
+      borderRadius: { md: '${radiusMd}px' },
     },
   },
-};</code></pre>
+};`;
+  return `
+    <section id="tokens">
+      ${chapterHeader('12', 'Tokens')}
+      <p class="summary">Drop-in code for the most common stacks. All values from the live extraction.</p>
 
-      <h3 class="sub">Full token set</h3>
-      <p class="muted">Run <code>npx designlang pack ${esc(host(design.meta?.url) || '<url>')}</code> for the complete bundle (DTCG, shadcn, Figma vars, motion, anatomy).</p>
+      <div class="codeblock-wrap">
+        <div class="codeblock-head"><span>CSS variables</span><span class="muted">variables.css</span></div>
+        <pre class="codeblock"><code>${esc(cssVars)}</code></pre>
+      </div>
+
+      <div class="codeblock-wrap">
+        <div class="codeblock-head"><span>Tailwind config</span><span class="muted">tailwind.config.js</span></div>
+        <pre class="codeblock"><code>${esc(tailwind)}</code></pre>
+      </div>
+
+      <p class="muted">Run <code>npx designlang pack ${esc(hostName)}</code> for the full bundle (DTCG, shadcn, Figma vars, motion, anatomy, Storybook).</p>
     </section>`;
 }
 
-function buildUsage(design) {
-  const hostName = host(design.meta?.url) || 'this site';
+function buildUsage() {
+  const rules = [
+    ['Lead with the primary.', 'It belongs on calls-to-action and one accent moment per screen. Not on body copy.'],
+    ['Two type families, three weights.', 'Display for headlines, body for paragraphs. Resist a third unless there is a real reason.'],
+    ['Snap to the spacing scale.', 'Padding, margin, and gap should land on the values in §05. One-off pixels accumulate into noise.'],
+    ['Treat accessibility as a hard constraint.', 'When a colour pair fails WCAG, fix the colour — not the contrast check.'],
+  ];
   return `
     <section id="usage">
-      <header><span class="sec-num">13</span><h2>How to use</h2></header>
-      <p class="lead">A few rules of thumb for applying these guidelines to derivative work.</p>
+      ${chapterHeader('13', 'Usage')}
       <ol class="usage-list">
-        <li><strong>Lead with brand colour.</strong> The primary lives on calls-to-action, key icons, and one accent moment per screen — not on body type.</li>
-        <li><strong>Hold the type to two families.</strong> Display for headlines, body for paragraphs. Resist a third unless there's a real reason.</li>
-        <li><strong>Snap to the spacing scale.</strong> Padding, margins, and gaps should land on the values in §05. One-off pixels accumulate into noise.</li>
-        <li><strong>Keep the radius set tight.</strong> Three to four values across the whole product. Mixing too many radii reads as inconsistent craft.</li>
-        <li><strong>Use motion for feedback, not decoration.</strong> The durations and easings in §08 set the brand's pace — match them rather than inventing your own.</li>
-        <li><strong>Treat accessibility as a hard constraint.</strong> If a colour pair fails WCAG, fix the colour — not the contrast check.</li>
+        ${rules.map(([title, body]) => `
+          <li>
+            <h3 class="usage-title">${esc(title)}</h3>
+            <p class="usage-body">${esc(body)}</p>
+          </li>
+        `).join('')}
       </ol>
-      <p class="muted">Generated from <code>${esc(hostName)}</code> with <a href="https://designlang.app" target="_blank" rel="noopener">designlang</a>. Re-run <code>designlang brand ${esc(hostName)}</code> any time to refresh.</p>
     </section>`;
 }
 
@@ -556,10 +653,9 @@ export function formatBrandBook(design, opts = {}) {
   if (!design) throw new Error('formatBrandBook: design is required');
   const meta = design.meta || {};
   const hostName = host(meta.url);
-  const grade = design.score?.grade || '—';
-  const accent = gradeAccent(grade);
+  const accent = pickAccent(design);
   const ogTitle = `${hostName} · brand guidelines`;
-  const ogDesc = `Full design-system documentation for ${hostName} — colour, type, spacing, motion, voice, accessibility, components, and drop-in tokens.`;
+  const ogDesc = `Design-system documentation for ${hostName}: colour, type, spacing, motion, voice, accessibility, components, and drop-in tokens.`;
 
   return `<!doctype html>
 <html lang="en">
@@ -577,22 +673,24 @@ export function formatBrandBook(design, opts = {}) {
 <link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(FONT_DISPLAY)}&family=${encodeURIComponent(FONT_BODY)}:wght@400;500;600&family=${encodeURIComponent(FONT_MONO)}:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: #f7f5ef;
-    --ink: #141414;
-    --ink-soft: #555049;
+    --paper: #f6f3ec;
+    --paper-2: #efebe1;
+    --ink: #131313;
+    --ink-soft: #555048;
     --ink-faint: #8a8579;
-    --rule: #e5e1d6;
+    --rule: #e0dccf;
     --accent: ${accent};
     --display: '${FONT_DISPLAY}', 'Times New Roman', serif;
     --body: '${FONT_BODY}', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     --mono: '${FONT_MONO}', ui-monospace, 'SF Mono', monospace;
   }
   [data-theme="dark"] {
-    --paper: #0e0d0b;
-    --ink: #f0ece2;
-    --ink-soft: #9b9589;
+    --paper: #0d0c0a;
+    --paper-2: #15140f;
+    --ink: #ece8de;
+    --ink-soft: #9d978a;
     --ink-faint: #5b574e;
-    --rule: #2a2823;
+    --rule: #292621;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -604,38 +702,62 @@ export function formatBrandBook(design, opts = {}) {
     font-size: 16px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     transition: background .25s, color .25s;
   }
   a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); padding-bottom: 1px; }
   a:hover { border-color: var(--ink); }
   code { font-family: var(--mono); font-size: 0.92em; }
   .muted { color: var(--ink-soft); }
+  .summary { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; color: var(--ink-faint); margin: 0 0 32px; padding-bottom: 14px; border-bottom: 1px solid var(--rule); }
 
-  .wrap { max-width: 880px; margin: 0 auto; padding: 56px 40px 96px; }
-  @media (max-width: 640px) { .wrap { padding: 32px 22px 64px; } }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 0 96px; }
 
   /* — Top bar — */
-  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 64px; font-size: 13px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 24px 40px; font-size: 13px; border-bottom: 1px solid var(--rule); }
   .brand { font-family: var(--display); font-size: 22px; }
-  .brand a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); padding-bottom: 1px; }
+  .brand a { color: var(--ink); text-decoration: none; border-bottom: 0; }
   .topbar nav { display: flex; gap: 18px; align-items: center; color: var(--ink-soft); }
-  .theme-btn { background: transparent; border: 1px solid var(--rule); color: var(--ink-soft); font-size: 12px; padding: 6px 12px; border-radius: 999px; cursor: pointer; letter-spacing: .04em; text-transform: uppercase; font-family: var(--body); }
+  .theme-btn { background: transparent; border: 1px solid var(--rule); color: var(--ink-soft); font-size: 11px; padding: 6px 12px; border-radius: 999px; cursor: pointer; letter-spacing: .12em; text-transform: uppercase; font-family: var(--body); }
   .theme-btn:hover { color: var(--ink); border-color: var(--ink); }
 
   /* — Cover — */
-  .cover { padding: 32px 0 80px; border-bottom: 1px solid var(--rule); }
-  .kicker { text-transform: uppercase; letter-spacing: .18em; font-size: 11px; color: var(--ink-soft); margin: 0 0 18px; }
-  .cover-title { font-family: var(--display); font-weight: 400; font-size: clamp(56px, 10vw, 120px); line-height: .95; letter-spacing: -.02em; margin: 0 0 24px; }
-  .cover-sub { font-size: 19px; line-height: 1.55; color: var(--ink-soft); max-width: 60ch; margin: 0 0 36px; }
-  .cover-meta { display: flex; flex-wrap: wrap; gap: 36px; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-soft); }
-  .cover-meta span { display: flex; flex-direction: column; gap: 4px; }
-  .cover-meta strong { color: var(--ink); font-family: var(--display); font-size: 28px; font-weight: 400; letter-spacing: 0; text-transform: none; }
+  .cover { padding: 0; border-bottom: 1px solid var(--rule); }
+  .cover-band {
+    height: clamp(180px, 28vw, 320px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 32px 40px;
+  }
+  .cover-band-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    opacity: 0.78;
+  }
+  .cover-band-hex code { font-family: var(--mono); font-size: 13px; opacity: 0.9; }
+  .cover-body { padding: 56px 40px 64px; }
+  .kicker { font-family: var(--mono); text-transform: uppercase; letter-spacing: .18em; font-size: 11px; color: var(--ink-soft); margin: 0 0 18px; }
+  .cover-title {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(56px, 11vw, 132px);
+    line-height: .94;
+    letter-spacing: -.02em;
+    margin: 0 0 24px;
+  }
+  .cover-sub { font-size: 19px; line-height: 1.5; color: var(--ink-soft); max-width: 60ch; margin: 0 0 36px; }
+  .cover-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 22px 32px; padding: 28px 0 0; border-top: 1px solid var(--rule); margin: 0; }
+  .cover-meta dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-faint); margin-bottom: 4px; }
+  .cover-meta dd { margin: 0; font-size: 15px; }
 
   /* — TOC — */
-  .toc { padding: 56px 0; border-bottom: 1px solid var(--rule); }
+  .toc { padding: 56px 40px; border-bottom: 1px solid var(--rule); background: var(--paper-2); }
   .toc-title { font-family: var(--display); font-weight: 400; font-size: 28px; margin: 0 0 24px; }
   .toc ol { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 48px; }
-  @media (max-width: 640px) { .toc ol { columns: 1; } }
+  @media (max-width: 640px) { .toc ol { columns: 1; } .toc, .topbar, .cover-band, .cover-body { padding-left: 22px; padding-right: 22px; } }
   .toc li { padding: 10px 0; border-top: 1px solid var(--rule); break-inside: avoid; }
   .toc li:last-child { border-bottom: 1px solid var(--rule); }
   .toc a { display: flex; gap: 14px; align-items: baseline; border: 0; }
@@ -643,12 +765,12 @@ export function formatBrandBook(design, opts = {}) {
   .toc-label { font-family: var(--display); font-size: 18px; }
 
   /* — Sections — */
-  section { padding: 64px 0; border-bottom: 1px solid var(--rule); }
+  section { padding: 72px 40px; border-bottom: 1px solid var(--rule); }
   section:last-of-type { border-bottom: 0; }
-  section header { display: flex; gap: 18px; align-items: baseline; margin-bottom: 18px; }
-  .sec-num { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; color: var(--ink-faint); }
+  @media (max-width: 640px) { section { padding: 48px 22px; } }
+  .chapter-header { padding-bottom: 18px; margin-bottom: 28px; border-bottom: 1px solid var(--rule); }
+  .sec-num { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; color: var(--ink-faint); text-transform: uppercase; display: block; margin-bottom: 10px; }
   section h2 { font-family: var(--display); font-weight: 400; font-size: clamp(36px, 4.5vw, 56px); line-height: 1.04; letter-spacing: -.005em; margin: 0; }
-  section .lead { color: var(--ink-soft); margin: 0 0 32px; max-width: 60ch; font-size: 17px; }
   .sub { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 36px 0 14px; }
 
   /* — Meta grid — */
@@ -658,121 +780,187 @@ export function formatBrandBook(design, opts = {}) {
   .meta-grid dd { margin: 0; font-size: 15px; }
 
   /* — Color section — */
-  .brand-color { padding: 18px 0; border-top: 1px solid var(--rule); }
-  .brand-color:last-of-type { border-bottom: 1px solid var(--rule); }
-  .brand-color h4 { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 0 0 14px; }
-  .color-row { display: grid; grid-template-columns: minmax(140px, 1fr) 2fr; gap: 24px; align-items: stretch; }
-  @media (max-width: 640px) { .color-row { grid-template-columns: 1fr; } }
-  .swatch-large { min-height: 96px; border-radius: 6px; display: flex; align-items: flex-end; justify-content: flex-start; padding: 14px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
-  .swatch-large span { font-family: var(--mono); font-size: 13px; opacity: 0.92; }
-  .color-meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 18px; padding: 0; margin: 0; }
-  .color-meta div { padding: 0; }
+  .brand-grid { display: grid; gap: 20px; margin: 0 0 28px; }
+  .brand-grid-pair { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 640px) { .brand-grid-pair { grid-template-columns: 1fr; } }
+  .brand-color { display: flex; flex-direction: column; gap: 14px; }
+  .big-swatch {
+    aspect-ratio: 1.9 / 1;
+    border-radius: 8px;
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+  }
+  .brand-color-primary .big-swatch { aspect-ratio: 2.6 / 1; }
+  .big-swatch-name { font-family: var(--display); font-size: 32px; line-height: 1; }
+  .big-swatch-hex { font-family: var(--mono); font-size: 14px; letter-spacing: .04em; opacity: 0.92; }
+  .color-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; padding: 0; margin: 0; }
   .color-meta dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-faint); margin-bottom: 2px; }
-  .color-meta dd { margin: 0; font-size: 14px; }
+  .color-meta dd { margin: 0 0 10px; font-size: 14px; }
 
-  .palette-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
-  .mini-swatch { aspect-ratio: 1.6 / 1; border-radius: 6px; padding: 10px; display: flex; align-items: flex-end; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
-  .mini-swatch code { font-size: 11px; opacity: 0.92; }
+  .neutral-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+  .neutral-cell { aspect-ratio: 1.8 / 1; display: flex; align-items: flex-end; padding: 10px 12px; }
+  .neutral-cell code { font-size: 11px; }
 
-  .callout { margin-top: 32px; padding: 18px 22px; background: rgba(0,0,0,.03); border-left: 3px solid var(--accent); border-radius: 4px; }
+  .palette-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 6px; }
+  .mini-swatch { aspect-ratio: 1.6 / 1; border-radius: 5px; padding: 9px 11px; display: flex; align-items: flex-end; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+  .mini-swatch code { font-size: 10px; opacity: 0.92; }
+
+  .callout {
+    margin-top: 32px;
+    padding: 14px 18px;
+    background: rgba(0,0,0,.03);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 4px 4px 0;
+    font-size: 14px;
+  }
   [data-theme="dark"] .callout { background: rgba(255,255,255,.04); }
-  .callout-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-faint); display: block; margin-bottom: 4px; }
-  .callout p { margin: 0; }
 
   /* — Logo — */
   .logo-card { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: center; padding: 24px 0; }
   @media (max-width: 640px) { .logo-card { grid-template-columns: 1fr; } }
-  .logo-canvas { aspect-ratio: 16 / 9; background: rgba(0,0,0,.03); border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 32px; box-shadow: inset 0 0 0 1px var(--rule); }
-  [data-theme="dark"] .logo-canvas { background: rgba(255,255,255,.04); }
+  .logo-canvas { aspect-ratio: 16 / 9; background: var(--paper-2); border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 32px; box-shadow: inset 0 0 0 1px var(--rule); }
   .logo-canvas svg { max-width: 60%; max-height: 80%; }
-  .logo-placeholder { font-family: var(--display); font-size: 40px; color: var(--ink-soft); }
+  .logo-placeholder { font-family: var(--display); font-size: 36px; color: var(--ink-soft); }
   .logo-meta { grid-template-columns: 1fr; }
 
   /* — Type — */
-  .specimen { padding: 24px 0; }
-  .spec-line { line-height: 1.05; margin: 0 0 14px; letter-spacing: -.01em; }
+  .specimen { padding: 18px 0 26px; }
+  .spec-line { line-height: 1.05; margin: 0 0 18px; letter-spacing: -.01em; }
+  .spec-display { font-weight: 400; }
+  .spec-body { color: var(--ink-soft); font-style: italic; }
   .scale-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  .scale-table th, .scale-table td { padding: 12px 6px; text-align: left; border-bottom: 1px solid var(--rule); vertical-align: middle; }
-  .scale-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-faint); }
+  .scale-table th, .scale-table td { padding: 14px 8px; text-align: left; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+  .scale-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-faint); border-bottom: 1px solid var(--ink); }
+  .scale-table .t-step { width: 64px; }
+  .scale-table .t-size { width: 80px; }
+  .scale-table .t-sample { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  /* — Spacing rhythm — */
-  .rhythm { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; }
-  .rhythm-bar { height: 16px; background: var(--accent); opacity: .82; border-radius: 2px; display: flex; align-items: center; padding-left: 10px; }
-  .rhythm-bar span { font-family: var(--mono); font-size: 10px; color: var(--paper); mix-blend-mode: difference; filter: invert(1); }
+  /* — Spacing — */
+  .space-rhythm { display: flex; flex-direction: column; gap: 10px; padding: 8px 0; }
+  .space-step { display: flex; align-items: center; gap: 14px; }
+  .space-block { height: 14px; background: var(--ink); border-radius: 2px; flex: 0 0 auto; }
+  [data-theme="dark"] .space-block { background: var(--ink); }
+  .space-step code { font-size: 11px; color: var(--ink-soft); min-width: 56px; }
 
   /* — Shape — */
-  .radii-row, .shadows-row, .motion-row, .icon-grid { display: grid; gap: 16px; }
-  .radii-row { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
-  .shadows-row { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-  .motion-row { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
-  .icon-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
-  .radius-card, .shadow-card, .motion-card { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
-  .radius-block { width: 80px; height: 80px; background: var(--accent); }
-  .shadow-block { width: 100%; height: 80px; background: var(--paper); border-radius: 8px; }
-  [data-theme="dark"] .shadow-block { background: rgba(255,255,255,.06); }
-  .motion-dot { width: 28px; height: 28px; border-radius: 999px; background: var(--accent); animation: pulse var(--dur, 600ms) ease-in-out infinite alternate; }
-  @keyframes pulse { from { transform: scale(.7); } to { transform: scale(1.2); } }
-  .icon-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 1px solid var(--rule); border-radius: 6px; padding: 10px; }
+  .radii-row, .shadows-row { display: grid; gap: 16px; }
+  .radii-row { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+  .shadows-row { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .radius-card, .shadow-card { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  .radius-block { width: 96px; height: 96px; background: var(--paper-2); box-shadow: inset 0 0 0 1px var(--rule); }
+  .shadow-block { width: 100%; height: 96px; background: var(--paper); border-radius: 10px; }
+  [data-theme="dark"] .shadow-block { background: var(--paper-2); }
+  .radius-card code, .shadow-card code { font-size: 11px; color: var(--ink-soft); }
+
+  /* — Iconography — */
+  .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 10px; }
+  .icon-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 1px solid var(--rule); border-radius: 6px; padding: 10px; background: var(--paper-2); }
   .icon-cell svg { width: 100%; height: 100%; }
-  .easings { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 12px; }
-  .easings li { padding: 6px 12px; background: rgba(0,0,0,.03); border-radius: 4px; font-size: 12px; }
-  [data-theme="dark"] .easings li { background: rgba(255,255,255,.04); }
+
+  /* — Motion — */
+  .motion-tempo { display: flex; flex-direction: column; gap: 10px; }
+  .tempo-item { display: flex; align-items: center; gap: 14px; }
+  .tempo-bar { height: 6px; border-radius: 999px; min-width: 24px; opacity: 0.8; flex: 0 0 auto; animation: tempoSlide var(--dur, 600ms) cubic-bezier(.2,.7,.2,1) infinite alternate; }
+  @keyframes tempoSlide { from { width: 24px; opacity: 0.5; } to { width: 280px; opacity: 0.95; } }
+  .tempo-item code { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); min-width: 120px; }
+  .easings { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+  .easings li { padding: 6px 12px; background: var(--paper-2); border: 1px solid var(--rule); border-radius: 4px; font-size: 12px; }
 
   /* — Components — */
+  .mock-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 24px; align-items: start; padding: 8px 0 28px; }
+  @media (max-width: 640px) { .mock-grid { grid-template-columns: 1fr; } }
+  .mock-button { display: flex; flex-direction: column; gap: 14px; padding: 32px; background: var(--paper-2); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--rule); align-items: flex-start; }
+  .m-btn { font-family: var(--body); font-size: 14px; font-weight: 500; padding: 12px 22px; border: 1px solid transparent; cursor: pointer; }
+  .m-btn-secondary { background: transparent; border-style: solid; border-width: 1px; }
+  .mock-card { padding: 26px 28px; box-shadow: inset 0 0 0 1px var(--rule); }
+  .m-card-eyebrow { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-faint); }
+  .m-card-title { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 8px 0 8px; line-height: 1.1; }
+  .m-card-body { margin: 0 0 14px; font-size: 14px; color: var(--ink-soft); line-height: 1.5; }
+  .m-card-link { font-family: var(--body); font-size: 13px; font-weight: 500; border: 0; padding: 0; }
+
+  .component-list { display: flex; flex-direction: column; }
   .component-card { padding: 18px 0; border-top: 1px solid var(--rule); }
   .component-card:last-of-type { border-bottom: 1px solid var(--rule); }
   .component-card h4 { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 0 0 14px; }
 
   /* — Voice — */
-  .cta-verbs { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px 14px; }
-  .cta-verbs li { padding: 6px 12px; background: rgba(0,0,0,.03); border-radius: 4px; font-size: 13px; }
-  [data-theme="dark"] .cta-verbs li { background: rgba(255,255,255,.04); }
   .quotes { list-style: none; padding: 0; margin: 0; }
-  .quotes li { font-family: var(--display); font-size: 22px; padding: 14px 0; border-top: 1px solid var(--rule); color: var(--ink-soft); font-style: italic; }
+  .quotes li {
+    font-family: var(--display);
+    font-size: 26px;
+    line-height: 1.18;
+    padding: 22px 0;
+    border-top: 1px solid var(--rule);
+    color: var(--ink);
+  }
   .quotes li:last-child { border-bottom: 1px solid var(--rule); }
+  .cta-verbs { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px 20px; }
+  .cta-verbs li { display: flex; align-items: baseline; gap: 6px; font-size: 14px; }
+  .cta-verbs code { font-size: 13px; }
+  .cta-verbs .muted { font-family: var(--mono); font-size: 11px; }
 
-  /* — Remediation — */
+  /* — Accessibility — */
+  .a11y-score { display: flex; align-items: baseline; gap: 24px; padding: 12px 0 32px; border-bottom: 1px solid var(--rule); margin-bottom: 24px; }
+  .a11y-num { font-family: var(--display); font-size: clamp(72px, 10vw, 120px); line-height: 1; letter-spacing: -.02em; }
+  .a11y-suffix { font-size: 0.5em; color: var(--ink-soft); margin-left: 4px; }
+  .a11y-label { color: var(--ink-soft); font-size: 14px; line-height: 1.4; }
+  .a11y-pairs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+  .a11y-pair { display: flex; flex-direction: column; gap: 12px; }
+  .a11y-stack { padding: 22px 18px; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); display: flex; justify-content: space-between; align-items: center; }
+  .a11y-Aa { font-family: var(--display); font-size: 32px; line-height: 1; }
+  .a11y-ratio { font-family: var(--mono); font-size: 12px; opacity: 0.9; }
+  .a11y-pair dl { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; padding: 0; margin: 0; }
+  .a11y-pair dt { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-faint); }
+  .a11y-pair dd { margin: 0 0 4px; font-size: 12px; }
   .remediation { list-style: none; padding: 0; margin: 0; }
-  .remediation li { padding: 10px 0; border-top: 1px solid var(--rule); display: flex; gap: 10px; align-items: baseline; }
+  .remediation li { padding: 10px 0; border-top: 1px solid var(--rule); }
   .remediation li:last-child { border-bottom: 1px solid var(--rule); }
 
-  /* — Code blocks — */
-  .codeblock { background: rgba(0,0,0,.04); border-radius: 6px; padding: 16px 18px; overflow-x: auto; font-family: var(--mono); font-size: 12px; line-height: 1.6; margin: 0 0 14px; }
-  [data-theme="dark"] .codeblock { background: rgba(255,255,255,.05); }
+  /* — Tokens — */
+  .codeblock-wrap { margin: 0 0 18px; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+  .codeblock-head { display: flex; justify-content: space-between; padding: 10px 14px; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-faint); background: var(--paper-2); border-bottom: 1px solid var(--rule); }
+  .codeblock { background: var(--paper-2); padding: 16px 18px; overflow-x: auto; font-family: var(--mono); font-size: 12px; line-height: 1.6; margin: 0; color: var(--ink); }
 
   /* — Usage — */
   .usage-list { padding: 0; margin: 0; counter-reset: rule; list-style: none; }
-  .usage-list li { padding: 18px 0; border-top: 1px solid var(--rule); position: relative; padding-left: 56px; counter-increment: rule; }
+  .usage-list li { padding: 22px 0; border-top: 1px solid var(--rule); position: relative; padding-left: 56px; counter-increment: rule; }
   .usage-list li:last-child { border-bottom: 1px solid var(--rule); }
-  .usage-list li::before { content: counter(rule, decimal-leading-zero); position: absolute; left: 0; top: 22px; font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .usage-list li::before { content: counter(rule, decimal-leading-zero); position: absolute; left: 0; top: 26px; font-family: var(--mono); font-size: 11px; color: var(--ink-faint); letter-spacing: .14em; }
+  .usage-title { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 0 0 6px; }
+  .usage-body { margin: 0; color: var(--ink-soft); font-size: 15px; line-height: 1.55; }
 
   /* — Footer — */
-  footer { padding: 48px 0 0; font-size: 13px; color: var(--ink-soft); display: flex; justify-content: space-between; align-items: end; flex-wrap: wrap; gap: 16px; }
+  footer { padding: 40px 40px 0; font-size: 13px; color: var(--ink-soft); display: flex; justify-content: space-between; align-items: end; flex-wrap: wrap; gap: 16px; }
   footer .sig { font-family: var(--display); font-size: 22px; color: var(--ink); }
-  footer .stamp { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+  footer .stamp { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; }
+  @media (max-width: 640px) { footer { padding: 40px 22px 0; } }
 
   /* — Print — */
   @media print {
     body { background: white; color: black; }
     .topbar nav, .theme-btn { display: none; }
-    section, .cover, .toc { page-break-inside: avoid; border-color: #ddd; }
-    .toc { page-break-after: always; }
-    .cover { page-break-after: always; }
-    .scale-table { page-break-inside: avoid; }
+    .cover, .toc, section { page-break-inside: avoid; border-color: #ddd; padding: 36px 32px; }
+    .cover-band { background-color: var(--accent) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .toc, .cover { page-break-after: always; }
+    section { page-break-after: always; }
+    .scale-table, .a11y-pair, .component-card { page-break-inside: avoid; }
   }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="topbar">
-      <div class="brand"><a href="https://designlang.app">designlang</a></div>
-      <nav>
-        <span>Brand Guidelines</span>
-        <button class="theme-btn" id="themeBtn" type="button">Theme</button>
-      </nav>
-    </header>
+  <header class="topbar">
+    <div class="brand"><a href="https://designlang.app">designlang</a></div>
+    <nav>
+      <span>Brand guidelines</span>
+      <button class="theme-btn" id="themeBtn" type="button">Theme</button>
+    </nav>
+  </header>
 
-    ${buildCover(design)}
+  <main class="wrap">
+    ${buildCover(design, accent)}
     ${buildToc()}
     ${buildAbout(design)}
     ${buildLogo(design)}
@@ -781,12 +969,12 @@ export function formatBrandBook(design, opts = {}) {
     ${buildSpacing(design)}
     ${buildShape(design)}
     ${buildIconography(design)}
-    ${buildMotion(design)}
-    ${buildComponents(design)}
+    ${buildMotion(design, accent)}
+    ${buildComponents(design, accent)}
     ${buildVoice(design)}
     ${buildAccessibility(design)}
     ${buildTokens(design)}
-    ${buildUsage(design)}
+    ${buildUsage()}
 
     <footer>
       <div>
@@ -795,7 +983,7 @@ export function formatBrandBook(design, opts = {}) {
       </div>
       <div class="stamp">${esc(new Date(design.meta?.timestamp || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }))} · v${esc(opts.version || '')}</div>
     </footer>
-  </div>
+  </main>
 
   <script>
     (function () {
