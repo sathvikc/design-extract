@@ -53,6 +53,8 @@ import { buildPack } from '../src/pack.js';
 import { recolorDesign } from '../src/recolor.js';
 import { formatThemeSwap, formatThemeSwapMarkdown } from '../src/formatters/theme-swap.js';
 import { formatBrandBook, formatBrandBookMarkdown } from '../src/formatters/brand-book.js';
+import { fuseDesigns, AXES } from '../src/fuse.js';
+import { formatPair, formatPairMarkdown } from '../src/formatters/pair.js';
 import { nameFromUrl } from '../src/utils.js';
 
 function validateUrl(url) {
@@ -1401,6 +1403,118 @@ program
       }
     } catch (err) {
       spinner.fail('Brand book failed');
+      console.error(chalk.red(`\n  ${err.message}\n`));
+      process.exit(1);
+    }
+  });
+
+// ── Pair command — fuse two designs across configurable axes
+program
+  .command('pair <urlA> <urlB>')
+  .description('Fuse two extracted designs across axes (colours/typography/spacing/shape/motion/voice/components)')
+  .option('-o, --out <dir>', 'output directory', './design-extract-output')
+  .option('-n, --name <name>', 'output file prefix (default: <hostA>-x-<hostB>)')
+  .option('--colors-from <a|b>',     'pull colours from A or B (default: a)')
+  .option('--typography-from <a|b>', 'pull typography from A or B (default: b)')
+  .option('--spacing-from <a|b>',    'pull spacing from A or B (default: a)')
+  .option('--shape-from <a|b>',      'pull shape (radii + shadows) from A or B (default: a)')
+  .option('--motion-from <a|b>',     'pull motion from A or B (default: a)')
+  .option('--voice-from <a|b>',      'pull voice from A or B (default: b)')
+  .option('--components-from <a|b>', 'pull component anatomy from A or B (default: b)')
+  .option('--brand', 'also emit a full brand-guidelines book of the fused identity')
+  .option('--format <fmt>', 'output format: html, md, json, all', 'all')
+  .option('--open', 'open the HTML pair card in the default browser')
+  .action(async (urlA, urlB, opts) => {
+    if (!urlA.startsWith('http')) urlA = `https://${urlA}`;
+    if (!urlB.startsWith('http')) urlB = `https://${urlB}`;
+    validateUrl(urlA);
+    validateUrl(urlB);
+
+    const spinner = ora(`Extracting ${urlA} and ${urlB} in parallel...`).start();
+    try {
+      const [designA, designB] = await Promise.all([
+        extractDesignLanguage(urlA),
+        extractDesignLanguage(urlB),
+      ]);
+
+      spinner.text = 'Fusing...';
+      const { design: fused, summary } = fuseDesigns(designA, designB, {
+        colorsFrom:     opts.colorsFrom,
+        typographyFrom: opts.typographyFrom,
+        spacingFrom:    opts.spacingFrom,
+        shapeFrom:      opts.shapeFrom,
+        motionFrom:     opts.motionFrom,
+        voiceFrom:      opts.voiceFrom,
+        componentsFrom: opts.componentsFrom,
+      });
+
+      const outDir = resolve(opts.out);
+      mkdirSync(outDir, { recursive: true });
+      const prefix = opts.name || `${nameFromUrl(urlA)}-x-${nameFromUrl(urlB)}.pair`;
+      const written = [];
+
+      if (opts.format === 'all' || opts.format === 'html') {
+        const html = formatPair(designA, designB, fused, summary, { version: PKG_VERSION });
+        const p = join(outDir, `${prefix}.html`);
+        writeFileSync(p, html);
+        written.push(p);
+      }
+      if (opts.format === 'all' || opts.format === 'md') {
+        const md = formatPairMarkdown(designA, designB, fused, summary);
+        const p = join(outDir, `${prefix}.md`);
+        writeFileSync(p, md);
+        written.push(p);
+      }
+      if (opts.format === 'all' || opts.format === 'json') {
+        const p = join(outDir, `${prefix}.json`);
+        writeFileSync(p, JSON.stringify({
+          a: { url: designA.meta?.url, host: summary.a.host },
+          b: { url: designB.meta?.url, host: summary.b.host },
+          axes: summary.axes,
+          fused: {
+            primary: fused.colors?.primary?.hex || null,
+            family: (fused.typography?.families || [])[0],
+            tone: fused.voice?.tone,
+          },
+          timestamp: new Date().toISOString(),
+        }, null, 2));
+        written.push(p);
+      }
+      if (opts.brand) {
+        const html = formatBrandBook(fused, { version: PKG_VERSION });
+        const p = join(outDir, `${prefix}.brand.html`);
+        writeFileSync(p, html);
+        written.push(p);
+      }
+
+      spinner.stop();
+      console.log('');
+      console.log(`  ${chalk.bold(`${summary.a.host} × ${summary.b.host}`)}`);
+      console.log('');
+      const axisLabels = {
+        colors: 'Colours', typography: 'Typography', spacing: 'Spacing',
+        shape: 'Shape', motion: 'Motion', voice: 'Voice', components: 'Components',
+      };
+      for (const axis of Object.keys(axisLabels)) {
+        const src = summary.axes[axis];
+        const fromHost = src === 'a' ? summary.a.host : summary.b.host;
+        const tag = src === 'a' ? chalk.cyan('A') : chalk.magenta('B');
+        console.log(`    ${tag}  ${axisLabels[axis].padEnd(12)} ${chalk.gray('·')} ${chalk.gray(fromHost)}`);
+      }
+      console.log('');
+      for (const f of written) console.log(`  ${chalk.green('✓')} ${chalk.gray(f)}`);
+      console.log('');
+
+      if (opts.open) {
+        const htmlPath = written.find(p => p.endsWith('.html'));
+        if (htmlPath) {
+          const { spawn } = await import('child_process');
+          const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+          spawn(cmd, [htmlPath], { detached: true, stdio: 'ignore' }).unref();
+        }
+      }
+    } catch (err) {
+      spinner.fail('Pair failed');
       console.error(chalk.red(`\n  ${err.message}\n`));
       process.exit(1);
     }

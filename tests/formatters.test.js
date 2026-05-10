@@ -1324,3 +1324,188 @@ describe('formatBrandBookMarkdown', () => {
     assert.match(md, /\*\*Primary:\*\* `#0066cc`/);
   });
 });
+
+// ── fuseDesigns + formatPair ──────────────────────────────────
+
+describe('fuseDesigns', () => {
+  let fuseDesigns, AXES;
+  before(async () => {
+    ({ fuseDesigns, AXES } = await import('../src/fuse.js'));
+  });
+
+  // Build a "B" design that's clearly distinguishable from mockDesign on
+  // every axis so we can verify which side each axis came from.
+  function makeB() {
+    return {
+      meta: { url: 'https://b.example.com', title: 'B Site', timestamp: new Date().toISOString() },
+      colors: {
+        primary: { hex: '#ff4800', count: 99 },
+        secondary: { hex: '#990000', count: 50 },
+        all: [{ hex: '#ff4800' }, { hex: '#990000' }, { hex: '#1a1a1a' }],
+        neutrals: [{ hex: '#222222' }, { hex: '#cccccc' }],
+        backgrounds: ['#fafafa'],
+        text: ['#0a0a0a'],
+        gradients: [],
+      },
+      typography: {
+        families: [{ name: 'Söhne', count: 100 }],
+        scale: [{ size: 56 }, { size: 18 }],
+        weights: [{ weight: '500', count: 100 }],
+      },
+      spacing: { base: 8, scale: [8, 16, 32] },
+      borders: { radii: [{ value: 0 }, { value: 2 }] },
+      shadows: { values: [{ raw: 'none' }] },
+      motion: { feel: 'mechanical', durations: [{ ms: 0 }], easings: ['linear'] },
+      voice: { tone: 'sharp', sampleHeadings: ['Headline from B'], ctaVerbs: ['ship'] },
+      componentAnatomy: [{ kind: 'badge', slots: ['label'] }],
+      componentLibrary: { library: 'custom-b' },
+      pageIntent: { type: 'landing', confidence: 1 },
+      materialLanguage: { label: 'brutalist' },
+      imageryStyle: { label: 'flat-illustration' },
+      score: { grade: 'A', overall: 95, scores: {} },
+    };
+  }
+
+  it('exposes the seven canonical axes', () => {
+    assert.deepEqual(AXES.sort(), ['colors', 'components', 'motion', 'shape', 'spacing', 'typography', 'voice'].sort());
+  });
+
+  it('uses the documented default split — visual from A, voice + type + components from B', () => {
+    const b = makeB();
+    const { design, summary } = fuseDesigns(mockDesign, b);
+    // Defaults: colors/spacing/shape/motion -> A; typography/voice/components -> B.
+    assert.equal(design.colors.primary.hex, '#0066cc', 'colours from A by default');
+    assert.equal(design.typography.families[0].name, 'Söhne', 'typography from B by default');
+    assert.equal(design.voice.tone, 'sharp', 'voice from B by default');
+    assert.equal(design.componentLibrary.library, 'custom-b', 'components from B by default');
+    assert.equal(design.spacing.base, 4, 'spacing from A by default');
+    assert.equal(design.borders.radii[0].value, 4, 'shape (radii) from A by default');
+    assert.equal(design.motion?.feel, undefined, 'A has no motion in mock — falls through cleanly');
+    assert.equal(summary.axes.colors, 'a');
+    assert.equal(summary.axes.typography, 'b');
+  });
+
+  it('honours per-axis overrides', () => {
+    const b = makeB();
+    const { design, summary } = fuseDesigns(mockDesign, b, { colorsFrom: 'b', voiceFrom: 'a', componentsFrom: 'a' });
+    assert.equal(design.colors.primary.hex, '#ff4800');
+    assert.equal(summary.axes.colors, 'b');
+    assert.equal(summary.axes.voice, 'a');
+    assert.equal(summary.axes.components, 'a');
+  });
+
+  it('strips score / cssHealth (they belong to the source extractions, not the fusion)', () => {
+    const b = makeB();
+    const { design } = fuseDesigns(mockDesign, b);
+    assert.equal(design.score, null);
+    assert.equal(design.cssHealth, null);
+  });
+
+  it('synthesises a pair-specific meta URL and title', () => {
+    const b = makeB();
+    const { design } = fuseDesigns(mockDesign, b);
+    assert.match(design.meta.url, /^pair:\/\/example\.com-x-b\.example\.com$/);
+    assert.equal(design.meta.title, 'example.com × b.example.com');
+    assert.equal(design.meta.pairedFrom.a, 'https://example.com');
+    assert.equal(design.meta.pairedFrom.b, 'https://b.example.com');
+  });
+
+  it('does not mutate the source designs', () => {
+    const b = makeB();
+    const beforeA = JSON.stringify(mockDesign.colors);
+    const beforeB = JSON.stringify(b.colors);
+    fuseDesigns(mockDesign, b);
+    assert.equal(JSON.stringify(mockDesign.colors), beforeA, 'A.colors must not mutate');
+    assert.equal(JSON.stringify(b.colors), beforeB, 'B.colors must not mutate');
+  });
+
+  it('throws clearly when either design is missing', () => {
+    assert.throws(() => fuseDesigns(null, makeB()), /both designs are required/);
+    assert.throws(() => fuseDesigns(mockDesign, null), /both designs are required/);
+  });
+});
+
+describe('formatPair', () => {
+  let fuseDesigns, formatPair, formatPairMarkdown;
+  before(async () => {
+    ({ fuseDesigns } = await import('../src/fuse.js'));
+    ({ formatPair, formatPairMarkdown } = await import('../src/formatters/pair.js'));
+  });
+
+  function makeB() {
+    return {
+      meta: { url: 'https://other.example' },
+      colors: { primary: { hex: '#ff4800' }, all: [{ hex: '#ff4800' }] },
+      typography: { families: [{ name: 'Söhne' }], scale: [], weights: [] },
+      spacing: { scale: [] },
+      borders: { radii: [] },
+      shadows: { values: [] },
+      motion: {},
+      voice: { tone: 'sharp', sampleHeadings: ['Headline from B'] },
+      componentAnatomy: [],
+      componentLibrary: { library: 'custom-b' },
+      score: { grade: 'A', overall: 95, scores: {} },
+    };
+  }
+
+  it('renders both source hosts + the fused identity in self-contained HTML', () => {
+    const b = makeB();
+    const { design, summary } = fuseDesigns(mockDesign, b);
+    const html = formatPair(mockDesign, b, design, summary, { version: '12.8.0' });
+    assert.ok(html.startsWith('<!doctype html>'));
+    assert.ok(html.includes('example.com'));
+    assert.ok(html.includes('other.example'));
+    assert.match(html, /Which axis came from where/);
+    assert.match(html, /from A|from B|FROM A|FROM B/);
+  });
+
+  it('uses the fused designs sample heading in the specimen when available', () => {
+    const b = makeB();
+    const { design, summary } = fuseDesigns(mockDesign, b);
+    const html = formatPair(mockDesign, b, design, summary);
+    // Voice came from B by default → specimen should quote B's heading.
+    assert.ok(html.includes('Headline from B'), 'specimen must use the fused voice');
+  });
+
+  it('escapes user-controlled strings (XSS)', () => {
+    const b = makeB();
+    b.meta.url = 'https://<script>alert(1)</script>.com';
+    const { design, summary } = fuseDesigns(mockDesign, b);
+    const html = formatPair(mockDesign, b, design, summary);
+    assert.ok(!html.includes('<script>alert(1)'));
+    assert.ok(html.includes('&lt;script&gt;'));
+  });
+
+  it('throws when any of the three designs is missing', () => {
+    const b = makeB();
+    const { design, summary } = fuseDesigns(mockDesign, b);
+    assert.throws(() => formatPair(null, b, design, summary), /required/);
+    assert.throws(() => formatPair(mockDesign, null, design, summary), /required/);
+    assert.throws(() => formatPair(mockDesign, b, null, summary), /required/);
+  });
+});
+
+describe('formatPairMarkdown', () => {
+  let fuseDesigns, formatPairMarkdown;
+  before(async () => {
+    ({ fuseDesigns } = await import('../src/fuse.js'));
+    ({ formatPairMarkdown } = await import('../src/formatters/pair.js'));
+  });
+
+  it('emits a per-axis source table', () => {
+    const b = {
+      meta: { url: 'https://other.example' },
+      colors: { primary: { hex: '#ff4800' }, all: [{ hex: '#ff4800' }] },
+      typography: { families: [{ name: 'Söhne' }] },
+      spacing: { scale: [] }, borders: { radii: [] }, shadows: { values: [] },
+      motion: {}, voice: { tone: 'sharp', sampleHeadings: [] },
+      componentAnatomy: [], componentLibrary: {}, score: { grade: 'A', overall: 95, scores: {} },
+    };
+    const { design, summary } = fuseDesigns(mockDesign, b);
+    const md = formatPairMarkdown(mockDesign, b, design, summary);
+    assert.match(md, /^# example\.com × other\.example/m);
+    assert.match(md, /\| Colour \| example\.com \|/);
+    assert.match(md, /\| Typography \| other\.example \|/);
+    assert.match(md, /\| Voice \| other\.example \|/);
+  });
+});
