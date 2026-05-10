@@ -1,5 +1,65 @@
 # Changelog
 
+## [12.8.0] — 2026-05-10
+
+**Pair — fuse two extracted designs into a single hybrid identity.**
+
+\`designlang pair <urlA> <urlB>\` extracts both sites in parallel, then
+mixes their design systems along seven configurable axes (colours,
+typography, spacing, shape, motion, voice, components). Default split is
+"visuals from A, voice + type + components from B" — i.e. the most
+distinctive crossover. Override any axis with \`--<axis>-from a|b\`.
+
+\`\`\`bash
+npx designlang pair stripe.com linear.app
+\`\`\`
+
+\`\`\`
+stripe.com × linear.app
+  A  Colours      · stripe.com
+  B  Typography   · linear.app
+  A  Spacing      · stripe.com
+  A  Shape        · stripe.com
+  A  Motion       · stripe.com
+  B  Voice        · linear.app
+  B  Components   · linear.app
+
+✓ stripe-com-x-linear-app.pair.html
+✓ stripe-com-x-linear-app.pair.md
+✓ stripe-com-x-linear-app.pair.json
+\`\`\`
+
+### Added
+
+- New CLI command: \`designlang pair <urlA> <urlB>\` with \`--colors-from\`,
+  \`--typography-from\`, \`--spacing-from\`, \`--shape-from\`, \`--motion-from\`,
+  \`--voice-from\`, \`--components-from\`, plus \`--brand\` to also emit a
+  full brand-guidelines book of the fused identity.
+- New module \`src/fuse.js\` — \`fuseDesigns(a, b, opts)\` deep-clones both
+  inputs, picks each axis from the requested source, synthesises a
+  pair-specific meta URL (\`pair://<a>-x-<b>\`), and strips score /
+  cssHealth (those belong to the source extractions, not the fusion).
+- New formatter \`src/formatters/pair.js\` — editorial pair card with a
+  three-card crossover (A · B · Fused), per-axis source matrix table,
+  and a fused specimen using the *real headline* from whichever site
+  contributed the voice axis.
+- Plus \`formatPairMarkdown\` for diff-friendly summaries.
+- 12 new tests covering default split, per-axis overrides, score-stripping,
+  meta synthesis, immutability of source designs, HTML rendering, voice
+  carry-through to the specimen, XSS escaping, and missing-input errors.
+
+### Plugin
+
+\`/pair\` is the 8th slash command in the Claude Code plugin
+(\`/extract\`, \`/grade\`, \`/battle\`, \`/remix\`, \`/pack\`, \`/theme-swap\`,
+\`/brand\`, \`/pair\`). Plugin manifests bumped to 12.8.0.
+
+### Why
+
+\`battle\` answers "which is better"; \`pair\` answers "what would the
+intersection look like". Same parallel extraction, opposite operation.
+Pure logic, no LLM, no new dependencies.
+
 ## [12.7.1] — 2026-05-09
 
 **Brand book — visual polish pass.**
