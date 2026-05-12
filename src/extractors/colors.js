@@ -106,8 +106,29 @@ export function extractColors(computedStyles) {
     return pct < 0.05 && c.members.some(m => m.contexts.has('background'));
   }) || ranked.find(c => c !== primary && c !== secondary) || null;
 
+  // Primary detection confidence — useful signal for downstream consumers
+  // that may want to warn the user when extraction is uncertain (e.g. a
+  // monochrome site where there's no clear brand colour). We compute it
+  // from the score gap between rank 1 and rank 2: a runaway leader is
+  // confident, a near-tie is not.
+  let primaryConfidence = null;
+  if (primary) {
+    const top = brandScore(primary);
+    const next = ranked[1] ? brandScore(ranked[1]) : 0;
+    if (top <= 0) {
+      primaryConfidence = 0;
+    } else if (next <= 0) {
+      primaryConfidence = primary.interactiveBg > 0 ? 1 : 0.6;
+    } else {
+      const gap = (top - next) / top;
+      // Anchor: gap >= 0.5 → 1.0 (runaway). gap 0 → 0.3 (near-tie).
+      primaryConfidence = Math.max(0.3, Math.min(1, 0.3 + gap * 1.4));
+    }
+    primaryConfidence = Math.round(primaryConfidence * 100) / 100;
+  }
+
   return {
-    primary: primary ? { hex: primary.hex, rgb: primary.representative, hsl: rgbToHsl(primary.representative), count: primary.count } : null,
+    primary: primary ? { hex: primary.hex, rgb: primary.representative, hsl: rgbToHsl(primary.representative), count: primary.count, confidence: primaryConfidence } : null,
     secondary: secondary ? { hex: secondary.hex, rgb: secondary.representative, hsl: rgbToHsl(secondary.representative), count: secondary.count } : null,
     accent: accent ? { hex: accent.hex, rgb: accent.representative, hsl: rgbToHsl(accent.representative), count: accent.count } : null,
     neutrals: neutrals.map(c => ({ hex: c.hex, rgb: c.representative, hsl: rgbToHsl(c.representative), count: c.count })),

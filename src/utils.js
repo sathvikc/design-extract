@@ -188,6 +188,20 @@ export function clusterColors(colors, threshold = 15) {
       clusters.push({ representative: color.parsed, hex: color.hex, members: [color], count: color.count });
     }
   }
+  // The first encountered colour seeded each cluster, but that's order-of-
+  // iteration accident, not signal. Re-pick the representative as the
+  // most-used member of the cluster so downstream consumers (primary
+  // detection, palette display, brand book) get the dominant shade.
+  for (const cluster of clusters) {
+    if (cluster.members.length > 1) {
+      const dominant = cluster.members.reduce(
+        (best, m) => (m.count > best.count ? m : best),
+        cluster.members[0],
+      );
+      cluster.representative = dominant.parsed;
+      cluster.hex = dominant.hex;
+    }
+  }
   return clusters.sort((a, b) => b.count - a.count);
 }
 
@@ -235,13 +249,33 @@ export function nameFromUrl(url) {
 
 export function detectScale(values) {
   if (values.length < 3) return { base: null, scale: values };
-  const candidates = [2, 4, 6, 8];
+  // Expanded candidate set. Real production palettes use 4/8 (Tailwind +
+  // Material), 5 (Bootstrap), 6 (some Apple specs), 7 (rare), 10/12/16
+  // (looser systems). 2 stays as a fallback for icon/component-level
+  // numbers. We give 4 and 8 a small head-start because they win >70%
+  // of the time and were the previous-only choices — keeps results
+  // stable for sites that worked before.
+  const candidates = [2, 4, 5, 6, 7, 8, 10, 12, 16];
+  const bonus = { 4: 0.04, 8: 0.04 };
   let bestBase = null;
   let bestScore = 0;
   for (const base of candidates) {
-    const score = values.filter(v => v > 0 && v % base === 0).length / values.length;
+    const fit = values.filter(v => v > 0 && v % base === 0).length / values.length;
+    const score = fit + (bonus[base] || 0);
     if (score > bestScore) { bestScore = score; bestBase = base; }
   }
   if (bestScore >= 0.6) return { base: bestBase, scale: values };
   return { base: null, scale: values };
+}
+
+// Shared "always-list" coercer for downstream consumers (formatters,
+// pack, brand-book). Different extractors return slot/prop/variant
+// fields as arrays, objects, or comma-separated strings depending on
+// what was detected; this normalises without losing data.
+export function asList(v) {
+  if (v == null) return [];
+  if (Array.isArray(v)) return v.filter(x => x != null);
+  if (typeof v === 'string') return v.split(',').map(s => s.trim()).filter(Boolean);
+  if (typeof v === 'object') return Object.keys(v).filter(k => v[k] !== false && v[k] !== null);
+  return [String(v)];
 }

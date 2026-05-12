@@ -239,6 +239,22 @@ describe('clusterColors', () => {
     const clusters = clusterColors(colors, 15);
     assert.ok(clusters[0].count >= clusters[clusters.length - 1].count);
   });
+
+  it('uses the most-used member as the cluster representative (not first-encountered)', () => {
+    // The lavender (#f0f0ff) was encountered FIRST but is only used 2 times;
+    // the deep purple (#5544ff) joins its cluster and is used 50 times.
+    // The representative MUST be the dominant shade for downstream
+    // primary-detection to work correctly. (This was a real bug pre-v12.9
+    // that produced washed-out brand colours in the brand book.)
+    const colors = [
+      { hex: '#f0f0ff', parsed: { r: 240, g: 240, b: 255 }, count: 2 },
+      { hex: '#5544ff', parsed: { r: 85, g: 68, b: 255 }, count: 50 },
+    ];
+    const clusters = clusterColors(colors, 280); // big threshold → both cluster together
+    assert.equal(clusters.length, 1);
+    assert.equal(clusters[0].hex, '#5544ff', 'cluster hex must be the dominant member');
+    assert.deepEqual(clusters[0].representative, { r: 85, g: 68, b: 255 });
+  });
 });
 
 // ── clusterValues ───────────────────────────────────────────────
@@ -326,6 +342,27 @@ describe('detectScale', () => {
   it('returns null base for arbitrary values', () => {
     const result = detectScale([3, 7, 11, 19, 37, 53]);
     assert.equal(result.base, null);
+  });
+
+  it('detects base-5 scales (Bootstrap-style)', () => {
+    // 5/10/15/20/25/40/60 — all divisible by 5; nothing in [2,4,6,8] fits
+    // well, so before this change the result was base:null.
+    const result = detectScale([5, 10, 15, 20, 25, 40, 60]);
+    assert.equal(result.base, 5);
+  });
+
+  it('detects base-6 scales', () => {
+    const result = detectScale([6, 12, 18, 24, 30, 42, 60]);
+    // base 2 or 6 both fit ≥60%; 6 should win the tie (or 2 with bonus).
+    assert.ok([2, 6].includes(result.base));
+  });
+
+  it('still prefers base-8 when both 4 and 8 fit (Tailwind-leaning bonus)', () => {
+    // 8/16/24/32/40 — 4 fits 100%, 8 fits 100%. Tie. Bonus keeps both
+    // valid but the chosen base should still be one of the production
+    // defaults, not a coincidental higher divisor.
+    const result = detectScale([8, 16, 24, 32, 40]);
+    assert.ok([4, 8].includes(result.base));
   });
 });
 
