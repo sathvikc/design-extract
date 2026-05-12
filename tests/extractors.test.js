@@ -196,6 +196,36 @@ describe('extractTypography', () => {
     assert.ok(typo.weights.some(w => w.weight === '400'));
     assert.ok(typo.weights.some(w => w.weight === '700'));
   });
+
+  it('drops generic CSS family names from the families list', () => {
+    // Stacks declaring only generic fallbacks should not produce any
+    // entry in families[] — they aren't part of the site's brand.
+    const noisy = [
+      makeEl({ tag: 'p',    fontFamily: 'sans-serif', fontSize: '16px' }),
+      makeEl({ tag: 'span', fontFamily: 'system-ui',  fontSize: '14px' }),
+      makeEl({ tag: 'code', fontFamily: 'monospace',  fontSize: '12px' }),
+      makeEl({ tag: 'h1',   fontFamily: 'inherit',    fontSize: '32px' }),
+      makeEl({ tag: 'h2',   fontFamily: '"Inter", sans-serif', fontSize: '24px' }),
+    ];
+    const typo = extractTypography(noisy);
+    const names = typo.families.map(f => f.name);
+    assert.ok(!names.some(n => /^sans-serif|monospace|system-ui|inherit$/i.test(n)),
+      `families must not contain generic stacks, got: ${names.join(', ')}`);
+    assert.ok(names.includes('Inter'), 'real families must still come through');
+  });
+
+  it('drops icon-font families (Material Icons, Font Awesome, etc.)', () => {
+    const iconHeavy = [
+      makeEl({ tag: 'i',    fontFamily: '"Material Icons", sans-serif', fontSize: '24px' }),
+      makeEl({ tag: 'i',    fontFamily: '"Font Awesome 6 Free"',         fontSize: '20px' }),
+      makeEl({ tag: 'span', fontFamily: 'lucide',                        fontSize: '16px' }),
+      makeEl({ tag: 'p',    fontFamily: '"Inter", sans-serif',           fontSize: '16px' }),
+    ];
+    const typo = extractTypography(iconHeavy);
+    const names = typo.families.map(f => f.name);
+    assert.ok(!names.some(n => /Material Icons|Font Awesome|lucide/i.test(n)),
+      `families must not contain icon fonts, got: ${names.join(', ')}`);
+  });
 });
 
 // ── extractSpacing ──────────────────────────────────────────────

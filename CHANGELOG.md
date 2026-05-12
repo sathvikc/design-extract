@@ -1,5 +1,60 @@
 # Changelog
 
+## [12.9.0] — 2026-05-11
+
+**Extraction quality pass — the core MVP, fixed.**
+
+Eight features rode on top of the same extractor. This release fixes
+four real defects in that extractor — visible across grade, battle,
+remix, pack, theme-swap, brand, and pair without anyone having to
+re-run the downstream code.
+
+### Fixed
+
+- **Cluster representative bug** in \`clusterColors()\`. Before: the first-
+  encountered colour seeded each cluster, so a sparsely-used pale shade
+  could become the canonical hex for a cluster that mostly held a vivid
+  brand colour. The brand-book primary slot was reading lavender for
+  Stripe instead of \`#533afd\`. Fixed: representative is now the
+  most-counted member of the cluster.
+- **Spacing base detection** missed common production scales. Before:
+  only \`[2, 4, 6, 8]\` were tried as base candidates, so Bootstrap-style
+  base-5 sites and base-7/10/12 sites returned \`base: null\`. Fixed:
+  expanded to \`[2, 4, 5, 6, 7, 8, 10, 12, 16]\` with a small bonus for
+  4 and 8 to keep results stable for the production-default sites.
+- **Typography noise**. Before: generic CSS stacks (\`sans-serif\`,
+  \`monospace\`, \`system-ui\`, \`inherit\`), OS UI fonts (\`-apple-system\`),
+  and icon fonts (Material Icons, Font Awesome, Lucide, Tabler, etc.)
+  polluted the \`families\` list, making the brand book mistakenly
+  document an icon font as the brand's body family. Fixed: explicit
+  generic + icon-family filter at the source.
+
+### Added
+
+- **\`primary.confidence\`** (0–1) on \`design.colors.primary\`. Computed
+  from the score gap between rank 1 and rank 2 brand candidates — a
+  runaway leader scores 1.0; a near-tie scores 0.3. Downstream
+  consumers (brand book, grade, theme-swap) can surface uncertainty
+  warnings on low-confidence extractions.
+- **\`asList(v)\`** helper exported from \`src/utils.js\`. Coerces
+  anything-shaped input (array / object / comma-string / scalar) into
+  a clean string array. Consolidates the per-formatter ad-hoc
+  defenses (brand-book, pair, pack all had their own copies).
+
+### Why
+
+Verified live on \`stripe.com\`:
+
+- Pre-v12.9: primary slot showed a lavender shade, multiple icon-font
+  entries in families, spacing base often \`null\`.
+- v12.9: primary \`#533afd\` (count 899, confidence 0.59), \`families:
+  ['sohne-var']\`, spacing base detected correctly.
+
+No new dependencies, no schema breaks, no public-API changes. 396/396
+tests pass (6 new — base-5 + base-6 detectScale, cluster representative
+correctness, generic-family filter, icon-family filter, asList shape
+coercion).
+
 ## [12.8.0] — 2026-05-10
 
 **Pair — fuse two extracted designs into a single hybrid identity.**
