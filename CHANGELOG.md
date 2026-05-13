@@ -1,5 +1,46 @@
 # Changelog
 
+## [12.10.0] — 2026-05-12
+
+**Small ship: \`designlang stats\` + low-confidence warning in grade cards.**
+
+Two tight quality-of-life additions on top of the v12.9 extraction pass.
+
+### Added
+
+- **\`designlang stats <url>\`** — one-screen summary to stdout. Grade, primary, fonts, spacing base, WCAG, stack, library, tone, material, intent — all in ~15 lines. No files written. Use \`-j\` / \`--as-json\` for machine-readable output (CI, scripting).
+
+  \`\`\`
+  Grade        B · 87/100
+  Primary      #533afd ×899 59% conf
+  Fonts        sohne-var
+  Type scale   14 sizes
+  Spacing      base 2px · 13 steps
+  Shape        5 radii · 6 shadows
+  Colours      31 tokens
+  WCAG         79%
+  Stack        next · unknown
+  Material     skeuomorphic
+  Tone         neutral
+  Intent       landing
+  \`\`\`
+
+- **Low-confidence primary warning in \`grade.html\`.** Surfaces the v12.9
+  \`primary.confidence\` field when it drops under 0.5 — a soft, amber
+  callout above the dimensions grid that tells the reader the brand
+  colour is a near-tie pick rather than a runaway leader. Renders as
+  ordinary inline note, not an error. Stays out of the way when
+  confidence is high (the common case).
+
+### Why \`stats\`?
+
+Every other command writes files. There was no one-line "what's this
+site made of" path for scripting, CI summaries, or a quick sanity
+check. \`stats\` fills that gap without bloat — it's the read-only,
+zero-side-effect entry point.
+
+2 new tests (low-confidence note present + absent paths). 398/398 total.
+
 ## [12.9.0] — 2026-05-11
 
 **Extraction quality pass — the core MVP, fixed.**

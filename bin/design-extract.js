@@ -944,6 +944,104 @@ program
     }
   });
 
+// ── Stats command — fast stdout summary, no files written ──
+program
+  .command('stats <url>')
+  .description('Print a concise one-screen summary to stdout — grade, primary, fonts, spacing, voice. No files written.')
+  .option('-j, --as-json', 'emit machine-readable JSON to stdout instead of pretty text')
+  .action(async (url, opts) => {
+    if (!url.startsWith('http')) url = `https://${url}`;
+    validateUrl(url);
+
+    // Quiet path for --as-json: no spinner / chrome noise, just data on stdout.
+    // (`--json` is already a global program flag; `--as-json` avoids the clash.)
+    const wantJson = !!opts.asJson;
+    const spinner = wantJson ? null : ora(`Reading ${url}...`).start();
+    try {
+      const design = await extractDesignLanguage(url);
+      const s = design.score || {};
+      const primary = design.colors?.primary;
+      const families = (design.typography?.families || []).map(f => f?.name || f).filter(Boolean);
+      const summary = {
+        url,
+        title: design.meta?.title,
+        grade: s.grade ?? null,
+        score: s.overall ?? null,
+        primary: primary
+          ? { hex: primary.hex, count: primary.count, confidence: primary.confidence ?? null }
+          : null,
+        families: families.slice(0, 3),
+        fontFamilyCount: families.length,
+        typeScale: (design.typography?.scale || []).length,
+        spacingBase: design.spacing?.base ?? null,
+        spacingScale: (design.spacing?.scale || []).length,
+        radii: (design.borders?.radii || []).length,
+        shadows: (design.shadows?.values || []).length,
+        colors: (design.colors?.all || []).length,
+        wcag: design.accessibility?.score ?? null,
+        material: design.materialLanguage?.label,
+        library: design.componentLibrary?.library,
+        tone: design.voice?.tone,
+        stack: design.stack?.framework,
+        intent: design.pageIntent?.type,
+      };
+
+      if (wantJson) {
+        if (spinner) spinner.stop();
+        process.stdout.write(JSON.stringify(summary, null, 2) + '\n');
+        return;
+      }
+
+      spinner.stop();
+      const gradeColor =
+        summary.grade === 'A' ? chalk.green
+        : summary.grade === 'B' ? chalk.cyan
+        : summary.grade === 'C' ? chalk.yellow
+        : summary.grade === 'D' ? chalk.magenta
+        : chalk.red;
+      const confTag = primary && primary.confidence != null
+        ? (primary.confidence < 0.5
+            ? chalk.yellow(`~${Math.round(primary.confidence * 100)}% conf`)
+            : chalk.gray(`${Math.round(primary.confidence * 100)}% conf`))
+        : '';
+      const line = (label, value) =>
+        `  ${chalk.gray(label.padEnd(12))} ${value}`;
+
+      console.log('');
+      console.log(`  ${chalk.bold(url)}`);
+      if (summary.title) console.log(`  ${chalk.gray(summary.title)}`);
+      console.log('');
+      console.log(line('Grade', `${gradeColor.bold(summary.grade || '—')} ${chalk.gray('·')} ${chalk.bold(String(summary.score ?? '—') + '/100')}`));
+      if (primary) {
+        console.log(line('Primary', `${chalk.bold(primary.hex)} ${chalk.gray('×' + primary.count)} ${confTag}`));
+      } else {
+        console.log(line('Primary', chalk.gray('—')));
+      }
+      if (families.length) {
+        const head = families[0];
+        const body = families[1] || head;
+        const extra = families.length > 2 ? chalk.gray(` +${families.length - 2}`) : '';
+        console.log(line('Fonts', `${head}${body && body !== head ? chalk.gray(' / ') + body : ''}${extra}`));
+      } else {
+        console.log(line('Fonts', chalk.gray('—')));
+      }
+      console.log(line('Type scale', `${summary.typeScale} sizes`));
+      console.log(line('Spacing', `${summary.spacingBase ? `base ${summary.spacingBase}px` : 'no base'} · ${summary.spacingScale} steps`));
+      console.log(line('Shape', `${summary.radii} radii · ${summary.shadows} shadows`));
+      console.log(line('Colours', `${summary.colors} tokens`));
+      console.log(line('WCAG', summary.wcag != null ? `${summary.wcag}%` : chalk.gray('—')));
+      console.log(line('Stack', [summary.stack, summary.library].filter(Boolean).join(' · ') || chalk.gray('—')));
+      console.log(line('Material', summary.material || chalk.gray('—')));
+      console.log(line('Tone', summary.tone || chalk.gray('—')));
+      console.log(line('Intent', summary.intent || chalk.gray('—')));
+      console.log('');
+    } catch (err) {
+      if (spinner) spinner.fail('Stats failed');
+      console.error(chalk.red(`\n  ${err.message}\n`));
+      process.exit(1);
+    }
+  });
+
 // ── Grade command — shareable HTML report card ─────────────
 program
   .command('grade <url>')
