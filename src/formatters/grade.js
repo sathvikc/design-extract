@@ -124,6 +124,16 @@ export function formatGrade(design, opts = {}) {
   const ogTitle = `${host} — Grade ${s.grade}`;
   const ogDesc = `Design system audit by designlang. ${s.overall}/100 across 8 dimensions.`;
 
+  // Surface a low-confidence warning when the primary detection was uncertain
+  // (e.g. monochrome site, near-tie between top brand candidates). The field
+  // arrived in v12.9 — this card now exposes it so readers don't take the
+  // primary at face value when it's a soft pick.
+  const primaryConfidence = design.colors?.primary?.confidence;
+  const lowConfidence = typeof primaryConfidence === 'number' && primaryConfidence < 0.5;
+  const confidenceNote = lowConfidence
+    ? `<p class="confidence-note">Primary detection was low-confidence (${Math.round(primaryConfidence * 100)}%). The brand colour may be a soft pick — review the palette below.</p>`
+    : '';
+
   const dims = DIMENSIONS
     .filter(([k]) => s.scores[k] !== undefined)
     .map(([k, label, blurb]) => {
@@ -225,6 +235,20 @@ ${headHref ? `<link href="${esc(headHref)}" rel="stylesheet">` : ''}
   section > h2 { font-family: var(--display); font-weight: 400; font-size: 32px; margin: 0 0 8px; letter-spacing: -.005em; }
   section > h2 + .lead { color: var(--ink-soft); margin: 0 0 36px; max-width: 60ch; }
 
+  /* Low-confidence primary callout — only rendered when v12.9's
+     primary.confidence drops under 0.5. Soft warning, not an error. */
+  .confidence-note {
+    margin: -16px 0 32px;
+    padding: 12px 16px;
+    background: rgba(212, 145, 0, .08);
+    border-left: 2px solid #d49100;
+    border-radius: 0 4px 4px 0;
+    font-size: 14px;
+    color: var(--ink-soft);
+    max-width: 60ch;
+  }
+  [data-theme="dark"] .confidence-note { background: rgba(212, 145, 0, .14); }
+
   /* — Dimensions grid — */
   .dims { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 48px; }
   @media (max-width: 640px) { .dims { grid-template-columns: 1fr; gap: 28px; } }
@@ -313,6 +337,7 @@ ${headHref ? `<link href="${esc(headHref)}" rel="stylesheet">` : ''}
     <section>
       <h2>Eight dimensions, scored.</h2>
       <p class="lead">Each dimension is graded against calibrated thresholds drawn from production design systems (Stripe, Linear, Vercel, GitHub, Apple). The number is the headline; the prose underneath is what to do next.</p>
+      ${confidenceNote}
       <div class="dims">${dims}</div>
     </section>
 

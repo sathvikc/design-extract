@@ -748,6 +748,24 @@ describe('formatGrade', () => {
     assert.ok(!html.includes('[object Object]'), 'must resolve object→number');
   });
 
+  it('surfaces a low-confidence note when primary.confidence < 0.5 (v12.10)', () => {
+    const lowConf = JSON.parse(JSON.stringify(mockDesign));
+    lowConf.colors.primary = { ...lowConf.colors.primary, confidence: 0.32 };
+    const html = formatGrade(lowConf);
+    assert.match(html, /Primary detection was low-confidence/);
+    assert.match(html, /32%/, 'rounded confidence percent must render');
+  });
+
+  it('omits the confidence note when primary.confidence >= 0.5 or missing', () => {
+    const highConf = JSON.parse(JSON.stringify(mockDesign));
+    highConf.colors.primary = { ...highConf.colors.primary, confidence: 0.92 };
+    assert.ok(!formatGrade(highConf).includes('low-confidence'));
+    // Also when the field is absent (pre-v12.9 cached extractions).
+    const noConf = JSON.parse(JSON.stringify(mockDesign));
+    delete noConf.colors.primary.confidence;
+    assert.ok(!formatGrade(noConf).includes('low-confidence'));
+  });
+
   it('throws a clear error when score is missing', () => {
     const noScore = { ...mockDesign, score: null };
     assert.throws(() => formatGrade(noScore), /score missing/);
