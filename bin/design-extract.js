@@ -946,23 +946,31 @@ program
 
 // ── Stats command — fast stdout summary, no files written ──
 program
-  .command('stats <url>')
-  .description('Print a concise one-screen summary to stdout — grade, primary, fonts, spacing, voice. No files written.')
-  .option('-j, --as-json', 'emit machine-readable JSON to stdout instead of pretty text')
-  .action(async (url, opts) => {
-    if (!url.startsWith('http')) url = `https://${url}`;
-    validateUrl(url);
+  .command('stats <urls...>')
+  .description('Print a concise one-screen summary to stdout — grade, primary, fonts, spacing, voice. Accepts multiple URLs. No files written.')
+  .option('-j, --as-json', 'emit machine-readable JSON to stdout instead of pretty text (an array when multiple URLs)')
+  .action(async (urls, opts) => {
+    // Normalise each URL the same way the single-URL path used to.
+    const targets = urls.map(u => {
+      const full = u.startsWith('http') ? u : `https://${u}`;
+      validateUrl(full);
+      return full;
+    });
 
     // Quiet path for --as-json: no spinner / chrome noise, just data on stdout.
     // (`--json` is already a global program flag; `--as-json` avoids the clash.)
     const wantJson = !!opts.asJson;
-    const spinner = wantJson ? null : ora(`Reading ${url}...`).start();
-    try {
+    const spinner = wantJson
+      ? null
+      : ora(targets.length === 1 ? `Reading ${targets[0]}...` : `Reading ${targets.length} sites in parallel...`).start();
+
+    // Single helper used by both pretty and JSON paths.
+    async function summarise(url) {
       const design = await extractDesignLanguage(url);
       const s = design.score || {};
       const primary = design.colors?.primary;
       const families = (design.typography?.families || []).map(f => f?.name || f).filter(Boolean);
-      const summary = {
+      return {
         url,
         title: design.meta?.title,
         grade: s.grade ?? null,
@@ -985,30 +993,24 @@ program
         stack: design.stack?.framework,
         intent: design.pageIntent?.type,
       };
+    }
 
-      if (wantJson) {
-        if (spinner) spinner.stop();
-        process.stdout.write(JSON.stringify(summary, null, 2) + '\n');
-        return;
-      }
-
-      spinner.stop();
+    function printPretty(summary) {
       const gradeColor =
         summary.grade === 'A' ? chalk.green
         : summary.grade === 'B' ? chalk.cyan
         : summary.grade === 'C' ? chalk.yellow
         : summary.grade === 'D' ? chalk.magenta
         : chalk.red;
+      const primary = summary.primary;
       const confTag = primary && primary.confidence != null
         ? (primary.confidence < 0.5
             ? chalk.yellow(`~${Math.round(primary.confidence * 100)}% conf`)
             : chalk.gray(`${Math.round(primary.confidence * 100)}% conf`))
         : '';
-      const line = (label, value) =>
-        `  ${chalk.gray(label.padEnd(12))} ${value}`;
-
+      const line = (label, value) => `  ${chalk.gray(label.padEnd(12))} ${value}`;
       console.log('');
-      console.log(`  ${chalk.bold(url)}`);
+      console.log(`  ${chalk.bold(summary.url)}`);
       if (summary.title) console.log(`  ${chalk.gray(summary.title)}`);
       console.log('');
       console.log(line('Grade', `${gradeColor.bold(summary.grade || '—')} ${chalk.gray('·')} ${chalk.bold(String(summary.score ?? '—') + '/100')}`));
@@ -1017,10 +1019,10 @@ program
       } else {
         console.log(line('Primary', chalk.gray('—')));
       }
-      if (families.length) {
-        const head = families[0];
-        const body = families[1] || head;
-        const extra = families.length > 2 ? chalk.gray(` +${families.length - 2}`) : '';
+      if (summary.families.length) {
+        const head = summary.families[0];
+        const body = summary.families[1] || head;
+        const extra = summary.fontFamilyCount > 2 ? chalk.gray(` +${summary.fontFamilyCount - 2}`) : '';
         console.log(line('Fonts', `${head}${body && body !== head ? chalk.gray(' / ') + body : ''}${extra}`));
       } else {
         console.log(line('Fonts', chalk.gray('—')));
@@ -1034,7 +1036,41 @@ program
       console.log(line('Material', summary.material || chalk.gray('—')));
       console.log(line('Tone', summary.tone || chalk.gray('—')));
       console.log(line('Intent', summary.intent || chalk.gray('—')));
+    }
+
+    try {
+      // Settle so a single failure doesn't kill the whole batch; per-URL
+      // errors are surfaced as individual rejections in both paths.
+      const results = await Promise.allSettled(targets.map(summarise));
+
+      if (wantJson) {
+        if (spinner) spinner.stop();
+        const payload = results.map((r, i) => r.status === 'fulfilled'
+          ? r.value
+          : { url: targets[i], error: r.reason?.message || String(r.reason) });
+        // When the caller passed a single URL we keep the legacy shape
+        // (a bare object) so existing scripts don't break. Multiple URLs
+        // become an array.
+        const out = targets.length === 1 ? payload[0] : payload;
+        process.stdout.write(JSON.stringify(out, null, 2) + '\n');
+        return;
+      }
+
+      spinner.stop();
+      let anyFailed = false;
+      results.forEach((r, i) => {
+        if (i > 0) console.log(chalk.gray('  ' + '─'.repeat(60)));
+        if (r.status === 'fulfilled') {
+          printPretty(r.value);
+        } else {
+          anyFailed = true;
+          console.log('');
+          console.log(`  ${chalk.bold(targets[i])}`);
+          console.log(`  ${chalk.red('failed:')} ${chalk.red(r.reason?.message || String(r.reason))}`);
+        }
+      });
       console.log('');
+      if (anyFailed) process.exitCode = 1;
     } catch (err) {
       if (spinner) spinner.fail('Stats failed');
       console.error(chalk.red(`\n  ${err.message}\n`));

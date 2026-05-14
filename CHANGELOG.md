@@ -1,5 +1,26 @@
 # Changelog
 
+## [12.10.1] — 2026-05-13
+
+**Tiny ship: \`stats\` now scans multiple URLs at once.**
+
+\`designlang stats\` previously took exactly one URL. Now it takes any
+number, runs them in parallel, and prints each block with a divider:
+
+\`\`\`bash
+npx designlang stats stripe.com vercel.com linear.app
+\`\`\`
+
+In \`--as-json\` mode:
+
+- One URL → a bare object (legacy shape, unchanged)
+- Two-or-more URLs → an array of objects
+- Per-URL failures don't kill the batch — they surface as
+  \`{ url, error }\` in JSON or a red row in pretty mode, and the
+  process exits non-zero only when at least one site failed.
+
+No flag changes, no schema breaks for the existing single-URL callers.
+
 ## [12.10.0] — 2026-05-12
 
 **Small ship: \`designlang stats\` + low-confidence warning in grade cards.**
