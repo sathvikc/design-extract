@@ -205,196 +205,130 @@ export default function HeroExtractor() {
   const streaming = status === 'streaming';
   const disabled = streaming;
 
+  const SUGGESTIONS = ['stripe.com', 'linear.app', 'vercel.com', 'notion.so', 'figma.com'];
+  const setUrl = (host) => { if (inputRef.current) inputRef.current.value = `https://${host}`; };
+
   return (
     <>
-      <div className="with-margin" style={{ marginTop: 'var(--r8)' }}>
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            display: 'flex',
-            alignItems: 'stretch',
-            gap: 0,
-            maxWidth: 720,
-            border: 'var(--hair)',
-          }}
-        >
-          <label htmlFor="url" style={{ display: 'none' }}>URL</label>
+      <div className="dx-shell">
+        <form className="dx-form" onSubmit={handleSubmit}>
+          <span className="dx-form-prefix">https://</span>
+          <label htmlFor="url" className="visually-hidden">URL</label>
           <input
             id="url"
             ref={inputRef}
             name="url"
-            type="url"
-            placeholder="https://stripe.com"
-            defaultValue="https://stripe.com"
+            type="text"
+            placeholder="stripe.com"
+            defaultValue="stripe.com"
             disabled={disabled}
-            className="mono"
-            style={{
-              flex: 1,
-              padding: '18px 20px',
-              fontSize: 16,
-              color: 'var(--ink)',
-              background: 'transparent',
-              borderRight: 'var(--hair)',
-            }}
+            className="dx-form-input"
+            spellCheck={false}
+            autoComplete="off"
+            autoCapitalize="off"
           />
-          <button
-            type="submit"
-            className="cta"
-            disabled={disabled}
-            style={{ boxShadow: 'none' }}
-          >
-            {streaming ? 'Extracting…' : 'Extract'}
-            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-3)' }}>↵</span>
+          <button type="submit" className="dx-form-submit" disabled={disabled} aria-busy={streaming}>
+            {streaming ? (
+              <>
+                <span className="dx-spinner" aria-hidden />
+                <span>Extracting…</span>
+              </>
+            ) : (
+              <>
+                <span>Extract</span>
+                <span className="dx-form-kbd">↵</span>
+              </>
+            )}
           </button>
         </form>
 
-        <Marginalia>
-          <div>status</div>
-          <div style={{ minHeight: '1.5em' }}>
-            {status === 'idle' && <code style={{ color: 'var(--ink-3)' }}>awaiting URL</code>}
-            {streaming && stageLabel && (
-              <code>§ {stageLabel}{cached ? ' (cached)' : ''}</code>
+        <div className="dx-suggest">
+          <span className="dx-suggest-label">try</span>
+          {SUGGESTIONS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className="dx-chip"
+              disabled={disabled}
+              onClick={() => setUrl(s)}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
+        <div className="dx-status">
+          <span className={`dx-led dx-led-${status}`} aria-hidden />
+          <span className="dx-status-text mono">
+            {status === 'idle' && 'idle · paste a URL'}
+            {streaming && (stageLabel ? `streaming · ${stageLabel}${cached ? ' · cached' : ''}` : 'opening stream…')}
+            {status === 'done' && `done${cached ? ' · cached' : ''}`}
+            {status === 'error' && 'halted'}
+          </span>
+          <span className="dx-status-meta mono">free demo · 1 / day · unlimited via CLI</span>
+        </div>
+
+        {errorMsg && (
+          <p className="dx-alert mono" role="alert">
+            {errorMsg}
+            {status === 'error' && (
+              <button type="button" className="dx-alert-action" onClick={reset}>retry</button>
             )}
-            {streaming && !stageLabel && <code>§ opening stream</code>}
-            {status === 'done' && <code style={{ color: 'var(--accent)' }}>complete{cached ? ' (cached)' : ''}</code>}
-            {status === 'error' && <code style={{ color: 'var(--accent)' }}>halted</code>}
-          </div>
-          {cached && (
-            <>
-              <hr style={{ margin: '12px 0', border: 0, borderTop: '1px solid var(--ink-3)' }} />
-              <span className="chip" style={{ fontSize: 10 }}>cached · &lt; 24h</span>
-            </>
-          )}
-        </Marginalia>
+          </p>
+        )}
+        {rateLimitMsg && <p className="dx-alert mono" role="alert">{rateLimitMsg}</p>}
       </div>
 
-      {errorMsg && (
-        <p className="mono" role="alert" style={{ marginTop: 'var(--r4)', fontSize: 12, color: 'var(--accent)' }}>
-          {errorMsg}{' '}
-          {status === 'error' && (
-            <button
-              type="button"
-              onClick={reset}
-              style={{ textDecoration: 'underline', color: 'inherit', marginLeft: 8 }}
-            >
-              Try another URL
-            </button>
-          )}
-        </p>
-      )}
-
-      {rateLimitMsg && (
-        <p className="mono" role="alert" style={{ marginTop: 'var(--r4)', fontSize: 12, color: 'var(--accent)' }}>
-          {rateLimitMsg}
-        </p>
-      )}
-
-      <p className="mono" style={{ marginTop: 14, fontSize: 11, color: 'var(--ink-3)' }}>
-        Free demo: 1 extraction per day. Unlimited via the CLI — no account.
-      </p>
-
-      {/* ── Live paint ─────────────────────────────────────── */}
       {(swatches.length > 0 || fontSample || dimensions.length > 0 || summary) && (
-        <div style={{ marginTop: 'var(--r7)', display: 'grid', gap: 'var(--r5)' }}>
+        <div className="dx-paint">
           {swatches.length > 0 && (
-            <div>
-              <div className="section-label" style={{ marginBottom: 'var(--r3)' }}>
+            <section className="dx-panel">
+              <header className="dx-panel-head">
                 <span>palette</span>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--r3)' }}>
+                <span className="mono">{swatches.length} colors</span>
+              </header>
+              <div className="dx-swatches">
                 {swatches.map((s, i) => (
-                  <div
-                    key={s.path}
-                    style={{
-                      opacity: 0,
-                      animation: `designlang-fade-in 200ms ease-out forwards`,
-                      animationDelay: `${i * 40}ms`,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        background: s.hex,
-                        border: 'var(--hair)',
-                      }}
-                    />
-                    <div
-                      className="mono"
-                      style={{ fontSize: 10, color: 'var(--ink-3)', marginTop: 4 }}
-                    >
-                      {s.hex}
-                    </div>
+                  <div key={s.path} className="dx-swatch" style={{ animationDelay: `${i * 40}ms` }}>
+                    <div className="dx-swatch-chip" style={{ background: s.hex }} />
+                    <div className="dx-swatch-hex mono">{s.hex}</div>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
-
           {fontSample && (
-            <div>
-              <div className="section-label" style={{ marginBottom: 'var(--r3)' }}>
-                <span>type</span>
-              </div>
-              <div
-                style={{
-                  fontFamily: `${fontSample}, system-ui, sans-serif`,
-                  fontSize: 32,
-                  lineHeight: 1.2,
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                Aa Bb Cc 123
-              </div>
-              <div className="mono" style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>
-                {fontSample}
-              </div>
-            </div>
+            <section className="dx-panel">
+              <header className="dx-panel-head"><span>typography</span><span className="mono">{fontSample}</span></header>
+              <div className="dx-type" style={{ fontFamily: `${fontSample}, system-ui, sans-serif` }}>Aa Bb Cc 123</div>
+            </section>
           )}
-
           {dimensions.length > 0 && (
-            <div>
-              <div className="section-label" style={{ marginBottom: 'var(--r3)' }}>
-                <span>scale</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+            <section className="dx-panel">
+              <header className="dx-panel-head"><span>scale</span><span className="mono">{dimensions.length} steps</span></header>
+              <div className="dx-bars">
                 {dimensions.map((d, i) => (
                   <div
                     key={d.path}
                     title={`${d.path} — ${d.raw}`}
-                    style={{
-                      width: 14,
-                      height: Math.min(Math.max(d.px, 4), 120),
-                      background: 'var(--ink)',
-                      opacity: 0,
-                      animation: `designlang-fade-in 200ms ease-out forwards`,
-                      animationDelay: `${i * 30}ms`,
-                    }}
+                    className="dx-bar"
+                    style={{ height: Math.min(Math.max(d.px, 4), 120), animationDelay: `${i * 30}ms` }}
                   />
                 ))}
               </div>
-            </div>
+            </section>
           )}
-
           {summary && (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                gap: 'var(--r5)',
-                borderTop: 'var(--hair)',
-                paddingTop: 'var(--r5)',
-              }}
-            >
-              <Numeral value={summary.colors} label="colors" />
-              <Numeral value={summary.spacingCount} label="spacing" />
-              <Numeral value={summary.shadowCount} label="shadows" />
-              <Numeral value={summary.componentCount} label="components" />
-              <Numeral
-                value={summary.score?.overall ?? '—'}
-                label={`score ${summary.score?.grade ? `(${summary.score.grade})` : ''}`}
-              />
-            </div>
+            <section className="dx-panel dx-summary">
+              <header className="dx-panel-head"><span>summary</span><span className="mono">live</span></header>
+              <div className="dx-summary-grid">
+                <Numeral value={summary.colors} label="colors" />
+                <Numeral value={summary.spacingCount} label="spacing" />
+                <Numeral value={summary.shadowCount} label="shadows" />
+                <Numeral value={summary.componentCount} label="components" />
+                <Numeral value={summary.score?.overall ?? '—'} label={`score ${summary.score?.grade ? `(${summary.score.grade})` : ''}`} />
+              </div>
+            </section>
           )}
         </div>
       )}
@@ -422,16 +356,9 @@ export default function HeroExtractor() {
 
 function Numeral({ value, label }) {
   return (
-    <div>
-      <div
-        className="display"
-        style={{ fontSize: 'clamp(32px, 5vw, 56px)', lineHeight: 1 }}
-      >
-        {value}
-      </div>
-      <div className="mono" style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 6, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-        {label}
-      </div>
+    <div className="dx-num">
+      <div className="dx-num-value">{value}</div>
+      <div className="dx-num-label mono">{label}</div>
     </div>
   );
 }

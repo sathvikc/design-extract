@@ -1,17 +1,14 @@
 import { listRecent } from '../../lib/cache';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 600; // 10 min — gallery shouldn't be hammered live
+export const revalidate = 600;
 
 export const metadata = {
   title: 'Gallery — design systems extracted by designlang',
   description:
-    'Public gallery of recent extractions. Every entry is a permalink: tap a card to read the DESIGN.md, browse DTCG tokens, copy the Tailwind config, or download the full bundle. $0, MIT, no signup.',
+    'Public gallery of recent extractions. Every entry is a permalink: tap a card to read the DESIGN.md, browse DTCG tokens, copy the Tailwind config, or download the full bundle.',
   alternates: { canonical: 'https://designlang.app/gallery' },
-  openGraph: {
-    title: 'designlang gallery',
-    description: 'Recent extractions — every card is a shareable permalink.',
-  },
+  openGraph: { title: 'designlang gallery', description: 'Recent extractions — every card is a shareable permalink.' },
 };
 
 function relTime(ms) {
@@ -30,98 +27,61 @@ export default async function Gallery() {
   const entries = await listRecent(48);
 
   return (
-    <main className="page" style={{ paddingBottom: 'var(--r9)' }}>
-      <header style={{ paddingTop: 'var(--r4)', paddingBottom: 'var(--r5)' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'baseline',
-            gap: 'var(--r5)',
-            borderBottom: 'var(--hair)',
-            paddingBottom: 'var(--r3)',
-          }}
-        >
-          <a href="/" className="mono" style={{ fontSize: 13, letterSpacing: '0.02em', borderBottom: 0, display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/mark.svg" alt="" width={22} height={22} style={{ display: 'block' }} />
-            designlang <span style={{ color: 'var(--ink-3)', marginLeft: 12 }}>v12.3</span>
-          </a>
-          <nav className="mono" style={{ display: 'flex', gap: 'var(--r5)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            <a href="/" style={{ borderBottom: 0 }}>Home</a>
-            <a href="/features" style={{ borderBottom: 0 }}>Features</a>
-            <a href="/spec" style={{ borderBottom: 0 }}>Spec</a>
-            <a href="/vs/design-extractor" style={{ borderBottom: 0, color: 'var(--accent)' }}>vs</a>
-          </nav>
+    <main>
+      <section className="section" style={{ paddingTop: 64, paddingBottom: 32 }}>
+        <div className="wrap">
+          <p className="eyebrow">gallery</p>
+          <h1 className="h1" style={{ fontSize: 'clamp(40px, 5.5vw, 64px)', maxWidth: '14ch' }}>
+            Every extraction, a permalink.
+          </h1>
+          <p className="lede" style={{ marginTop: 20 }}>
+            A live feed of sites people have run through designlang. Each card opens a full
+            shareable view — DESIGN.md, DTCG tokens, Tailwind, every output, copy &amp; download.
+          </p>
         </div>
-      </header>
-
-      <section style={{ paddingBlock: 'var(--r7) var(--r6)' }}>
-        <div className="section-label" style={{ marginBottom: 'var(--r5)' }}>
-          <span>§ gallery</span>
-        </div>
-        <h1 className="display" style={{ fontSize: 'clamp(40px, 6vw, 72px)', letterSpacing: '-0.03em', lineHeight: 1.0 }}>
-          Every extraction,<br />
-          a <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>permalink</em>.
-        </h1>
-        <p className="prose" style={{ fontSize: 17, lineHeight: 1.55, color: 'var(--ink-2)', maxWidth: '52ch', marginTop: 'var(--r4)' }}>
-          A live feed of sites people have run through designlang. Each card opens a full
-          shareable view — DESIGN.md, DTCG tokens, Tailwind, all 12 outputs, copy &amp; download.
-        </p>
       </section>
 
-      {entries.length === 0 ? (
-        <div className="mono" style={{ padding: 'var(--r7) 0', color: 'var(--ink-3)', fontSize: 13, letterSpacing: '0.04em' }}>
-          No recent extractions yet. <a href="/" style={{ color: 'var(--accent)' }}>Run the first one →</a>
+      <section className="section" style={{ paddingTop: 24 }}>
+        <div className="wrap">
+          {entries.length === 0 ? (
+            <div className="card" style={{ padding: '36px 32px', textAlign: 'center' }}>
+              <p className="lede" style={{ margin: '0 auto 18px' }}>
+                No recent extractions yet. Be the first.
+              </p>
+              <a href="/" className="btn btn-primary">Run an extraction</a>
+            </div>
+          ) : (
+            <div className="gallery-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
+              {entries.map((e) => {
+                const palette = [e.primary, e.secondary, e.accent, e.foreground, e.background].filter(Boolean);
+                const a = palette[0] || '#7f1d1d';
+                const b = palette[palette.length - 1] || '#000';
+                return (
+                  <a key={e.hash} href={`/x/${e.hash}`} className="gal-card" style={{ aspectRatio: 'auto', display: 'block' }}>
+                    <div style={{ display: 'flex', height: 110 }}>
+                      {palette.length > 0 ? palette.map((c, i) => (
+                        <div key={i} style={{ flex: 1, background: c }} />
+                      )) : (
+                        <div style={{ flex: 1, background: `linear-gradient(135deg, ${a}, ${b})` }} />
+                      )}
+                    </div>
+                    <div style={{ padding: '14px 16px 16px' }}>
+                      <div className="h3" style={{ fontSize: 16, marginBottom: 4 }}>{host(e.url)}</div>
+                      <div className="mono faint" style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>
+                        {[e.intent, e.material, e.library].filter((x) => x && x !== 'unknown').join(' · ') || '—'}
+                      </div>
+                      <div className="mono" style={{ fontSize: 11, color: 'var(--fg-2)', display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid var(--hairline)' }}>
+                        <span>{e.colors} colors</span>
+                        <span className="faint">{relTime(e.generatedAt)}</span>
+                      </div>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          )}
         </div>
-      ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: 0,
-            borderTop: 'var(--hair)',
-            borderLeft: 'var(--hair)',
-          }}
-        >
-          {entries.map((e) => (
-            <a
-              key={e.hash}
-              href={`/x/${e.hash}`}
-              style={{
-                display: 'block',
-                padding: 'var(--r4)',
-                borderBottom: '1px solid var(--ink)',
-                borderRight: '1px solid var(--ink)',
-                borderBottom_: '1px solid var(--ink)',
-                background: 'var(--paper)',
-                color: 'var(--ink)',
-                borderBottomStyle: 'solid',
-                textDecoration: 'none',
-              }}
-            >
-              {/* Palette strip — paints the card identity in 2s. */}
-              <div style={{ display: 'flex', height: 56, marginBottom: 'var(--r3)', border: '1px solid var(--ink)' }}>
-                {[e.primary, e.secondary, e.accent, e.foreground, e.background]
-                  .filter(Boolean)
-                  .map((c, i) => (
-                    <div key={i} style={{ flex: 1, background: c }} />
-                  ))}
-              </div>
-              <div className="display" style={{ fontSize: 18, letterSpacing: '-0.01em', lineHeight: 1.2, marginBottom: 4, wordBreak: 'break-word' }}>
-                {host(e.url)}
-              </div>
-              <div className="mono" style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 'var(--r3)' }}>
-                {[e.intent, e.material, e.library].filter((x) => x && x !== 'unknown').join(' · ') || '—'}
-              </div>
-              <div className="mono" style={{ fontSize: 11, color: 'var(--ink-2)', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--paper-3)', paddingTop: 8 }}>
-                <span>{e.colors} colors</span>
-                <span style={{ color: 'var(--ink-3)' }}>{relTime(e.generatedAt)}</span>
-              </div>
-            </a>
-          ))}
-        </div>
-      )}
+      </section>
     </main>
   );
 }

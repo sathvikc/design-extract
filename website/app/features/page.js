@@ -1,280 +1,109 @@
-import Rule from '../components/Rule';
-import TokenBrowser from '../components/TokenBrowser';
-import McpSection from '../components/McpSection';
-import PlatformTabs from '../components/PlatformTabs';
-import CssHealth from '../components/CssHealth';
-import A11ySlider from '../components/A11ySlider';
-import RegionsComponents from '../components/RegionsComponents';
-import Specimens from '../components/Specimens';
-import Comparison from '../components/Comparison';
-import {
-  V11Showcase,
-  V10Capabilities,
-  V9Capabilities,
-  InstallTracks,
-  SiteFooter,
-} from '../page';
-
 export const metadata = {
   title: 'Features — designlang',
   description:
-    'Every capability behind designlang: clone, ci, studio (v11), the v10 semantic layer (intent · sections · material · library), motion · anatomy · voice (v9), DTCG token browser, MCP server, multi-platform emitters, CSS health, A11y remediation, regions + components, install tracks.',
+    'Every capability behind designlang: extractors, emitters, MCP server, CSS health, WCAG remediation, brand books, drift CI.',
   alternates: { canonical: 'https://designlang.app/features' },
-  openGraph: {
-    title: 'Features — designlang',
-    description: 'Everything designlang ships, on one page.',
-  },
+  openGraph: { title: 'Features — designlang', description: 'Everything designlang ships, on one page.' },
 };
+
+const GROUPS = [
+  {
+    title: 'Extractors',
+    body: 'Nine extractors run against any URL — they read what your browser actually sees.',
+    items: [
+      ['palette',     'All colours from computed styles, deduped, named, with primary inferred from frequency × position × contrast.'],
+      ['typography',  'Font families, weights, sizes, line-heights, letter-spacing — flagged primitive, semantic, or composite.'],
+      ['spacing',     'Margin / padding / gap rhythm, snapped to a base scale and quantised to the nearest token.'],
+      ['shadows',     'Box-shadows captured layer-by-layer with offset, blur, spread, alpha — emit as DTCG composite tokens.'],
+      ['borders',     'Radius scale, border styles and widths — recovered from real DOM, not guessed from a class name.'],
+      ['motion',      'Transitions and keyframe animations: durations, easing curves, stagger.'],
+      ['anatomy',     'Components clustered by structural similarity. Slots, props and variants typed.'],
+      ['voice',       'Headline, subhead and CTA samples lifted from the page — your real product voice, not Lorem.'],
+      ['a11y',        'WCAG contrast audit with the smallest hue-shift remediation that passes AA.'],
+    ],
+  },
+  {
+    title: 'Emitters',
+    body: 'One run, every output. Pipe wherever your stack lives.',
+    items: [
+      ['DTCG',        'W3C Design Tokens Community Group format. Primitive · semantic · composite, fully linked.'],
+      ['Tailwind',    'Drop-in tailwind.config.js with theme.extend wired to the extracted tokens.'],
+      ['CSS vars',    ':root { --color-primary: … } — copy-paste into any project.'],
+      ['Figma',       'Figma Variables JSON. Imports clean into Figma\'s native variables panel.'],
+      ['shadcn/ui',   'shadcn theme.json with colours, radii and font-family already mapped.'],
+      ['React/Vue',   'Theme objects for React, Vue and Svelte that read like you wrote them by hand.'],
+      ['iOS',         'SwiftUI Color, Font and CGFloat scales. Builds straight into Xcode.'],
+      ['Android',     'Jetpack Compose ColorScheme, Typography, Shapes — no manual translation.'],
+      ['Flutter',     'Dart ThemeData with light + dark generated from the extracted pair.'],
+      ['WordPress',   'A block theme.json with palette, type, spacing — drop in any wp-content/themes folder.'],
+      ['PDF',         'A 13-chapter brand book PDF with chapter breaks, running footers, optional embedded tokens.'],
+    ],
+  },
+  {
+    title: 'Agent surface',
+    body: 'Built for the editor, not just the terminal.',
+    items: [
+      ['MCP server',  'Stdio MCP for Claude Code, Cursor and Windsurf. Your editor speaks tokens natively.'],
+      ['AGENTS.md',   'Auto-generated AGENTS.md / .cursorrules / Claude skills with the extracted system embedded.'],
+      ['DESIGN.md',   'Single-file, 8-section spec — agent-readable, repo-checkable, badge-verifiable.'],
+      ['Studio',      'Local browser studio. Inspect every token, every spec, every emitter output.'],
+      ['CI drift',    'Snapshots tokens. Fails the build when your design system silently drifts.'],
+      ['Permalinks',  'Every extraction gets a /x/<hash> permalink. Share without re-running.'],
+    ],
+  },
+];
 
 export default function Features() {
   return (
-    <main className="page">
-      {/* ── HEAD SLUG ─────────────────────────────────────── */}
-      <header style={{ paddingTop: 'var(--r4)', paddingBottom: 'var(--r5)' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'baseline',
-            gap: 'var(--r5)',
-            borderBottom: 'var(--hair)',
-            paddingBottom: 'var(--r3)',
-          }}
-        >
-          <a href="/" className="mono" style={{ fontSize: 13, letterSpacing: '0.02em', borderBottom: 0, display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/mark.svg" alt="" width={22} height={22} style={{ display: 'block' }} />
-            designlang <span style={{ color: 'var(--ink-3)', marginLeft: 12 }}>v12.3</span>
-          </a>
-          <nav
-            className="mono"
-            style={{ display: 'flex', gap: 'var(--r5)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.1em' }}
-          >
-            <a href="/" style={{ borderBottom: 0 }}>Home</a>
-            <a href="/features" style={{ borderBottom: 0, color: 'var(--accent)' }}>Features</a>
-            <a href="/vs/design-extractor" style={{ borderBottom: 0 }}>vs</a>
-            <a href="https://github.com/Manavarya09/design-extract" style={{ borderBottom: 0 }}>GitHub</a>
-            <a href="https://www.npmjs.com/package/designlang" style={{ borderBottom: 0 }}>npm</a>
-          </nav>
+    <main>
+      <section className="section" style={{ paddingTop: 64, paddingBottom: 32 }}>
+        <div className="wrap">
+          <p className="eyebrow">features</p>
+          <h1 className="h1" style={{ fontSize: 'clamp(40px, 5.5vw, 64px)', maxWidth: '14ch' }}>
+            Everything designlang ships.
+          </h1>
+          <p className="lede" style={{ marginTop: 20 }}>
+            Twenty-six capabilities. One CLI. No paid tier, no API keys, no signup.
+            Plug into Tailwind, shadcn, Figma, your iOS app, your build pipeline, or your editor — same run.
+          </p>
         </div>
-      </header>
-
-      {/* ── HERO ─────────────────────────────────────────── */}
-      <section style={{ paddingBlock: 'var(--r7) var(--r8)' }}>
-        <div className="section-label" style={{ marginBottom: 'var(--r6)' }}>
-          <span>§00 — features</span>
-        </div>
-        <h1 className="display" style={{ fontSize: 'clamp(48px, 8vw, 96px)', letterSpacing: '-0.035em', lineHeight: 0.96, marginBottom: 'var(--r6)' }}>
-          Every capability,<br />
-          <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>one page</em>.
-        </h1>
-        <p className="prose" style={{ fontSize: 19, lineHeight: 1.5, maxWidth: '54ch', color: 'var(--ink-2)' }}>
-          Three commands at the top — <code className="mono">clone</code>, <code className="mono">ci</code>, <code className="mono">studio</code> — sit on a stack of nine semantic classifiers, six v9 tools, an editorial token browser, a live MCP server, multi-platform emitters, CSS health, A11y remediation, and four install tracks. Everything below this line is real, shipped, and free.
-        </p>
       </section>
 
-      {/* ── §01 v12.3 — REMIX ────────────────────────────── */}
-      <section id="remix">
-        <Rule number="01" label="v12.3 — remix" />
-        <div style={{ padding: 'var(--r6) 0', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'var(--r6)', alignItems: 'start' }}>
-          <div>
-            <h2 className="display" style={{ fontSize: 'clamp(32px, 4vw, 56px)', letterSpacing: '-0.02em', lineHeight: 1.04, marginBottom: 'var(--r4)' }}>
-              Restyle any site<br /><em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>in a different language.</em>
-            </h2>
-            <p className="prose" style={{ fontSize: 17, lineHeight: 1.55, color: 'var(--ink-2)', marginBottom: 'var(--r4)', maxWidth: '46ch' }}>
-              <code className="mono">designlang remix &lt;url&gt; --as &lt;vocab&gt;</code> takes the page-shape we
-              already extract — sections, voice, anatomy — and re-renders it under a different
-              design vocabulary. Same content, different language. <code className="mono">--all</code>
-              emits all six in one extraction.
-            </p>
-            <pre className="mono" style={{ background: 'var(--ink)', color: 'var(--paper)', padding: 'var(--r4) var(--r5)', fontSize: 13, lineHeight: 1.7, overflowX: 'auto' }}>
-{`$ npx designlang remix stripe.com --all
-
-  Remixed · brutalist, swiss, art-deco, cyberpunk, soft-ui, editorial
-  ✓ stripe-com.remix.brutalist.html
-  ✓ stripe-com.remix.swiss.html
-  ✓ stripe-com.remix.art-deco.html
-  ✓ stripe-com.remix.cyberpunk.html
-  ✓ stripe-com.remix.soft-ui.html
-  ✓ stripe-com.remix.editorial.html`}
-            </pre>
+      {GROUPS.map((g) => (
+        <section className="section" key={g.title} style={{ paddingTop: 24 }}>
+          <div className="wrap">
+            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', marginBottom: 28, gap: 24, flexWrap: 'wrap' }}>
+              <div>
+                <p className="eyebrow">{g.title.toLowerCase()}</p>
+                <h2 className="h2">{g.title}.</h2>
+                <p className="lede" style={{ marginTop: 6 }}>{g.body}</p>
+              </div>
+              <span className="mono faint" style={{ fontSize: 12 }}>{g.items.length} items</span>
+            </header>
+            <div className="grid-3">
+              {g.items.map(([tag, body]) => (
+                <article key={tag} className="feature">
+                  <span className="feature-tag">{tag}</span>
+                  <p>{body}</p>
+                </article>
+              ))}
+            </div>
           </div>
-          <ul className="mono" style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 12, lineHeight: 1.7, letterSpacing: '0.02em' }}>
-            {[
-              ['Brutalist', 'hard edges · mono type · single screaming accent · Space Grotesk + IBM Plex Mono'],
-              ['Swiss', 'Helvetica · grids · restraint — the post-Bauhaus default'],
-              ['Art Deco', 'gold on ink · geometric ornament · Playfair + Cormorant'],
-              ['Cyberpunk', 'neon on midnight · scanlines · chromatic-aberration headings'],
-              ['Soft UI', 'cushioned shapes · low contrast · single hue · Vision-OS-adjacent'],
-              ['Editorial', 'broadsheet serifs · generous whitespace · Instrument Serif + EB Garamond'],
-            ].map(([k, v]) => (
-              <li key={k} style={{ paddingBlock: 'var(--r3)', borderTop: '1px solid var(--ink-3)' }}>
-                <span style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--ink-3)', fontSize: 10, display: 'block', marginBottom: 4 }}>{k}</span>
-                <span style={{ color: 'var(--ink)' }}>{v}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+        </section>
+      ))}
 
-      {/* ── §02 v12.2 — BATTLE + BADGE ───────────────────── */}
-      <section id="battle">
-        <Rule number="02" label="v12.2 — battle + badge" />
-        <div style={{ padding: 'var(--r6) 0', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'var(--r6)', alignItems: 'start' }}>
-          <div>
-            <h2 className="display" style={{ fontSize: 'clamp(32px, 4vw, 56px)', letterSpacing: '-0.02em', lineHeight: 1.04, marginBottom: 'var(--r4)' }}>
-              Pit two sites.<br /><em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>Stamp every README.</em>
-            </h2>
-            <p className="prose" style={{ fontSize: 17, lineHeight: 1.55, color: 'var(--ink-2)', marginBottom: 'var(--r4)', maxWidth: '46ch' }}>
-              <code className="mono">designlang battle &lt;A&gt; &lt;B&gt;</code> renders a head-to-head graded
-              card — eight dimensions, bar-by-bar, verdict line. <code className="mono">designlang grade --badge</code> writes a shields.io-style SVG. Or skip the
-              CLI: drop a live badge in any README from <code className="mono">designlang.app/badge/&lt;host&gt;.svg</code>.
-            </p>
-            <pre className="mono" style={{ background: 'var(--ink)', color: 'var(--paper)', padding: 'var(--r4) var(--r5)', fontSize: 13, lineHeight: 1.7, overflowX: 'auto' }}>
-{`$ npx designlang battle stripe.com vercel.com
-
-  B · 87 stripe.com
-  vs
-  C · 76 vercel.com
-
-  Verdict: stripe.com wins`}
-            </pre>
-            <p className="mono" style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 'var(--r3)', letterSpacing: '0.02em' }}>
-              Drop in any README:
-            </p>
-            <pre className="mono" style={{ background: 'var(--ink)', color: 'var(--paper)', padding: 'var(--r3) var(--r5)', fontSize: 12, lineHeight: 1.6, overflowX: 'auto', marginTop: 6 }}>
-{`![Design Score](https://designlang.app/badge/stripe.com.svg)`}
-            </pre>
+      <section className="section">
+        <div className="wrap">
+          <div className="card" style={{ padding: '32px 28px', textAlign: 'center' }}>
+            <h2 className="h2" style={{ fontSize: 28 }}>One command.</h2>
+            <p className="lede" style={{ margin: '0 auto 20px' }}>Every output above lands in <code className="kbd">./design-extract-output</code> in seconds.</p>
+            <div className="row" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
+              <code className="kbd" style={{ fontSize: 13, padding: '8px 14px' }}>npx designlang stripe.com</code>
+              <a href="/" className="btn btn-primary">Try it live</a>
+            </div>
           </div>
-          <ul className="mono" style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 12, lineHeight: 1.7, letterSpacing: '0.02em' }}>
-            {[
-              ['Battle', 'parallel extraction · per-dimension bars · win / tie / loss tally · verdict'],
-              ['Badge SVG', 'shields.io style · color by grade · 5 tiers (A–F) · accessible (aria-label)'],
-              ['Live endpoint', '/badge/<host>.svg · blob-cached 24h · edge cached 6h · ~50ms repeat hits'],
-              ['Permanent link', 'every README adoption is a permanent backlink to a live grade'],
-              ['CLI flag', '--badge on any `grade` run also emits *-badge.svg locally'],
-            ].map(([k, v]) => (
-              <li key={k} style={{ paddingBlock: 'var(--r3)', borderTop: '1px solid var(--ink-3)' }}>
-                <span style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--ink-3)', fontSize: 10, display: 'block', marginBottom: 4 }}>{k}</span>
-                <span style={{ color: 'var(--ink)' }}>{v}</span>
-              </li>
-            ))}
-          </ul>
         </div>
       </section>
-
-      {/* ── §02 v12.1 — GRADE ────────────────────────────── */}
-      <section id="grade">
-        <Rule number="03" label="v12.1 — grade" />
-        <div style={{ padding: 'var(--r6) 0', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'var(--r6)', alignItems: 'start' }}>
-          <div>
-            <h2 className="display" style={{ fontSize: 'clamp(32px, 4vw, 56px)', letterSpacing: '-0.02em', lineHeight: 1.04, marginBottom: 'var(--r4)' }}>
-              A shareable<br /><em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>report card</em> for any site.
-            </h2>
-            <p className="prose" style={{ fontSize: 17, lineHeight: 1.55, color: 'var(--ink-2)', marginBottom: 'var(--r4)', maxWidth: '46ch' }}>
-              <code className="mono">designlang grade &lt;url&gt;</code> emits a self-contained HTML audit page —
-              big serif letter grade, eight scored dimensions, evidence pulled from the site itself
-              (palette, type specimen, spacing rhythm), and a strengths / what-to-fix ledger.
-              Editorial layout, dark-mode toggle, print-ready, OG meta. Post the file. Send it to a client.
-            </p>
-            <pre className="mono" style={{ background: 'var(--ink)', color: 'var(--paper)', padding: 'var(--r4) var(--r5)', fontSize: 13, lineHeight: 1.7, overflowX: 'auto' }}>
-{`$ npx designlang grade https://stripe.com
-
-  Grade B · 87/100 · https://stripe.com
-  ✓ stripe-com.grade.html
-  ✓ stripe-com.grade.md
-  ✓ stripe-com.grade.json`}
-            </pre>
-          </div>
-          <ul className="mono" style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 12, lineHeight: 1.7, letterSpacing: '0.02em' }}>
-            {[
-              ['8 dimensions', 'color · typography · spacing · elevation · radii · a11y · tokenization · css health'],
-              ['Evidence', 'real palette swatches · type specimen in the site’s own font · spacing rhythm bars'],
-              ['Self-contained', 'one HTML file · no API · no build step · OG meta for shareable links'],
-              ['CI-ready', '--format json | md | html | all · exits 0 with the grade'],
-              ['Themes', 'paper / ink with dark-mode toggle · print-ready'],
-            ].map(([k, v]) => (
-              <li key={k} style={{ paddingBlock: 'var(--r3)', borderTop: '1px solid var(--ink-3)' }}>
-                <span style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--ink-3)', fontSize: 10, display: 'block', marginBottom: 4 }}>{k}</span>
-                <span style={{ color: 'var(--ink)' }}>{v}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* ── §02 v11 — CLONE · CI · STUDIO ────────────────── */}
-      <section id="v11">
-        <Rule number="04" label="v11 — clone · ci · studio" />
-        <V11Showcase />
-      </section>
-
-      {/* ── §02 v10 — SEMANTIC INTELLIGENCE ──────────────── */}
-      <section id="v10">
-        <Rule number="05" label="v10 — semantic intelligence" />
-        <V10Capabilities />
-      </section>
-
-      {/* ── §03 v9 — MOTION · ANATOMY · VOICE ────────────── */}
-      <section id="v9">
-        <Rule number="06" label="v9 — motion · anatomy · voice" />
-        <V9Capabilities />
-      </section>
-
-      {/* ── §04 DTCG BROWSER ─────────────────────────────── */}
-      <section id="tokens">
-        <Rule number="07" label="DTCG token browser" />
-        <div style={{ padding: 'var(--r6) 0' }}>
-          <TokenBrowser />
-        </div>
-      </section>
-
-      {/* ── §05 MCP ──────────────────────────────────────── */}
-      <section id="mcp">
-        <Rule number="08" label="MCP server" />
-        <McpSection />
-      </section>
-
-      {/* ── §06 MULTI-PLATFORM ───────────────────────────── */}
-      <section id="platforms">
-        <Rule number="09" label="multi-platform emitters" />
-        <PlatformTabs />
-      </section>
-
-      {/* ── §07 HEALTH ───────────────────────────────────── */}
-      <section id="health">
-        <CssHealth />
-      </section>
-
-      {/* ── §08 REMEDIATION ──────────────────────────────── */}
-      <section id="a11y">
-        <A11ySlider />
-      </section>
-
-      {/* ── §09 REGIONS + COMPONENTS ─────────────────────── */}
-      <section id="regions">
-        <RegionsComponents />
-      </section>
-
-      {/* ── §10 SPECIMENS ────────────────────────────────── */}
-      <section id="specimens">
-        <Rule number="10" label="specimens" />
-        <Specimens />
-      </section>
-
-      {/* ── §11 COMPARISON ───────────────────────────────── */}
-      <section id="compared">
-        <Rule number="11" label="compared" />
-        <Comparison />
-      </section>
-
-      {/* ── §12 INSTALL ──────────────────────────────────── */}
-      <section id="install" style={{ paddingBottom: 'var(--r9)' }}>
-        <Rule number="12" label="install" />
-        <InstallTracks />
-      </section>
-
-      <SiteFooter />
     </main>
   );
 }
