@@ -1,6 +1,7 @@
 import HeroExtractor from './components/HeroExtractor';
 import Grainient from './components/Grainient';
 import RedditMarquee from './components/RedditMarquee';
+import CopyCmd from './components/CopyCmd';
 import { FAQ } from './seo-config';
 
 const FEATURES = [
@@ -88,10 +89,8 @@ function Hero() {
               <a href="#extract" className="btn btn-primary">Run extraction</a>
               <a href="https://github.com/Manavarya09/design-extract" className="btn btn-ghost" target="_blank" rel="noreferrer">View source</a>
             </div>
-            <div className="row mono" style={{ marginTop: 26, gap: 14, color: 'var(--fg-3)', fontSize: 12 }}>
-              <span className="kbd">npx</span>
-              <span>designlang stripe.com</span>
-              <span className="faint">— no install, no account</span>
+            <div style={{ marginTop: 26 }}>
+              <CopyCmd cmd="npx designlang stripe.com" hint="— no install, no account" />
             </div>
           </div>
 
