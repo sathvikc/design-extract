@@ -1,5 +1,16 @@
 import { SITE_URL } from './seo-config';
 
+const GALLERY_SLUGS = [
+  'stripe-com',
+  'linear-app',
+  'vercel-com',
+  'notion-so',
+  'figma-com',
+  'apple-com',
+  'arc-net',
+  'spotify-com',
+];
+
 export default function sitemap() {
   const now = new Date();
   const routes = [
@@ -8,11 +19,23 @@ export default function sitemap() {
     { path: '/gallery',               priority: 0.9,  freq: 'hourly'  },
     { path: '/spec',                  priority: 0.9,  freq: 'monthly' },
     { path: '/vs/design-extractor',   priority: 0.9,  freq: 'weekly'  },
+    { path: '/#faq',                  priority: 0.7,  freq: 'monthly' },
+    { path: '/#about',                priority: 0.7,  freq: 'monthly' },
   ];
-  return routes.map(({ path, priority, freq }) => ({
+
+  const base = routes.map(({ path, priority, freq }) => ({
     url: `${SITE_URL}${path}`,
     lastModified: now,
     changeFrequency: freq,
     priority,
   }));
+
+  const galleryPages = GALLERY_SLUGS.map((slug) => ({
+    url: `${SITE_URL}/gallery/${slug}/brand.html`,
+    lastModified: now,
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  }));
+
+  return [...base, ...galleryPages];
 }

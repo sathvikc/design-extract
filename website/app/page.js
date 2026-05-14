@@ -1,6 +1,7 @@
 import HeroExtractor from './components/HeroExtractor';
 import Grainient from './components/Grainient';
 import RedditMarquee from './components/RedditMarquee';
+import { FAQ } from './seo-config';
 
 const FEATURES = [
   { tag: 'tokens', title: 'W3C DTCG tokens', body: 'Primitive, semantic and composite tokens — straight to Tailwind, CSS vars, Figma variables, shadcn theme.' },
@@ -153,12 +154,11 @@ function ExtractSection() {
       <div className="dx-section-bg" aria-hidden />
       <div className="wrap dx-section-wrap">
         <header className="dx-section-head">
-          <span className="dx-live"><span className="dx-live-dot" />LIVE</span>
+          <p className="eyebrow" style={{ marginBottom: 14 }}>try it now</p>
           <h2 className="dx-section-title">See it work.</h2>
           <p className="dx-section-tag">Paste a URL. Watch the system land.</p>
         </header>
         <div className="dx-stage">
-          <span className="dx-stage-corner mono">demo · /api/extract</span>
           <HeroExtractor />
         </div>
       </div>
@@ -257,6 +257,68 @@ function GallerySection() {
   );
 }
 
+function FaqSection() {
+  return (
+    <section id="faq" className="section">
+      <div className="wrap-narrow">
+        <p className="eyebrow">faq</p>
+        <h2 className="h2">Frequently asked.</h2>
+        <p className="lede" style={{ marginBottom: 36 }}>
+          Quick answers about installing designlang, the output formats, the MCP server, and how it compares to Style Dictionary, Subframe, v0 and design-extractor.com.
+        </p>
+        <div className="faq-list">
+          {FAQ.map((item, i) => (
+            <details key={i} className="faq-item" open={i === 0}>
+              <summary className="faq-q">{item.q}</summary>
+              <div className="faq-a">{item.a}</div>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SeoCopySection() {
+  return (
+    <section id="about" className="section seo-copy-section">
+      <div className="wrap-narrow seo-copy">
+        <p className="eyebrow">about designlang</p>
+        <h2 className="h2">An open-source CLI that turns any URL into a complete design system.</h2>
+        <div className="seo-prose">
+          <p>
+            <strong>designlang</strong> is a free, MIT-licensed command-line tool that points a headless Chromium browser at any
+            live website and reads its design system off the rendered DOM. One run emits W3C{' '}
+            <strong>DTCG tokens</strong> in primitive, semantic and composite layers, plus a Tailwind config, CSS variables,
+            Figma Variables JSON, a shadcn/ui theme, React / Vue / Svelte theme objects, iOS SwiftUI extensions,
+            Android Jetpack Compose <code>Theme.kt</code>, Flutter <code>ThemeData</code>, a WordPress block theme, and a
+            print-ready brand-book PDF with chapter bookmarks and the tokens embedded as a file attachment.
+          </p>
+          <p>
+            designlang is built for the AI-coding era. The bundled <strong>stdio MCP server</strong> exposes every extracted
+            artefact — colours, typography, spacing, motion, anatomy, accessibility findings — to Claude Code, Cursor and
+            Windsurf as native MCP resources. The CLI also writes <code>AGENTS.md</code>, <code>.cursorrules</code> and
+            Claude Code skills directly into your repo so any agent can read the system without prompting.
+          </p>
+          <p>
+            Beyond extraction, designlang ships a <strong>CSS health audit</strong> (specificity graph, dead-rule detection,
+            duplicate declaration count, <code>@keyframes</code> catalogue), a <strong>WCAG remediation</strong> step that
+            picks the smallest hue-shift to pass AA, a <strong>semantic region classifier</strong> for navs / hero / pricing
+            / testimonials / footer, <strong>component clustering</strong> with variant and slot detection, dark-mode pairing,
+            authenticated crawling, and a <strong>CI drift bot</strong> that fails the build when the system silently changes.
+          </p>
+          <p>
+            Designed as a strict superset of <a href="/vs/design-extractor">design-extractor.com</a>, designlang ships the
+            entire DESIGN.md spec (see <a href="/spec">the spec page</a>) plus everything you actually need to build the design.
+            Free, open source, no signup, no API key. Try it on <a href="#extract">any URL above</a> or run{' '}
+            <code className="kbd" style={{ fontSize: 12 }}>npx designlang stripe.com</code> in your terminal.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function CtaSection() {
   return (
     <section className="section">
@@ -284,6 +346,8 @@ export default function Home() {
       <FeaturesSection />
       <RedditSection />
       <GallerySection />
+      <SeoCopySection />
+      <FaqSection />
       <CtaSection />
     </main>
   );

@@ -24,8 +24,8 @@
   <rect x="3" y="3" width="20" height="20" rx="5" fill="url(#dlFront)"/>
   <rect x="3" y="3" width="20" height="20" rx="5" fill="url(#dlSheen)"/>
 
-  <!-- the extracted token: a single bright dot, top-left -->
-  <circle cx="8.5" cy="8.5" r="1.7" fill="#ffffff"/>
+  <!-- bracket motif: pulled-out tab in top-left -->
+  <path d="M 6.5 7.5 L 6.5 11.5 M 6.5 7.5 L 10.5 7.5" stroke="#ffffff" stroke-width="1.6" stroke-linecap="square" stroke-opacity="0.85"/>
 
   <!-- subtle hairline stroke on the front layer -->
   <rect x="3.5" y="3.5" width="19" height="19" rx="4.5"

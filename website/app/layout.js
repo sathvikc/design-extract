@@ -193,9 +193,9 @@ function Footer() {
         <div className="ftr-bottom">
           <div className="ftr-bottom-left">
             <span className="mono">v12.11.0</span>
-            <span className="ftr-dot">·</span>
-            <span className="mono"><span className="ftr-led" /> all systems live</span>
-            <span className="ftr-dot">·</span>
+            <span className="ftr-sep">/</span>
+            <span className="mono ftr-status">all systems live</span>
+            <span className="ftr-sep">/</span>
             <span>built by <a href="https://manavaryasingh.com" target="_blank" rel="noreferrer">Manav Arya Singh</a></span>
           </div>
           <div className="ftr-bottom-right">

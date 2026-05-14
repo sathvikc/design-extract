@@ -258,12 +258,17 @@ export default function HeroExtractor() {
         </div>
 
         <div className="dx-status">
-          <span className={`dx-led dx-led-${status}`} aria-hidden />
+          <span className={`dx-status-tag dx-status-${status}`}>
+            {status === 'idle' && 'IDLE'}
+            {streaming && 'STREAMING'}
+            {status === 'done' && (cached ? 'DONE / CACHED' : 'DONE')}
+            {status === 'error' && 'HALTED'}
+          </span>
           <span className="dx-status-text mono">
-            {status === 'idle' && 'idle · paste a URL'}
-            {streaming && (stageLabel ? `streaming · ${stageLabel}${cached ? ' · cached' : ''}` : 'opening stream…')}
-            {status === 'done' && `done${cached ? ' · cached' : ''}`}
-            {status === 'error' && 'halted'}
+            {status === 'idle' && 'paste a URL above'}
+            {streaming && (stageLabel || 'opening stream…')}
+            {status === 'done' && 'extraction complete'}
+            {status === 'error' && 'try another URL'}
           </span>
           <span className="dx-status-meta mono">free demo · 1 / day · unlimited via CLI</span>
         </div>

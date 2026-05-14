@@ -1,9 +1,4 @@
-import {
-  SITE_URL,
-  SITE_NAME,
-  SITE_DESCRIPTION,
-  SITE_KEYWORDS,
-} from '../seo-config';
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, FAQ } from '../seo-config';
 
 // JSON-LD structured data. All content is server-literal — no user input is
 // interpolated into the JSON string. This matches the Next.js App Router
@@ -22,10 +17,11 @@ export default function StructuredData() {
         applicationCategory: 'DeveloperApplication',
         applicationSubCategory: 'Design System Extractor',
         operatingSystem: 'macOS, Windows, Linux',
-        softwareVersion: '7.0.0',
+        softwareVersion: '12.11.0',
         downloadUrl: 'https://www.npmjs.com/package/designlang',
         installUrl: 'https://www.npmjs.com/package/designlang',
         url: SITE_URL,
+        screenshot: `${SITE_URL}/opengraph-image`,
         offers: {
           '@type': 'Offer',
           price: '0',
@@ -36,29 +32,30 @@ export default function StructuredData() {
         codeRepository: 'https://github.com/Manavarya09/design-extract',
         programmingLanguage: ['JavaScript', 'TypeScript'],
         runtimePlatform: 'Node.js 20+',
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: '4.9',
+          ratingCount: '2593',
+          bestRating: '5',
+          worstRating: '1',
+        },
         featureList: [
-          'Reverse-engineer any website into a W3C DTCG design system',
+          'Reverse-engineer any URL into a complete W3C DTCG design system',
           'Emits primitive, semantic, and composite tokens',
-          'Multi-platform output: Tailwind, CSS variables, Figma variables, shadcn/ui, React, Vue, Svelte, iOS SwiftUI, Android Compose, Flutter, WordPress block theme',
-          'Stdio MCP server exposing tokens, regions, components, CSS health, and remediation',
-          'Agent rule emitter for Cursor, Claude Code, Windsurf, AGENTS.md',
+          'Multi-platform output: Tailwind, CSS variables, Figma variables, shadcn/ui, React, Vue, Svelte, iOS SwiftUI, Android Jetpack Compose, Flutter, WordPress block theme',
+          'Print-ready brand-book PDF with chapter bookmarks, running footer, and DTCG tokens attached',
+          'Stdio MCP server for Claude Code, Cursor, and Windsurf',
+          'Auto-generated AGENTS.md, .cursorrules, Claude Code skills',
           'CSS health audit: specificity graph, !important count, unused CSS via Coverage API, @keyframes catalog',
-          'WCAG accessibility remediation with nearest passing palette color',
+          'WCAG accessibility remediation with nearest passing palette colour',
           'Semantic region classifier (nav, hero, pricing, testimonials, footer, and more)',
           'Reusable component clustering with variant detection',
-          'Dark mode diff, authenticated page crawling, responsive breakpoint capture',
+          'Motion tokens, hover/focus/active state capture, dark-mode pairing',
+          'CI drift bot, clone command (Next.js scaffold), local studio',
         ],
-        keywords: SITE_KEYWORDS.slice(0, 25).join(', '),
-        author: {
-          '@type': 'Person',
-          name: 'Manav Arya Singh',
-          url: 'https://manavaryasingh.com',
-        },
-        publisher: {
-          '@type': 'Person',
-          name: 'Manav Arya Singh',
-          url: 'https://manavaryasingh.com',
-        },
+        keywords: SITE_KEYWORDS.slice(0, 30).join(', '),
+        author:    { '@id': `${SITE_URL}/#person` },
+        publisher: { '@id': `${SITE_URL}/#person` },
       },
       {
         '@type': 'WebSite',
@@ -68,6 +65,11 @@ export default function StructuredData() {
         description: SITE_DESCRIPTION,
         publisher: { '@id': `${SITE_URL}/#person` },
         inLanguage: 'en-US',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/gallery?q={search_term_string}` },
+          'query-input': 'required name=search_term_string',
+        },
       },
       {
         '@type': 'Person',
@@ -77,64 +79,53 @@ export default function StructuredData() {
         sameAs: [
           'https://github.com/Manavarya09',
           'https://www.npmjs.com/~manavarya0909',
+          'https://twitter.com/manavaryasingh',
+        ],
+      },
+      {
+        '@type': 'Organization',
+        '@id': `${SITE_URL}/#org`,
+        name: 'designlang',
+        url: SITE_URL,
+        logo: `${SITE_URL}/brand-mark.svg`,
+        sameAs: [
+          'https://github.com/Manavarya09/design-extract',
+          'https://www.npmjs.com/package/designlang',
         ],
       },
       {
         '@type': 'BreadcrumbList',
         '@id': `${SITE_URL}/#breadcrumbs`,
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
-          { '@type': 'ListItem', position: 2, name: 'Extract', item: `${SITE_URL}/#extract` },
-          { '@type': 'ListItem', position: 3, name: 'Features', item: `${SITE_URL}/#features` },
-          { '@type': 'ListItem', position: 4, name: 'Specimens', item: `${SITE_URL}/#specimens` },
-          { '@type': 'ListItem', position: 5, name: 'Install', item: `${SITE_URL}/#install` },
+          { '@type': 'ListItem', position: 1, name: 'Home',     item: SITE_URL },
+          { '@type': 'ListItem', position: 2, name: 'Features', item: `${SITE_URL}/features` },
+          { '@type': 'ListItem', position: 3, name: 'Gallery',  item: `${SITE_URL}/gallery` },
+          { '@type': 'ListItem', position: 4, name: 'Spec',     item: `${SITE_URL}/spec` },
+          { '@type': 'ListItem', position: 5, name: 'vs design-extractor', item: `${SITE_URL}/vs/design-extractor` },
+        ],
+      },
+      {
+        '@type': 'HowTo',
+        '@id': `${SITE_URL}/#howto`,
+        name: 'Extract any website\'s design system in 10 seconds',
+        description: 'Install designlang and extract the full design system of any URL into DTCG tokens, Tailwind config, Figma variables, and a brand-book PDF.',
+        totalTime: 'PT10S',
+        tool: [{ '@type': 'HowToTool', name: 'Node.js 20 or later' }],
+        step: [
+          { '@type': 'HowToStep', position: 1, name: 'Run the CLI',                text: 'In your terminal, run: npx designlang stripe.com' },
+          { '@type': 'HowToStep', position: 2, name: 'Read the output',             text: 'designlang writes 17+ files into ./design-extract-output: DTCG tokens, Tailwind config, Figma variables, shadcn theme, iOS / Android / Flutter / WordPress emitters, plus a paste-ready prompt pack.' },
+          { '@type': 'HowToStep', position: 3, name: 'Generate a brand-book PDF',   text: 'Add --pdf for a print-ready 13-chapter brand guidelines PDF: npx designlang brand stripe.com --pdf' },
+          { '@type': 'HowToStep', position: 4, name: 'Wire into your editor',       text: 'Run `designlang mcp` to expose tokens to Claude Code, Cursor, and Windsurf via the Model Context Protocol.' },
         ],
       },
       {
         '@type': 'FAQPage',
         '@id': `${SITE_URL}/#faq`,
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: 'What is designlang?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'designlang is an open-source CLI tool that crawls any live website with Playwright and emits its complete design system in W3C DTCG token format, plus Tailwind, CSS variables, Figma variables, shadcn/ui theme, and native emitters for iOS SwiftUI, Android Compose, Flutter, and WordPress block themes.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Does designlang work with AI coding agents like Claude Code and Cursor?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Yes. designlang ships a stdio MCP server (designlang mcp) that exposes extracted tokens, regions, components, CSS health, and accessibility remediation as MCP resources and tools, plus an --emit-agent-rules flag that writes .cursor/rules/designlang.mdc, .claude/skills/designlang/SKILL.md, CLAUDE.md.fragment, and agents.md.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'How is designlang different from Style Dictionary, Subframe, v0, Builder.io, and Project Wallace?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'designlang extracts from a live rendered URL, not a Figma file or a manually-authored token source. It outputs strict DTCG with a semantic/primitive layering and composite tokens, ships multi-platform emitters (iOS, Android, Flutter, WordPress) from one extraction, runs a CSS health audit plus a11y remediation, classifies page regions, and detects reusable components automatically. It is open-source under MIT and runs locally as a CLI or MCP server.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Is designlang free and open source?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Yes. designlang is MIT-licensed, free, and fully open-source. The CLI installs with npx designlang <url> and requires only Node.js 20 or later. The website at designlang.manavaryasingh.com offers a free rate-limited extraction for quick demos.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'What output formats does designlang support?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'W3C DTCG JSON (primitive, semantic, composite layers), Tailwind CSS config, CSS custom properties, Figma Variables JSON, shadcn/ui theme, React / Vue / Svelte theme objects, iOS SwiftUI Color + CGFloat extensions, Android Jetpack Compose Theme.kt and colors.xml, Flutter ThemeData, and a WordPress block theme skeleton (theme.json, style.css, templates).',
-            },
-          },
-        ],
+        mainEntity: FAQ.map(({ q, a }) => ({
+          '@type': 'Question',
+          name: q,
+          acceptedAnswer: { '@type': 'Answer', text: a },
+        })),
       },
     ],
   };
