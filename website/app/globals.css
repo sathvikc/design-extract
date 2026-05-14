@@ -193,9 +193,15 @@ img, svg { display: block; max-width: 100%; }
   font-size: 12px;
   transition: color .15s, border-color .15s, background .15s;
 }
-.nav-stars svg { color: #ffb300; transition: transform .2s ease; }
+.nav-stars svg { color: var(--fg); transition: color .2s ease; opacity: 0.92; }
 .nav-stars:hover { color: #fff; border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }
-.nav-stars:hover svg { transform: rotate(72deg); }
+.nav-stars::after {
+  content: '★';
+  font-size: 11px;
+  color: #ffb300;
+  opacity: 0.95;
+  margin-left: 2px;
+}
 
 .nav-cta {
   display: inline-flex; align-items: center; gap: 8px;
