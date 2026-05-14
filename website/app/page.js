@@ -73,7 +73,7 @@ function Hero() {
         <div className="hero-grid">
           <div>
             <div className="hero-pills">
-              <span className="pill pill-red">v12.11.0</span>
+              <span className="pill pill-red">v12.12.0</span>
               <span className="pill">PDF brand books</span>
             </div>
             <h1 className="h1">

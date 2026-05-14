@@ -104,7 +104,7 @@ async function Nav() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand-mark.svg" alt="" className="nav-mark-img" width={26} height={26} />
           <span className="nav-wordmark">designlang</span>
-          <span className="nav-version mono">v12.11</span>
+          <span className="nav-version mono">v12.12</span>
         </a>
 
         <nav className="nav-pillnav" aria-label="primary">
@@ -192,7 +192,7 @@ function Footer() {
 
         <div className="ftr-bottom">
           <div className="ftr-bottom-left">
-            <span className="mono">v12.11.0</span>
+            <span className="mono">v12.12.0</span>
             <span className="ftr-sep">/</span>
             <span className="mono ftr-status">all systems live</span>
             <span className="ftr-sep">/</span>

@@ -1,5 +1,51 @@
 # Changelog
 
+## [12.12.0] — 2026-05-15
+
+**Website launch — designlang.app, fully rebuilt.**
+
+The marketing/demo site at [designlang.app](https://designlang.app) has been
+rewritten from the ground up. Highlights:
+
+- **Hero with WebGL Grainient background** (red/black, ogl-powered, GPU-paused
+  when offscreen) and a terminal output card showing real CLI execution.
+- **Live demo showcase** (`See it work.`) — paste any URL into a glass
+  stage, suggestion chips for stripe.com / linear.app / vercel.com /
+  notion.so / figma.com, click-to-copy `npx designlang stripe.com` in the
+  hero.
+- **Real gallery** — eight pre-rendered brand books for stripe.com,
+  linear.app, vercel.com, notion.so, figma.com, apple.com, arc.net and
+  spotify.com. Each card is the actual extraction the CLI produced; the
+  cover gradient uses the extracted primary + accent tokens.
+- **Floating glass nav** with a custom logo, segmented pill links, real
+  GitHub star count fetched from the API (server-rendered, 30 min revalidate),
+  and an `npm i designlang` CTA matching the hero gradient.
+- **Auto-scrolling reddit testimonial marquee** (3 cols, motion/react)
+  with the real comments from the r/ClaudeAI launch thread.
+- **Polished footer** with brand block, 4 link columns, decorative giant
+  outlined wordmark, version + author + license strip.
+- **Aggressive SEO** — keyword-dense title and description, ~75-keyword
+  list; JSON-LD graph with `SoftwareApplication`, `Organization`,
+  `WebSite + SearchAction`, `BreadcrumbList`, `FAQPage`, `HowTo`;
+  `aggregateRating` from real GitHub stars; visible FAQ section + ~250-word
+  about block; sitemap includes the 8 gallery brand books; rewritten
+  `llms.txt` for AI-search citability (allows GPTBot, ClaudeBot,
+  PerplexityBot, Google-Extended, Applebot-Extended, etc.).
+
+**Web extractor parity with the CLI.**
+
+- `/api/extract`'s file output now includes the brand-book HTML
+  (`<host>.brand.html`) for every run.
+- `formatBrandBook` is shared between the CLI and the website's
+  `lib/build-files.js`.
+
+**Other**
+
+- Fixed the README so the logo and "designlang in action" image render
+  on the npm package page (relative paths swapped for raw GitHub URLs).
+- Removed all decorative status dots from the website per design feedback;
+  status indicators are now typed text chips.
+
 ## [12.11.0] — 2026-05-15
 
 **`brand --pdf` ships native PDF brand guides.**
