@@ -101,9 +101,8 @@ async function Nav() {
     <div className="nav-wrap">
       <header className="nav" role="banner">
         <a href="/" className="nav-brand" aria-label="designlang home">
-          <span className="nav-mark" aria-hidden>
-            <span className="nav-mark-dot" />
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand-mark.svg" alt="" className="nav-mark-img" width={26} height={26} />
           <span className="nav-wordmark">designlang</span>
           <span className="nav-version mono">v12.11</span>
         </a>
@@ -140,31 +139,67 @@ async function Nav() {
 
 function Footer() {
   return (
-    <footer className="site">
-      <div className="wrap">
-        <div className="stack" style={{ gap: 8 }}>
-          <span className="mono" style={{ color: '#fff' }}>designlang</span>
-          <span className="faint">Reverse-engineer any website into a complete design system.</span>
-          <span className="faint mono" style={{ fontSize: 11, letterSpacing: '0.06em' }}>v12.11.0 · built by Manav Arya Singh</span>
+    <footer className="ftr">
+      <div className="ftr-bg" aria-hidden />
+      <div className="wrap ftr-grid">
+        <div className="ftr-brand">
+          <a href="/" className="ftr-mark" aria-label="designlang">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand-mark.svg" alt="" width={32} height={32} />
+            <span>designlang</span>
+          </a>
+          <p className="ftr-tag">
+            Reverse-engineer any website into a complete design system. CLI, MCP, studio, brand books — one command.
+          </p>
+          <div className="ftr-actions">
+            <a className="btn btn-primary btn-sm" href="https://www.npmjs.com/package/designlang" target="_blank" rel="noreferrer">npm i designlang</a>
+            <a className="btn btn-ghost btn-sm" href="https://github.com/Manavarya09/design-extract" target="_blank" rel="noreferrer">GitHub</a>
+          </div>
         </div>
-        <div className="cols">
-          <div className="col">
-            <span className="col-title">Product</span>
+
+        <div className="ftr-cols">
+          <div className="ftr-col">
+            <span className="ftr-title">Product</span>
             <a href="/features">Features</a>
             <a href="/gallery">Gallery</a>
-            <a href="/spec">Spec</a>
-            <a href="/vs/design-extractor">Compare</a>
+            <a href="/spec">DESIGN.md spec</a>
+            <a href="/vs/design-extractor">vs design-extractor</a>
           </div>
-          <div className="col">
-            <span className="col-title">Resources</span>
-            <a href="https://github.com/Manavarya09/design-extract" target="_blank" rel="noreferrer">GitHub</a>
+          <div className="ftr-col">
+            <span className="ftr-title">Install</span>
             <a href="https://www.npmjs.com/package/designlang" target="_blank" rel="noreferrer">npm</a>
-            <a href="/llms.txt">llms.txt</a>
+            <a href="https://github.com/Manavarya09/design-extract" target="_blank" rel="noreferrer">GitHub source</a>
+            <a href="https://github.com/Manavarya09/design-extract/releases" target="_blank" rel="noreferrer">Releases</a>
+            <a href="https://github.com/Manavarya09/design-extract/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer">Changelog</a>
           </div>
-          <div className="col">
-            <span className="col-title">Author</span>
-            <a href="https://manavaryasingh.com" target="_blank" rel="noreferrer">manavaryasingh.com</a>
-            <a href="https://github.com/Manavarya09" target="_blank" rel="noreferrer">github</a>
+          <div className="ftr-col">
+            <span className="ftr-title">Integrations</span>
+            <a href="/features#mcp">Claude Code (MCP)</a>
+            <a href="/features#mcp">Cursor (MCP)</a>
+            <a href="/features#mcp">Windsurf (MCP)</a>
+            <a href="/features#emitters">Figma plugin</a>
+          </div>
+          <div className="ftr-col">
+            <span className="ftr-title">Crawlers</span>
+            <a href="/llms.txt">llms.txt</a>
+            <a href="/sitemap.xml">sitemap.xml</a>
+            <a href="/robots.txt">robots.txt</a>
+            <a href="/badge/stripe.com" target="_blank" rel="noreferrer">badge api</a>
+          </div>
+        </div>
+
+        <span className="ftr-wordmark" aria-hidden>designlang</span>
+
+        <div className="ftr-bottom">
+          <div className="ftr-bottom-left">
+            <span className="mono">v12.11.0</span>
+            <span className="ftr-dot">·</span>
+            <span className="mono"><span className="ftr-led" /> all systems live</span>
+            <span className="ftr-dot">·</span>
+            <span>built by <a href="https://manavaryasingh.com" target="_blank" rel="noreferrer">Manav Arya Singh</a></span>
+          </div>
+          <div className="ftr-bottom-right">
+            <span className="mono">© {new Date().getFullYear()} designlang</span>
           </div>
         </div>
       </div>

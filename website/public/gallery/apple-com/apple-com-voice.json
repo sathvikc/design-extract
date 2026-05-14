@@ -1,0 +1,126 @@
+{
+  "tone": "friendly",
+  "pronoun": "you-only",
+  "headingStyle": "Title Case",
+  "headingLengthClass": "tight",
+  "ctaVerbs": [
+    {
+      "value": "learn",
+      "count": 8
+    },
+    {
+      "value": "buy",
+      "count": 5
+    },
+    {
+      "value": "stream",
+      "count": 5
+    },
+    {
+      "value": "play",
+      "count": 3
+    },
+    {
+      "value": "listen",
+      "count": 3
+    },
+    {
+      "value": "watch",
+      "count": 3
+    },
+    {
+      "value": "continue",
+      "count": 1
+    },
+    {
+      "value": "shop",
+      "count": 1
+    },
+    {
+      "value": "get",
+      "count": 1
+    },
+    {
+      "value": "apply",
+      "count": 1
+    }
+  ],
+  "buttonPatterns": [
+    {
+      "value": "learn more",
+      "count": 8
+    },
+    {
+      "value": "buy",
+      "count": 5
+    },
+    {
+      "value": "stream now",
+      "count": 5
+    },
+    {
+      "value": "play now",
+      "count": 3
+    },
+    {
+      "value": "listen now",
+      "count": 3
+    },
+    {
+      "value": "watch now",
+      "count": 3
+    },
+    {
+      "value": "continue",
+      "count": 1
+    },
+    {
+      "value": "0\n+",
+      "count": 1
+    },
+    {
+      "value": "shop iphone",
+      "count": 1
+    },
+    {
+      "value": "get your estimate",
+      "count": 1
+    },
+    {
+      "value": "apply now",
+      "count": 1
+    },
+    {
+      "value": "f1 on apple tv",
+      "count": 1
+    },
+    {
+      "value": "mls on apple tv",
+      "count": 1
+    },
+    {
+      "value": "see the schedule",
+      "count": 1
+    },
+    {
+      "value": "catch up now",
+      "count": 1
+    }
+  ],
+  "sampleHeadings": [
+    "MacBook Air",
+    "iPhone",
+    "iPad Air",
+    "Apple for College",
+    "Apple Watch Series 11",
+    "MacBook Air",
+    "iPhone",
+    "iPad Air",
+    "Apple for College",
+    "Apple Watch Series 11"
+  ],
+  "stats": {
+    "buttons": 36,
+    "headings": 24
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "stripe-com": {
+    "primary": "#533afd",
+    "bg": "#ffffff",
+    "fg": "#000000",
+    "palette": [
+      "#533afd",
+      "#e5edf5"
+    ]
+  },
+  "linear-app": {
+    "primary": "#e4f222",
+    "bg": "#08090a",
+    "fg": "#f7f8f8",
+    "palette": [
+      "#e4f222",
+      "#5e6ad2"
+    ]
+  },
+  "vercel-com": {
+    "primary": "#0068d6",
+    "bg": "#fafafa",
+    "fg": "#171717",
+    "palette": [
+      "#0068d6",
+      "#52aeff"
+    ]
+  },
+  "notion-so": {
+    "primary": "#455dd3",
+    "bg": "#ffffff",
+    "fg": "#000000",
+    "palette": [
+      "#455dd3",
+      "#0075de"
+    ]
+  },
+  "figma-com": {
+    "primary": "#e4ff97",
+    "bg": "#ffffff",
+    "fg": "#000000",
+    "palette": [
+      "#e4ff97",
+      "#00b6ff"
+    ]
+  },
+  "apple-com": {
+    "primary": "#f5f5f7",
+    "bg": "#ffffff",
+    "fg": "#000000",
+    "palette": [
+      "#f5f5f7",
+      "#0071e3"
+    ]
+  },
+  "arc-net": {
+    "primary": "#2702c2",
+    "bg": "#fffcec",
+    "fg": "#000000",
+    "palette": [
+      "#2702c2",
+      "#fffadd"
+    ]
+  },
+  "spotify-com": {
+    "primary": "#1ed760",
+    "bg": "#121212",
+    "fg": "#000000",
+    "palette": [
+      "#1ed760",
+      "#346e4a"
+    ]
+  }
+}

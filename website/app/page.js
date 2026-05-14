@@ -1,5 +1,6 @@
 import HeroExtractor from './components/HeroExtractor';
 import Grainient from './components/Grainient';
+import RedditMarquee from './components/RedditMarquee';
 
 const FEATURES = [
   { tag: 'tokens', title: 'W3C DTCG tokens', body: 'Primitive, semantic and composite tokens — straight to Tailwind, CSS vars, Figma variables, shadcn theme.' },
@@ -24,15 +25,17 @@ const REDDIT = [
   { sub: 'r/ClaudeAI', user: 'u/crypt0amat00r', body: 'Yes! I have a dedicated "scraper" agent and this is the perfect addition to its skillset. Thank you!', up: 4, href: 'https://www.reddit.com/r/ClaudeAI/comments/1sm23sp/' },
 ];
 
+// Real extractions from npx designlang <host>. Pre-rendered into
+// /public/gallery/<slug>/ so each card opens the actual brand book.
 const GALLERY = [
-  { host: 'stripe.com', a: '#635BFF', b: '#0A2540', grade: 'A+' },
-  { host: 'linear.app', a: '#5E6AD2', b: '#101828', grade: 'A' },
-  { host: 'vercel.com', a: '#000000', b: '#FAFAFA', grade: 'A' },
-  { host: 'notion.so', a: '#191919', b: '#E03E3E', grade: 'A-' },
-  { host: 'figma.com', a: '#0ACF83', b: '#A259FF', grade: 'A' },
-  { host: 'apple.com', a: '#0071E3', b: '#1D1D1F', grade: 'A+' },
-  { host: 'arc.net', a: '#FE6F61', b: '#5B51F5', grade: 'A' },
-  { host: 'spotify.com', a: '#1DB954', b: '#191414', grade: 'A-' },
+  { host: 'stripe.com',  slug: 'stripe-com',  primary: '#533afd', accent: '#e5edf5', bg: '#ffffff', grade: 'B'  },
+  { host: 'linear.app',  slug: 'linear-app',  primary: '#5e6ad2', accent: '#e4f222', bg: '#08090a', grade: 'A'  },
+  { host: 'vercel.com',  slug: 'vercel-com',  primary: '#0068d6', accent: '#52aeff', bg: '#fafafa', grade: 'A'  },
+  { host: 'notion.so',   slug: 'notion-so',   primary: '#455dd3', accent: '#0075de', bg: '#ffffff', grade: 'A-' },
+  { host: 'figma.com',   slug: 'figma-com',   primary: '#00b6ff', accent: '#e4ff97', bg: '#ffffff', grade: 'A'  },
+  { host: 'apple.com',   slug: 'apple-com',   primary: '#0071e3', accent: '#f5f5f7', bg: '#ffffff', grade: 'A+' },
+  { host: 'arc.net',     slug: 'arc-net',     primary: '#2702c2', accent: '#fffadd', bg: '#fffcec', grade: 'A'  },
+  { host: 'spotify.com', slug: 'spotify-com', primary: '#1ed760', accent: '#346e4a', bg: '#121212', grade: 'A-' },
 ];
 
 function Hero() {
@@ -191,32 +194,15 @@ function FeaturesSection() {
 
 function RedditSection() {
   return (
-    <section className="section">
-      <div className="wrap">
+    <section className="section rdt-section">
+      <div className="wrap" style={{ textAlign: 'center', marginBottom: 36 }}>
         <p className="eyebrow">loved by developers</p>
-        <h2 className="h2">From the threads.</h2>
-        <p className="lede" style={{ marginBottom: 36 }}>
-          Real comments from the r/ClaudeAI launch. Unedited, untouched.
+        <h2 className="h2" style={{ fontSize: 'clamp(36px, 5vw, 56px)' }}>From the threads.</h2>
+        <p className="lede" style={{ margin: '0 auto' }}>
+          Real, unedited comments from the r/ClaudeAI launch.
         </p>
-        <div className="reddit-grid">
-          {REDDIT.map((r, i) => (
-            <a key={r.user + i} href={r.href} target="_blank" rel="noreferrer" className="reddit-card">
-              <header className="reddit-meta">
-                <span className="reddit-sub">{r.sub}</span>
-                <span>·</span>
-                <span className="reddit-user">{r.user}</span>
-              </header>
-              <p className="reddit-body">{r.body}</p>
-              <footer className="reddit-foot">
-                <span className="reddit-vote">▲ {r.up}</span>
-                <span>reply</span>
-                <span>share</span>
-                <span style={{ marginLeft: 'auto' }}>open thread</span>
-              </footer>
-            </a>
-          ))}
-        </div>
       </div>
+      <RedditMarquee />
     </section>
   );
 }
@@ -226,23 +212,45 @@ function GallerySection() {
     <section className="section">
       <div className="wrap">
         <p className="eyebrow">see them in action</p>
-        <h2 className="h2">Extracted from the public web.</h2>
+        <h2 className="h2">Real extractions, on this site.</h2>
         <p className="lede" style={{ marginBottom: 36 }}>
-          Eight design systems pulled from the wild. Click through for the full DTCG output.
+          Eight brands. Eight real <code className="kbd">npx designlang &lt;host&gt;</code> runs. Click any card to open the actual brand book.
         </p>
         <div className="gallery-grid">
           {GALLERY.map(g => (
-            <a key={g.host} href={`/gallery#${g.host}`} className="gal-card">
-              <div className="gal-swatch" style={{ background: `linear-gradient(135deg, ${g.a} 0%, ${g.b} 100%)` }} />
+            <a
+              key={g.host}
+              href={`/gallery/${g.slug}/brand.html`}
+              target="_blank"
+              rel="noreferrer"
+              className="gal-card gal-real"
+            >
+              <div
+                className="gal-swatch"
+                style={{ background: `linear-gradient(135deg, ${g.primary} 0%, ${g.accent} 65%, ${g.bg === '#ffffff' ? '#1a1a1a' : g.bg} 100%)` }}
+              />
+              <div className="gal-logo">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://icon.horse/icon/${g.host}`}
+                  alt=""
+                  loading="lazy"
+                  width={64}
+                  height={64}
+                />
+              </div>
               <div className="gal-meta">
                 <span className="gal-host">{g.host}</span>
-                <span className="gal-grade">{g.grade}</span>
+                <span className="gal-grade">brand book ↗</span>
               </div>
             </a>
           ))}
         </div>
-        <div style={{ marginTop: 28 }}>
-          <a href="/gallery" className="btn btn-ghost">Open gallery</a>
+        <div style={{ marginTop: 28, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <a href="/gallery" className="btn btn-ghost">Browse gallery</a>
+          <span className="mono faint" style={{ alignSelf: 'center', fontSize: 12 }}>
+            extracted live · {new Date().toISOString().slice(0, 10)}
+          </span>
         </div>
       </div>
     </section>

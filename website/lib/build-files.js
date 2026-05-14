@@ -14,6 +14,7 @@ import { formatIosSwiftUI } from '../../src/formatters/ios-swiftui.js';
 import { formatAndroidCompose } from '../../src/formatters/android-compose.js';
 import { formatFlutterDart } from '../../src/formatters/flutter-dart.js';
 import { formatAgentRules } from '../../src/formatters/agent-rules.js';
+import { formatBrandBook } from '../../src/formatters/brand-book.js';
 import { nameFromUrl } from '../../src/utils.js';
 
 export function buildFiles(design, targetUrl) {
@@ -28,6 +29,7 @@ export function buildFiles(design, targetUrl) {
     [`${prefix}-tailwind.config.js`]: formatTailwind(design),
     [`${prefix}-variables.css`]: formatCssVars(design),
     [`${prefix}-preview.html`]: formatPreview(design),
+    [`${prefix}.brand.html`]: formatBrandBook(design),
     [`${prefix}-figma-variables.json`]: formatFigma(design),
     [`${prefix}-theme.js`]: formatReactTheme(design),
     [`${prefix}-shadcn-theme.css`]: formatShadcnTheme(design),
