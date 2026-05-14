@@ -1,5 +1,29 @@
 # Changelog
 
+## [12.11.0] — 2026-05-15
+
+**`brand --pdf` ships native PDF brand guides.**
+
+```bash
+npx designlang brand stripe.com --pdf
+# → stripe-com.brand.pdf  (print-ready, ~3–5s)
+```
+
+What you get on top of any "save as PDF":
+
+- **Per-chapter page breaks** — every section starts on a fresh page.
+- **Running footer** — `designlang · <subject> · <page> of <total>` on every page.
+- **Selectable text + embedded fonts** — never rasterized.
+- **`--paper a4|letter|tabloid` + `--landscape`** for any output target.
+- **`--attach-tokens`** embeds the DTCG tokens JSON *inside* the PDF as a
+  proper file attachment — open the PDF in Preview/Acrobat, hit the
+  paperclip, drop the JSON straight into Tailwind.
+- **`--no-print-background`** strips the brand-colour cover band for a
+  smaller file when you need it.
+
+Adds one tiny dep (`pdf-lib`, MIT, ~600KB) used only when `--attach-tokens`
+is passed; lazy-imported behind a dynamic `import()`.
+
 ## [12.10.1] — 2026-05-13
 
 **Tiny ship: \`stats\` now scans multiple URLs at once.**

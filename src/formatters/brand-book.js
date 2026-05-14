@@ -945,7 +945,8 @@ export function formatBrandBook(design, opts = {}) {
     .cover, .toc, section { page-break-inside: avoid; border-color: #ddd; padding: 36px 32px; }
     .cover-band { background-color: var(--accent) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .toc, .cover { page-break-after: always; }
-    section { page-break-after: always; }
+    section { page-break-before: always; page-break-after: always; break-before: page; }
+    .topbar { display: none !important; }
     .scale-table, .a11y-pair, .component-card { page-break-inside: avoid; }
   }
 </style>

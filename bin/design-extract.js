@@ -53,6 +53,7 @@ import { buildPack } from '../src/pack.js';
 import { recolorDesign } from '../src/recolor.js';
 import { formatThemeSwap, formatThemeSwapMarkdown } from '../src/formatters/theme-swap.js';
 import { formatBrandBook, formatBrandBookMarkdown } from '../src/formatters/brand-book.js';
+import { htmlToPdf } from '../src/pdf.js';
 import { fuseDesigns, AXES } from '../src/fuse.js';
 import { formatPair, formatPairMarkdown } from '../src/formatters/pair.js';
 import { nameFromUrl } from '../src/utils.js';
@@ -1456,6 +1457,11 @@ program
   .option('-n, --name <name>', 'output file prefix (default: derived from URL)')
   .option('--format <fmt>', 'output format: html, md, json, all', 'all')
   .option('--open', 'open the HTML book in the default browser')
+  .option('--pdf', 'also emit a print-ready PDF brand guide (chapter bookmarks, running page numbers)')
+  .option('--paper <size>', 'PDF paper size: a4 | letter | tabloid', 'a4')
+  .option('--landscape', 'PDF landscape orientation')
+  .option('--no-print-background', 'strip the brand-colour cover band from the PDF (smaller file)')
+  .option('--attach-tokens', 'embed the DTCG tokens JSON as a PDF file attachment')
   .action(async (url, opts) => {
     if (!url.startsWith('http')) url = `https://${url}`;
     validateUrl(url);
@@ -1477,11 +1483,14 @@ program
       const prefix = opts.name || `${nameFromUrl(url)}.brand`;
       const written = [];
 
-      if (opts.format === 'all' || opts.format === 'html') {
-        const html = formatBrandBook(design, { version: PKG_VERSION });
-        const p = join(outDir, `${prefix}.html`);
-        writeFileSync(p, html);
-        written.push(p);
+      let bookHtml = null;
+      if (opts.format === 'all' || opts.format === 'html' || opts.pdf) {
+        bookHtml = formatBrandBook(design, { version: PKG_VERSION });
+        if (opts.format === 'all' || opts.format === 'html') {
+          const p = join(outDir, `${prefix}.html`);
+          writeFileSync(p, bookHtml);
+          written.push(p);
+        }
       }
       if (opts.format === 'all' || opts.format === 'md') {
         const md = formatBrandBookMarkdown(design);
@@ -1513,6 +1522,42 @@ program
           score: design.score,
         }, null, 2));
         written.push(p);
+      }
+
+      if (opts.pdf) {
+        spinner.text = 'Rendering PDF...';
+        const pdfPath = join(outDir, `${prefix}.pdf`);
+        const attachments = [];
+        if (opts.attachTokens) {
+          // Reuse the JSON we just wrote if available; otherwise build a DTCG payload on the fly.
+          let tokensJson;
+          try {
+            tokensJson = readFileSync(join(outDir, `${prefix}.json`));
+          } catch {
+            tokensJson = Buffer.from(JSON.stringify({
+              colors: design.colors, typography: design.typography,
+              spacing: design.spacing, motion: design.motion,
+            }, null, 2));
+          }
+          attachments.push({
+            filename: `${nameFromUrl(url)}-tokens.json`,
+            contents: tokensJson,
+            mimeType: 'application/json',
+            description: 'Design tokens (DTCG-aligned)',
+          });
+        }
+        await htmlToPdf(bookHtml, {
+          paper: opts.paper,
+          landscape: !!opts.landscape,
+          printBackground: opts.printBackground !== false,
+          attachments,
+          metadata: {
+            title: `${new URL(url).hostname} brand guidelines`,
+            subject: `${new URL(url).hostname} brand guidelines`,
+          },
+          outPath: pdfPath,
+        });
+        written.push(pdfPath);
       }
 
       spinner.stop();
