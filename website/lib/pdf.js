@@ -39,13 +39,29 @@ export async function renderBrandPdf(html, host, { trusted = false } = {}) {
 
   try {
     const page = await browser.newPage();
+    // Bound every operation so a slow font CDN or remote browser can never
+    // hang the function into a platform 504 — we'd rather render unstyled
+    // than time out.
+    page.setDefaultTimeout(20000);
+    page.setDefaultNavigationTimeout(20000);
     if (!trusted) {
       await page.route('**', (route) => {
         const url = route.request().url();
         return isAllowedSubresource(url) ? route.continue() : route.abort();
       });
     }
-    await page.setContent(html, { waitUntil: 'networkidle' });
+    // 'networkidle' waits for the network to fall quiet, which stalls on a
+    // slow Google Fonts response (and behaves badly with request
+    // interception). 'load' fires once the document + its resources have
+    // loaded; we then give web fonts a *bounded* chance to settle so the
+    // PDF still looks right without ever blocking on a slow CDN.
+    await page.setContent(html, { waitUntil: 'load' }).catch(() => {});
+    await page
+      .evaluate(() => Promise.race([
+        (document.fonts && document.fonts.ready) || Promise.resolve(),
+        new Promise((r) => setTimeout(r, 2500)),
+      ]))
+      .catch(() => {});
     return await page.pdf({
       format: 'a4',
       printBackground: true,
