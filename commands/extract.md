@@ -35,7 +35,15 @@ Useful flags the user may pass via `$ARGUMENTS`:
 | `--depth <n>` | crawl N additional canonical pages |
 | `--dark` | also extract dark mode |
 | `--platforms ios,android,flutter,wordpress` | multi-platform emitters |
-| `--smart` | LLM fallback for low-confidence classifiers (needs `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`) |
+| `--smart` | LLM fallback for low-confidence classifiers (supports `ATLASCLOUD_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY`) |
 | `--cookie-file ./session.json` | authenticated extraction |
 
 Full reference: https://github.com/Manavarya09/design-extract#full-cli-reference
+
+Atlas Cloud quick setup for `--smart`:
+
+```bash
+export ATLASCLOUD_API_KEY="<atlascloud-api-key>"
+export ATLASCLOUD_MODEL="deepseek-ai/deepseek-v4-pro"
+npx designlang https://stripe.com --smart
+```

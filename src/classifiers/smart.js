@@ -1,7 +1,8 @@
 // Optional LLM fallback for low-confidence classifications. No SDK deps — we
-// hit the OpenAI or Anthropic REST API directly via global fetch. Runs only
-// when the user passes --smart AND an API key is available in env. Silently
-// no-ops otherwise so the core extractor stays zero-config.
+// hit the Anthropic REST API or an OpenAI-compatible chat endpoint directly via
+// global fetch. Runs only when the user passes --smart AND an API key is
+// available in env. Silently no-ops otherwise so the core extractor stays
+// zero-config.
 //
 // Consumers call `refineWithSmart({ pageIntent, sectionRoles, materialLanguage,
 // componentLibrary }, digest)` — we only hit the network for fields where
@@ -19,9 +20,38 @@ const TASKS = {
   },
 };
 
-function detectProvider() {
-  if (process.env.ANTHROPIC_API_KEY) return 'anthropic';
-  if (process.env.OPENAI_API_KEY) return 'openai';
+function trimTrailingSlash(url) {
+  return url ? url.replace(/\/+$/, '') : url;
+}
+
+export function resolveSmartProviderConfig(env = process.env) {
+  if (env.ANTHROPIC_API_KEY) {
+    return {
+      provider: 'anthropic',
+      apiKey: env.ANTHROPIC_API_KEY,
+      model: env.DESIGNLANG_MODEL || 'claude-haiku-4-5-20251001',
+    };
+  }
+
+  const atlasApiKey = env.ATLASCLOUD_API_KEY || env.ATLAS_CLOUD_API_KEY;
+  if (atlasApiKey) {
+    return {
+      provider: 'atlascloud',
+      apiKey: atlasApiKey,
+      baseUrl: trimTrailingSlash(env.ATLASCLOUD_API_BASE || env.ATLAS_CLOUD_API_BASE || 'https://api.atlascloud.ai/v1'),
+      model: env.DESIGNLANG_MODEL || env.ATLASCLOUD_MODEL || env.ATLAS_CLOUD_MODEL || 'deepseek-ai/deepseek-v4-pro',
+    };
+  }
+
+  if (env.OPENAI_API_KEY) {
+    return {
+      provider: 'openai',
+      apiKey: env.OPENAI_API_KEY,
+      baseUrl: trimTrailingSlash(env.OPENAI_API_BASE || env.OPENAI_BASE_URL || 'https://api.openai.com/v1'),
+      model: env.DESIGNLANG_MODEL || 'gpt-4o-mini',
+    };
+  }
+
   return null;
 }
 
@@ -44,16 +74,16 @@ function buildDigest({ rawData, design, pageIntent }) {
   ].join('\n\n');
 }
 
-async function callAnthropic(system, user) {
+async function callAnthropic(config, system, user) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
-      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'x-api-key': config.apiKey,
       'anthropic-version': '2023-06-01',
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: process.env.DESIGNLANG_MODEL || 'claude-haiku-4-5-20251001',
+      model: config.model,
       max_tokens: 200,
       system,
       messages: [{ role: 'user', content: user }],
@@ -65,15 +95,15 @@ async function callAnthropic(system, user) {
   return text;
 }
 
-async function callOpenAI(system, user) {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+async function callOpenAICompatible(config, system, user) {
+  const res = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
-      'authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+      'authorization': `Bearer ${config.apiKey}`,
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: process.env.DESIGNLANG_MODEL || 'gpt-4o-mini',
+      model: config.model,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: user },
@@ -82,14 +112,14 @@ async function callOpenAI(system, user) {
       response_format: { type: 'json_object' },
     }),
   });
-  if (!res.ok) throw new Error(`openai ${res.status}`);
+  if (!res.ok) throw new Error(`${config.provider} ${res.status}`);
   const json = await res.json();
   return json.choices?.[0]?.message?.content || '';
 }
 
-async function callLLM(provider, system, user) {
-  if (provider === 'anthropic') return callAnthropic(system, user);
-  return callOpenAI(system, user);
+async function callLLM(config, system, user) {
+  if (config.provider === 'anthropic') return callAnthropic(config, system, user);
+  return callOpenAICompatible(config, system, user);
 }
 
 function parseJsonLoose(text) {
@@ -101,8 +131,10 @@ function parseJsonLoose(text) {
 
 export async function refineWithSmart({ enabled, rawData, design, pageIntent, sectionRoles, materialLanguage, componentLibrary }) {
   if (!enabled) return { applied: false, reason: 'disabled' };
-  const provider = detectProvider();
-  if (!provider) return { applied: false, reason: 'no API key (set OPENAI_API_KEY or ANTHROPIC_API_KEY)' };
+  const providerConfig = resolveSmartProviderConfig();
+  if (!providerConfig) {
+    return { applied: false, reason: 'no API key (set OPENAI_API_KEY, ATLASCLOUD_API_KEY, or ANTHROPIC_API_KEY)' };
+  }
 
   const digest = buildDigest({ rawData, design, pageIntent });
   const updates = {};
@@ -118,13 +150,13 @@ export async function refineWithSmart({ enabled, rawData, design, pageIntent, se
     if (!spec) continue;
     const user = `Digest:\n${digest}\n\nCurrent heuristic result:\n${JSON.stringify(current)}\n\nRespond with the requested JSON.`;
     try {
-      const raw = await callLLM(provider, spec.system, user);
+      const raw = await callLLM(providerConfig, spec.system, user);
       const parsed = parseJsonLoose(raw);
-      if (parsed) updates[task] = { ...parsed, smart: true, provider };
+      if (parsed) updates[task] = { ...parsed, smart: true, provider: providerConfig.provider };
     } catch (e) {
       errors.push(`${task}: ${e.message}`);
     }
   }
 
-  return { applied: true, provider, updates, errors };
+  return { applied: true, provider: providerConfig.provider, updates, errors };
 }

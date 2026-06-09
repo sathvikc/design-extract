@@ -112,7 +112,7 @@ program
   .option('--tokens-legacy', 'Emit pre-v7 flat token JSON (backward compat)')
   .option('--platforms <csv>', 'Additional platforms: web,ios,android,flutter,wordpress,all (web is always emitted)', 'web')
   .option('--emit-agent-rules', 'Emit Cursor/Claude Code/generic agent rules')
-  .option('--smart', 'use optional LLM fallback when heuristic classifiers have low confidence (needs OPENAI_API_KEY or ANTHROPIC_API_KEY)')
+  .option('--smart', 'use optional LLM fallback when heuristic classifiers have low confidence (supports ATLASCLOUD_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY)')
   .option('--pages <n>', 'crawl N canonical pages (pricing/docs/blog/about/product) in addition to the homepage', parseInt)
   .option('--no-prompts', 'skip writing the prompt-pack directory')
   .option('--no-design-md', 'skip writing the agent-native DESIGN.md (single-file, 8-section, YAML front matter)')

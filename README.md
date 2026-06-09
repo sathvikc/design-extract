@@ -10,6 +10,17 @@
 
 </p>
 
+<p align="center">
+  <a href="https://www.atlascloud.ai/?utm_source=github&utm_medium=referral&utm_campaign=design-extract">
+    <img src="./assets/atlas-cloud-logo.svg" alt="Atlas Cloud" width="220">
+  </a>
+</p>
+
+<p align="center">
+  Powered by <a href="https://www.atlascloud.ai/?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud</a> for OpenAI-compatible <code>--smart</code> classification.
+  For AI coding workflows, try the <a href="https://www.atlascloud.ai/console/coding-plan?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud coding plan</a>.
+</p>
+
 ---
 
 <p align="center">
@@ -50,6 +61,21 @@ Drop a live design-score badge in any README:
 npm i -g designlang                         # global
 npx skills add Manavarya09/design-extract   # as an agent skill (40+ agents)
 ```
+
+## Atlas Cloud for `--smart`
+
+`designlang --smart` can now use Atlas Cloud through its OpenAI-compatible chat API, so low-confidence classifiers can stay zero-dependency while routing to Atlas-hosted models.
+
+```bash
+export ATLASCLOUD_API_KEY="<atlascloud-api-key>"
+export ATLASCLOUD_MODEL="deepseek-ai/deepseek-v4-pro"
+
+npx designlang https://stripe.com --smart
+```
+
+- Atlas Cloud envs: `ATLASCLOUD_API_KEY`, `ATLASCLOUD_MODEL`, optional `ATLASCLOUD_API_BASE`
+- Alias envs also work: `ATLAS_CLOUD_API_KEY`, `ATLAS_CLOUD_MODEL`, `ATLAS_CLOUD_API_BASE`
+- Existing `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` flows keep working unchanged
 
 ## What you get
 
@@ -284,5 +310,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). PRs welcome!
 ## License
 
 [MIT](LICENSE) - Manav Arya Singh
-
 
