@@ -10,13 +10,22 @@
 
 </p>
 
----
-
 <p align="center">
   <img src="https://raw.githubusercontent.com/Manavarya09/design-extract/main/designlang.png" alt="designlang in action — extracts DTCG tokens, Tailwind config, Figma variables, brand book PDF" width="100%">
 </p>
 
 [![designlang on npm](https://pkgfolio.vercel.app/embed/pkg/designlang?v=2)](https://www.npmjs.com/package/designlang)
+
+<p align="center">
+  <a href="https://www.atlascloud.ai/?utm_source=github&utm_medium=referral&utm_campaign=design-extract">
+    <img src="./assets/atlas-cloud-logo.svg" alt="Atlas Cloud" width="220">
+  </a>
+</p>
+
+<p align="center">
+  Powered by <a href="https://www.atlascloud.ai/?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud</a> for OpenAI-compatible <code>--smart</code> classification.
+  For AI coding workflows, try the <a href="https://www.atlascloud.ai/console/coding-plan?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud coding plan</a>.
+</p>
 
 **designlang** points a headless browser at any URL and reads the design system off the live DOM. One command emits 17+ files — DTCG tokens, Tailwind config, shadcn theme, Figma variables, motion tokens, typed component anatomy, brand voice, page-intent labels, and a paste-ready prompt pack for v0 / Lovable / Cursor / Claude Artifacts.
 
@@ -50,6 +59,21 @@ Drop a live design-score badge in any README:
 npm i -g designlang                         # global
 npx skills add Manavarya09/design-extract   # as an agent skill (40+ agents)
 ```
+
+## Atlas Cloud for `--smart`
+
+`designlang --smart` can now use Atlas Cloud through its OpenAI-compatible chat API, so low-confidence classifiers can stay zero-dependency while routing to Atlas-hosted models.
+
+```bash
+export ATLASCLOUD_API_KEY="<atlascloud-api-key>"
+export ATLASCLOUD_MODEL="deepseek-ai/deepseek-v4-pro"
+
+npx designlang https://stripe.com --smart
+```
+
+- Atlas Cloud envs: `ATLASCLOUD_API_KEY`, `ATLASCLOUD_MODEL`, optional `ATLASCLOUD_API_BASE`
+- Alias envs also work: `ATLAS_CLOUD_API_KEY`, `ATLAS_CLOUD_MODEL`, `ATLAS_CLOUD_API_BASE`
+- Existing `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` flows keep working unchanged
 
 ## What you get
 
@@ -284,5 +308,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). PRs welcome!
 ## License
 
 [MIT](LICENSE) - Manav Arya Singh
-
 
