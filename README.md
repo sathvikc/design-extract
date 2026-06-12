@@ -308,5 +308,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). PRs welcome!
 
 ## License
 
-[MIT](LICENSE) - Manav Arya Singh
+[MIT](LICENSE) - Manav Arya Singh !!
 
