@@ -1,5 +1,19 @@
 # Changelog
 
+## [12.20.0] — 2026-06-14
+
+**Studio gains one-click dark mode.**
+
+- **Light / Dark toggle** in the studio — generates a tasteful dark variant
+  from the extracted light tokens: surface drops to a near-black tinted toward
+  the brand hue, text lifts to near-white, and muted / border / card are
+  recomputed so the system stays coherent. The **brand accent is preserved**
+  (lightened only if it would vanish on dark), and type, shape, spacing and
+  motion carry over unchanged. Contrast grading recomputes live, your inspector
+  edits layer on top of either theme, and the chosen theme is encoded in the
+  shareable URL. Pure, shared `deriveDark()` in `src/studio-tokens.js` (new
+  unit tests included), so the CLI and website studios stay in lock-step.
+
 ## [12.19.0] — 2026-06-14
 
 **`studio` becomes a living design-system editor — and ships on the website.**

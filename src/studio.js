@@ -11,7 +11,7 @@
 import { createServer } from 'http';
 import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
 import { resolve, join, extname } from 'path';
-import { deriveTokens } from './studio-tokens.js';
+import { deriveTokens, deriveDark } from './studio-tokens.js';
 
 // Re-export so existing importers (and tests) can keep reaching it here.
 export { deriveTokens } from './studio-tokens.js';
@@ -160,6 +160,10 @@ function styleBlock() {
   #reset { display: inline-flex; align-items: center; }
   .stage-wrap[data-bd="white"] { background: #ffffff; }
   .stage-wrap[data-bd="dark"] { background: #14110e; }
+  .seg { display: flex; border: 1px solid var(--ink); }
+  .seg button { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 7px 11px; border: 0; border-left: 1px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; }
+  .seg button:first-child { border-left: 0; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
   .bd { display: flex; gap: 0; border: 1px solid var(--ink); }
   .bd button { width: 26px; height: 28px; border: 0; border-left: 1px solid var(--ink); background: var(--paper); cursor: pointer; padding: 0; }
   .bd button:first-child { border-left: 0; }
@@ -300,6 +304,7 @@ export function studioHtml(data) {
   const boot = {
     prefix: data.prefix,
     base: derived.vars,
+    dark: deriveDark(derived.vars),
     palette: derived.palette,
     fonts: derived.fonts,
     source: meta.source || '',
@@ -328,6 +333,10 @@ ${styleBlock()}
         <button class="tab" role="tab" data-tab="info" aria-selected="false">Info</button>
       </div>
       <div class="actions">
+        <div class="seg" role="group" aria-label="theme">
+          <button data-theme="light" aria-pressed="true">Light</button>
+          <button data-theme="dark" aria-pressed="false">Dark</button>
+        </div>
         <div class="bd" role="group" aria-label="preview backdrop">
           <button class="b-paper" data-bd="paper" aria-pressed="true" title="Paper"></button>
           <button class="b-white" data-bd="white" aria-pressed="false" title="White"></button>
@@ -360,6 +369,9 @@ ${styleBlock()}
 <script>
   var BOOT = JSON.parse(document.getElementById('__boot').textContent);
   var BASE = BOOT.base;
+  var DARK = BOOT.dark || BOOT.base;
+  var theme = 'light';
+  var activeBase = BASE;        // BASE (light) or DARK, edits layer on top
   var edits = {};
   var stage = document.getElementById('stage');
 
@@ -384,8 +396,16 @@ ${styleBlock()}
 
   function effective() {
     var out = {};
-    for (var k in BASE) out[k] = (edits[k] != null ? edits[k] : BASE[k]);
+    for (var k in activeBase) out[k] = (edits[k] != null ? edits[k] : activeBase[k]);
     return out;
+  }
+  function setTheme(t) {
+    theme = (t === 'dark') ? 'dark' : 'light';
+    activeBase = (theme === 'dark') ? DARK : BASE;
+    document.querySelectorAll('.seg button').forEach(function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-theme') === theme ? 'true' : 'false');
+    });
+    clean(); apply(); syncControls();
   }
   function apply() {
     var e = effective();
@@ -435,21 +455,27 @@ ${styleBlock()}
   // ── URL state (only deltas are encoded) ──
   var hashTimer = null;
   function writeHash() {
-    var keys = Object.keys(edits);
-    if (!keys.length) { history.replaceState(null, '', location.pathname); return; }
-    try { history.replaceState(null, '', '#' + btoa(JSON.stringify(edits))); } catch (e) {}
+    var payload = {};
+    for (var k in edits) payload[k] = edits[k];
+    if (theme === 'dark') payload.__theme = 'dark';
+    if (!Object.keys(payload).length) { history.replaceState(null, '', location.pathname); return; }
+    try { history.replaceState(null, '', '#' + btoa(JSON.stringify(payload))); } catch (e) {}
   }
   function scheduleHash() { clearTimeout(hashTimer); hashTimer = setTimeout(writeHash, 250); }
   function readHash() {
     try {
       if (location.hash.length > 1) {
         var o = JSON.parse(atob(location.hash.slice(1)));
-        if (o && typeof o === 'object') edits = o;
+        if (o && typeof o === 'object') {
+          if (o.__theme === 'dark') theme = 'dark';
+          delete o.__theme;
+          edits = o;
+        }
       }
     } catch (e) {}
   }
 
-  function clean() { for (var k in edits) if (edits[k] === BASE[k]) delete edits[k]; }
+  function clean() { for (var k in edits) if (edits[k] === activeBase[k]) delete edits[k]; }
 
   // ── Inspector wiring ──
   function syncControls() {
@@ -523,6 +549,12 @@ ${styleBlock()}
   });
   document.getElementById('panel-wall').classList.add('show');
 
+  // ── Theme (light / generated dark) ──
+  document.querySelector('.seg').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    setTheme(b.getAttribute('data-theme')); scheduleHash();
+  });
+
   // ── Backdrop ──
   var stageWrap = document.querySelector('.stage-wrap');
   document.querySelector('.bd').addEventListener('click', function (e) {
@@ -533,7 +565,7 @@ ${styleBlock()}
 
   // ── Actions ──
   document.getElementById('reset').addEventListener('click', function () {
-    edits = {}; apply(); syncControls(); writeHash(); toast('Reset to extracted tokens');
+    edits = {}; setTheme('light'); writeHash(); toast('Reset to extracted tokens');
   });
   document.getElementById('copylink').addEventListener('click', function () {
     writeHash();
@@ -595,7 +627,7 @@ ${styleBlock()}
   });
 
   // ── Boot ──
-  readHash(); clean(); apply(); syncControls();
+  readHash(); setTheme(theme);
 </script>
 </body>
 </html>`;

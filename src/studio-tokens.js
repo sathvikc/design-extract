@@ -135,3 +135,26 @@ export function deriveTokens(data) {
     'Inter', 'Instrument Sans', 'Fraunces', 'Georgia', 'system-ui', 'JetBrains Mono'].filter(Boolean)));
   return { vars, palette, fonts };
 }
+
+// Generate a tasteful dark variant from a light token set. Surface goes to a
+// near-black tinted slightly toward the accent hue; text to near-white; the
+// brand accent is preserved (lightened only if it would vanish on dark), and
+// muted/border/card are recomputed so the system stays coherent. Type, shape,
+// spacing and motion carry over unchanged.
+export function deriveDark(vars) {
+  const accent0 = vars['--p-accent'] || '#ff4800';
+  const accent = luminance(accent0) < 64 ? blend(accent0, '#ffffff', 0.34) : accent0;
+  const bg = blend('#0b0b0d', accent, 0.05);
+  const fg = blend('#ffffff', accent, 0.04);
+  return {
+    ...vars,
+    '--p-bg': bg,
+    '--p-fg': fg,
+    '--p-accent': accent,
+    '--p-accent-fg': luminance(accent) > 150 ? '#0a0908' : '#ffffff',
+    '--p-muted': blend(fg, bg, 0.5),
+    '--p-border': blend(fg, bg, 0.82),
+    '--p-card': blend(bg, fg, 0.06),
+    '--p-shadow': '0 1px 2px rgba(0,0,0,0.5), 0 12px 32px rgba(0,0,0,0.55)',
+  };
+}
