@@ -101,7 +101,7 @@ Each run writes 17+ files to `./design-extract-output/`. The headline outputs:
 | `*-figma-variables.json` | Figma Variables import (light + dark) |
 | `*-variables.css` | CSS custom properties |
 | `*-anatomy.tsx` | Typed React stubs for every detected component + variants |
-| `*-motion-tokens.json` | Durations, easings, springs, scroll-linked flag |
+| `*-motion-tokens.json` | Durations, easings, springs, scroll-linked flag; with `--motion-runtime` also choreography (stagger) + scroll recipes + observed durations |
 | `*-voice.json` | Brand voice — tone, pronoun posture, CTA verbs |
 | `*-prompts/` | Paste-ready prompts for v0, Lovable, Cursor, Claude Artifacts |
 | `*-mcp.json` | Disk-backed MCP server payload |
@@ -120,6 +120,7 @@ Other tools give you the paint. designlang reads the architecture:
 - **Responsive** — crawls 4 breakpoints and reports what changes (`--responsive`).
 - **Interaction states** — programmatically hovers and focuses, captures the deltas (`--interactions`, `--deep-interact`).
 - **Motion language** — durations, easing families, spring detection, scroll-linked flag, `feel` fingerprint (springy / smooth / mechanical / mixed).
+- **Runtime motion (`--motion-runtime`)** — drives the page (load / scroll / hover / focus) and reads `document.getAnimations()` to capture what *actually* animates: real durations, **choreography/stagger** sequences, and **scroll recipes** (parallax / reveal / pin). Folded into `*-motion-tokens.json` and previewable live in the studio's Motion tab.
 - **Component anatomy** — slot trees with variant × size × state matrices, emitted as typed `.tsx`.
 - **Brand voice** — tone, pronoun posture, heading style, CTA verb inventory.
 - **Page intent + section roles** — `landing` / `pricing` / `docs` etc., with semantic regions (`hero`, `feature-grid`, `pricing-table`, `cta`…).
@@ -163,7 +164,8 @@ designlang mcp                              # stdio MCP server for Cursor / Clau
 | Responsive | `--responsive` | Crawl at 4 viewports, map breakpoint changes |
 | Interactions | `--interactions` | Capture hover/focus/active state transitions |
 | Auto-interact | `--deep-interact` | Scroll, open menus/modals/accordions, hover CTAs before extraction |
-| Everything | `--full` | Enable screenshots + responsive + interactions + deep-interact |
+| Runtime motion | `--motion-runtime` | Capture real motion via `document.getAnimations()` — durations, stagger/choreography, scroll recipes |
+| Everything | `--full` | Enable screenshots + responsive + interactions + deep-interact + motion-runtime |
 | Apply | `designlang apply <url>` | Auto-detect framework and write tokens to your project |
 | Clone | `designlang clone <url>` | Generate a working Next.js starter with extracted design |
 | Score | `designlang score <url>` | Rate design quality with visual bar chart breakdown |
@@ -207,7 +209,8 @@ Options:
   --responsive            Capture at multiple breakpoints
   --interactions          Capture hover/focus/active states
   --deep-interact         Auto-interact pass (scroll, menus, modals, accordions, hover CTAs)
-  --full                  Enable all captures (implies --deep-interact)
+  --motion-runtime        Capture runtime motion via getAnimations() (durations, choreography, scroll recipes)
+  --full                  Enable all captures (implies --deep-interact + --motion-runtime)
   --cookie <cookies...>   Cookies for authenticated pages (name=value)
   --cookie-file <path>    Load cookies from JSON / storageState / Netscape cookies.txt
   --header <headers...>   Custom headers (name:value)

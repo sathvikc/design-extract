@@ -1,5 +1,31 @@
 # Changelog
 
+## [12.22.0] — 2026-06-15
+
+**Motion Lang v3 — capture what actually moves, not just what the CSS declares.**
+
+- **Runtime motion capture (`--motion-runtime`).** Drives the live page (load →
+  staged scroll → hover → focus) and reads `document.getAnimations()` to record
+  the animations & transitions the browser *actually* runs: real durations,
+  delays, easing, and the elements they target. Opt-in (also enabled by
+  `--full`); best-effort and never breaks extraction. New module
+  `src/extractors/motion-runtime.js`.
+- **Choreography & stagger detection.** `src/extractors/motion-choreography.js`
+  finds orchestrated sequences — sibling elements animating on the same trigger
+  with a near-constant delay step — and emits timeline-shaped recipes with the
+  real `staggerMs`, element count, and a collapsed selector pattern.
+- **Scroll recipes.** Scroll-triggered motion is classified into reusable
+  `parallax` / `reveal` / `pin` recipes.
+- **Emitter fidelity.** `*-motion-tokens.json` gains `choreography`, `scroll`,
+  and observed-duration blocks. The Framer Motion `stagger` variant and a new
+  GSAP `stagger()` helper now use the **real captured stagger** instead of a
+  heuristic guess when runtime data is present. All emitters degrade cleanly
+  with no runtime data.
+- **Studio Motion tab.** The local studio gains a Motion panel: easing curves
+  drawn as SVG (springs styled distinctly), duration chips, and runtime
+  choreography + scroll recipes — click a curve to preview its timing, play a
+  sequence to see the real stagger.
+
 ## [12.21.0] — 2026-06-14
 
 **Studio craft pass — the preview is now an intentional specimen, not a scatter of placeholders.**
