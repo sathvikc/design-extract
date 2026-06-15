@@ -100,6 +100,7 @@ program
   .option('--responsive', 'capture design at multiple breakpoints')
   .option('--interactions', 'capture hover/focus/active states')
   .option('--deep-interact', 'auto-interact pass: scroll, open menus/modals/accordions, hover CTAs (implies --interactions)')
+  .option('--motion-runtime', 'capture motion at runtime via document.getAnimations() — real durations, choreography/stagger, scroll recipes (Motion v3)')
   .option('--full', 'enable all extra captures (screenshots, responsive, interactions, deep-interact)')
   .option('--cookie <cookies...>', 'cookies for authenticated pages (name=value)')
   .option('--cookie-file <path>', 'load cookies from JSON, Playwright storageState, or Netscape cookies.txt')
@@ -209,6 +210,7 @@ program
         insecure: merged.insecure || false,
         userAgent: merged.userAgent,
         deepInteract: merged.deepInteract || merged.full,
+        motionRuntime: merged.motionRuntime || merged.full,
         selector: merged.selector,
         channel: merged.systemChrome ? 'chrome' : undefined,
       });

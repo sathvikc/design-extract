@@ -24,6 +24,7 @@ export async function crawlPage(url, options = {}) {
     insecure = false,
     userAgent,
     deepInteract = false,
+    motionRuntime = false,
     selector,
     channel,
     wsEndpoint,  // Remote browser (e.g. Browserless). When set, skips local launch.
@@ -112,9 +113,18 @@ export async function crawlPage(url, options = {}) {
       interactState = await runInteractionPass(page).catch(() => null);
     }
 
+    // Runtime motion capture (Motion v3, opt-in): drive the page and read what
+    // ACTUALLY animates via document.getAnimations(). Best-effort enrichment on
+    // top of static parsing — must never break extraction.
+    let motionRuntimeObs = null;
+    if (motionRuntime) {
+      motionRuntimeObs = await captureRuntimeMotion(page).catch(() => null);
+    }
+
     const lightData = await extractPageData(page, ignore, selector);
     lightData.cssCoverage = cssCoverage;
     if (interactState) lightData.interactState = interactState;
+    if (motionRuntimeObs) lightData.motionRuntime = motionRuntimeObs;
 
     // Component screenshots
     let componentScreenshots = {};
@@ -401,6 +411,126 @@ async function runInteractionPass(page) {
   } catch { /* ignore */ }
 
   return state;
+}
+
+// Runtime motion capture: read document.getAnimations() at load, after staged
+// scroll, and after hovering/focusing a sample of interactive elements. Returns
+// raw observations consumed by src/extractors/motion-runtime.js. Defensive:
+// every step is best-effort and any failure yields fewer observations, not a throw.
+async function captureRuntimeMotion(page) {
+  // In-page reader. mode = { trigger, selector? }. Serializes running animations
+  // (CSS animations + transitions + WAAPI) into plain objects.
+  const readScript = (mode) => {
+    const { trigger, selector } = mode;
+    const cssPath = (el) => {
+      if (!el || el.nodeType !== 1) return '';
+      const parts = [];
+      let node = el;
+      let depth = 0;
+      while (node && node.nodeType === 1 && depth < 4) {
+        let part = node.tagName.toLowerCase();
+        if (node.id) { part += `#${node.id}`; parts.unshift(part); break; }
+        const parent = node.parentElement;
+        if (parent) {
+          const sibs = Array.from(parent.children).filter(c => c.tagName === node.tagName);
+          if (sibs.length > 1) part += `:nth-of-type(${sibs.indexOf(node) + 1})`;
+        }
+        parts.unshift(part);
+        node = node.parentElement;
+        depth++;
+      }
+      return parts.join(' > ').slice(0, 200);
+    };
+    const serialize = (anim) => {
+      try {
+        const eff = anim.effect;
+        if (!eff || typeof eff.getTiming !== 'function') return null;
+        const t = eff.getTiming();
+        const target = eff.target;
+        if (selector && target && target.closest && !target.matches(selector) && !target.closest(selector)) {
+          // when scoped to a hovered/focused element, keep only its subtree
+        }
+        const props = new Set();
+        try {
+          for (const kf of eff.getKeyframes()) {
+            for (const k of Object.keys(kf)) {
+              if (['offset', 'composite', 'computedOffset', 'easing'].includes(k)) continue;
+              props.add(k.replace(/([A-Z])/g, '-$1').toLowerCase());
+            }
+          }
+        } catch { /* ignore */ }
+        const ctor = anim.constructor ? anim.constructor.name : '';
+        const isTransition = ctor === 'CSSTransition' || !!anim.transitionProperty;
+        return {
+          trigger,
+          selector: cssPath(target),
+          tag: target && target.tagName ? target.tagName.toLowerCase() : '',
+          type: isTransition ? 'transition' : 'animation',
+          name: anim.animationName || anim.transitionProperty || ctor || '',
+          duration: typeof t.duration === 'number' ? t.duration : 0,
+          delay: t.delay || 0,
+          easing: t.easing || 'linear',
+          iterations: t.iterations === Infinity ? 'Infinity' : t.iterations,
+          properties: [...props],
+        };
+      } catch { return null; }
+    };
+    let anims = [];
+    try { anims = document.getAnimations(); } catch { anims = []; }
+    if (selector) {
+      anims = anims.filter(a => {
+        const tgt = a.effect && a.effect.target;
+        if (!tgt || !tgt.matches) return false;
+        try { return tgt.matches(selector) || (tgt.closest && tgt.closest(selector)); } catch { return false; }
+      });
+    }
+    return anims.map(serialize).filter(Boolean).slice(0, 60);
+  };
+
+  const obs = [];
+  const push = (arr) => { if (Array.isArray(arr)) obs.push(...arr); };
+
+  // 1) Load — entrance + infinite animations still running.
+  push(await page.evaluate(readScript, { trigger: 'load' }).catch(() => []));
+
+  // 2) Scroll — reveal/parallax/scroll-timeline motion, captured per step.
+  try {
+    for (let i = 1; i <= 4; i++) {
+      await page.evaluate((step) => {
+        window.scrollTo(0, (document.body.scrollHeight * step) / 4);
+      }, i).catch(() => {});
+      await page.waitForTimeout(220);
+      push(await page.evaluate(readScript, { trigger: 'scroll' }).catch(() => []));
+    }
+    await page.evaluate(() => window.scrollTo(0, 0)).catch(() => {});
+  } catch { /* ignore */ }
+
+  // 3) Hover + focus — interaction transitions on a sample of controls.
+  let samples = [];
+  try {
+    samples = await page.evaluate(() => {
+      const out = [];
+      const pick = (sel, n) => Array.from(document.querySelectorAll(sel)).slice(0, n)
+        .forEach((el, i) => out.push(`${sel}:nth-of-type(${i + 1})`));
+      pick('button', 5);
+      pick('a[href]', 5);
+      return out;
+    });
+  } catch { /* ignore */ }
+  for (const sel of (samples || []).slice(0, 10)) {
+    try {
+      await page.hover(sel, { timeout: 500 });
+      await page.waitForTimeout(90);
+      push(await page.evaluate(readScript, { trigger: 'hover', selector: sel }).catch(() => []));
+    } catch { /* ignore */ }
+    try {
+      await page.focus(sel, { timeout: 500 });
+      await page.waitForTimeout(70);
+      push(await page.evaluate(readScript, { trigger: 'focus', selector: sel }).catch(() => []));
+    } catch { /* ignore */ }
+  }
+
+  return { observations: obs.slice(0, 200) };
 }
 
 async function extractPageData(page, ignoreSelectors, scopeSelector) {

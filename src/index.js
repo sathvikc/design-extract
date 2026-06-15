@@ -26,6 +26,8 @@ import { extractWideGamut } from './extractors/wide-gamut.js';
 import { extractTokenSources } from './extractors/token-sources.js';
 import { extractInteractionStates } from './extractors/interaction-states.js';
 import { extractMotion } from './extractors/motion.js';
+import { processRuntimeMotion } from './extractors/motion-runtime.js';
+import { detectChoreography } from './extractors/motion-choreography.js';
 import { extractComponentAnatomy } from './extractors/component-anatomy.js';
 import { extractVoice } from './extractors/voice.js';
 import { extractPageIntent } from './extractors/page-intent.js';
@@ -104,6 +106,16 @@ export async function extractDesignLanguage(url, options = {}) {
     if (result === null) warnings.push(`${name} extractor failed`);
   }
   design.warnings = warnings;
+
+  // Motion v3: fold runtime capture (opt-in --motion-runtime) into the motion
+  // model — real per-trigger animations, choreography, and scroll recipes.
+  if (rawData.light.motionRuntime) {
+    const runtime = safeExtract(processRuntimeMotion, rawData.light.motionRuntime);
+    if (runtime) {
+      runtime.choreography = safeExtract(detectChoreography, runtime.observations) || [];
+      design.motion.runtime = runtime;
+    }
+  }
 
   if (rawData.dark) {
     design.darkMode = {

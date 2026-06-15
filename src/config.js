@@ -29,6 +29,7 @@ export function mergeConfig(cliOpts, config) {
     responsive: cliOpts.responsive || config.responsive || false,
     interactions: cliOpts.interactions || cliOpts.deepInteract || config.interactions || false,
     deepInteract: cliOpts.deepInteract || config.deepInteract || false,
+    motionRuntime: cliOpts.motionRuntime || config.motionRuntime || false,
     full: cliOpts.full || config.full || false,
     cookie: cliOpts.cookie || config.cookies,
     header: cliOpts.header || config.headers,
