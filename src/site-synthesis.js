@@ -89,3 +89,85 @@ function record(tally, key, value, pageId, count = 1) {
 function pageId(page, idx) {
   return page.type || page.url || `page-${idx}`;
 }
+
+// ── canonical election ─────────────────────────────────────────────────────
+
+// Classify a token by how broadly it is used across the site.
+export function scopeForCoverage(coverage) {
+  if (coverage >= 0.8) return 'site-wide';
+  if (coverage >= 0.4) return 'section';
+  return 'page-local';
+}
+
+// Turn a tally into a sorted coverage list. Each row carries the elected value,
+// the fraction of pages that used it, its scope, and the contributing pages.
+function coverageRows(tally, totalPages) {
+  const rows = [];
+  for (const entry of tally.values()) {
+    const coverage = totalPages ? entry.pages.size / totalPages : 0;
+    rows.push({
+      key: entry.key,
+      value: entry.value,
+      pages: [...entry.pages],
+      pageCount: entry.pages.size,
+      count: entry.count,
+      coverage: Math.round(coverage * 100) / 100,
+      scope: scopeForCoverage(coverage),
+    });
+  }
+  // Most-covered first, then most-used — the canonical ordering.
+  return rows.sort((a, b) => b.coverage - a.coverage || b.count - a.count);
+}
+
+// Merge near-identical colours so a single canonical swatch represents a
+// perceptual cluster. The highest-count member becomes the cluster's value;
+// its coverage is the union of every member's pages.
+export function clusterColorRows(rows, threshold = 0.04) {
+  const clusters = [];
+  for (const row of rows) {
+    const hit = clusters.find((c) => colorDistance(c.key, row.key) <= threshold);
+    if (hit) {
+      hit.members.push(row);
+      for (const p of row.pages) hit.pageSet.add(p);
+      if (row.count > hit.count) {
+        hit.key = row.key;
+        hit.value = row.value;
+        hit.count = row.count;
+      } else {
+        hit.count += 0; // representative stays; counts merged below
+      }
+      hit.totalCount += row.count;
+    } else {
+      clusters.push({
+        key: row.key,
+        value: row.value,
+        count: row.count,
+        totalCount: row.count,
+        pageSet: new Set(row.pages),
+        members: [row],
+      });
+    }
+  }
+  return clusters;
+}
+
+// Apply colour clustering to a coverage list and re-derive coverage/scope from
+// the merged page sets.
+function canonicalColors(rows, totalPages, threshold) {
+  const clusters = clusterColorRows(rows, threshold);
+  return clusters
+    .map((c) => {
+      const coverage = totalPages ? c.pageSet.size / totalPages : 0;
+      return {
+        key: c.key,
+        value: c.value,
+        pages: [...c.pageSet],
+        pageCount: c.pageSet.size,
+        count: c.totalCount,
+        coverage: Math.round(coverage * 100) / 100,
+        scope: scopeForCoverage(coverage),
+        merged: c.members.length,
+      };
+    })
+    .sort((a, b) => b.coverage - a.coverage || b.count - a.count);
+}
