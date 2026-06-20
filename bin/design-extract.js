@@ -17,6 +17,7 @@ import { formatSiteCoverage, formatSiteConsistency } from '../src/formatters/sit
 import { extractLogo } from '../src/extractors/logo.js';
 import { captureComponentScreenshotsV10 } from '../src/extractors/component-screenshots.js';
 import { pairDarkMode } from '../src/extractors/dark-mode-pair.js';
+import { deriveBrandEssence } from '../src/extractors/brand-essence.js';
 import { captureResponsiveScreenshots } from '../src/extractors/responsive-screenshots.js';
 import { captureCoreWebVitals, extractFontLoading } from '../src/extractors/perf.js';
 import { buildPromptPack } from '../src/formatters/prompt-pack.js';
@@ -1641,6 +1642,9 @@ program
         deepInteract: true,
       });
 
+      // Synthesize brand essence once so html, md, and json all share it.
+      design.essence = deriveBrandEssence(design);
+
       const outDir = resolve(opts.out);
       mkdirSync(outDir, { recursive: true });
       const prefix = opts.name || `${nameFromUrl(url)}.brand`;
@@ -1669,6 +1673,7 @@ program
           url: design.meta?.url,
           title: design.meta?.title,
           timestamp: design.meta?.timestamp,
+          essence: design.essence,
           intent: design.pageIntent,
           material: design.materialLanguage,
           imagery: design.imageryStyle,

@@ -11,6 +11,8 @@
 //   2. Real text from the site whenever possible. The voice extractor
 //      surfaces real headings — use them. No filler aphorisms.
 
+import { deriveBrandEssence } from '../extractors/brand-essence.js';
+
 const FONT_DISPLAY = 'Instrument Serif';
 const FONT_BODY = 'Inter';
 const FONT_MONO = 'JetBrains Mono';
@@ -141,6 +143,7 @@ function buildCover(design, accent) {
 
 function buildToc() {
   const items = [
+    ['essence',       '00', 'Essence'],
     ['about',         '01', 'About'],
     ['logo',          '02', 'Logo'],
     ['color',         '03', 'Colour'],
@@ -170,6 +173,53 @@ function chapterHeader(num, title) {
       <span class="sec-num">Chapter ${num}</span>
       <h2>${esc(title)}</h2>
     </header>`;
+}
+
+function axisRow(label, leftPole, rightPole, value) {
+  const v = Number.isFinite(value) ? value : 0;
+  const pct = ((v + 1) / 2) * 100;
+  return `
+    <div class="axis-row">
+      <span class="axis-pole">${esc(leftPole)}</span>
+      <div class="axis-track" role="img" aria-label="${esc(label)}: ${v}">
+        <span class="axis-dot" style="left:${pct.toFixed(1)}%"></span>
+      </div>
+      <span class="axis-pole r">${esc(rightPole)}</span>
+    </div>`;
+}
+
+function buildEssence(design) {
+  const e = design.essence || deriveBrandEssence(design);
+  const a = e.axes || {};
+  const arch = e.archetype || {};
+  return `
+    <section id="essence">
+      ${chapterHeader('00', 'Essence')}
+      <p class="essence-lede">${esc(e.positioning)}</p>
+
+      <div class="essence-arch">
+        <span class="essence-arch-name">${esc(arch.name || '—')}</span>
+        <span class="essence-arch-meta">archetype · ${Math.round((arch.confidence || 0) * 100)}% fit${arch.runnerUp ? ` · vs ${esc(arch.runnerUp)}` : ''}</span>
+      </div>
+
+      ${(e.adjectives || []).length ? `
+        <h3 class="sub">Adjectives</h3>
+        <ul class="essence-chips">${e.adjectives.map(w => `<li>${esc(w)}</li>`).join('')}</ul>
+      ` : ''}
+
+      <h3 class="sub">Personality axes</h3>
+      <div class="axis-meters">
+        ${axisRow('Warmth', 'Cool', 'Warm', a.warmth?.value)}
+        ${axisRow('Energy', 'Composed', 'Kinetic', a.energy?.value)}
+        ${axisRow('Weight', 'Understated', 'Bold', a.weight?.value)}
+        ${axisRow('Era', 'Timeless', 'Modern', a.era?.value)}
+      </div>
+
+      ${(e.evidence || []).length ? `
+        <h3 class="sub">Evidence</h3>
+        <ul class="essence-evidence">${e.evidence.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
+      ` : ''}
+    </section>`;
 }
 
 function buildAbout(design) {
@@ -818,6 +868,23 @@ export function formatBrandBook(design, opts = {}) {
   }
   [data-theme="dark"] .callout { background: rgba(255,255,255,.04); }
 
+  /* — Essence (ch.00) — */
+  .essence-lede { font-family: var(--display); font-weight: 400; font-size: clamp(24px, 3.2vw, 38px); line-height: 1.22; letter-spacing: -.01em; margin: 0 0 34px; }
+  .essence-arch { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin: 0 0 28px; padding-bottom: 24px; border-bottom: 1px solid var(--rule); }
+  .essence-arch-name { font-family: var(--display); font-size: 30px; line-height: 1; }
+  .essence-arch-meta { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; color: var(--ink-faint); text-transform: uppercase; }
+  .essence-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .essence-chips li { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; text-transform: lowercase; padding: 6px 12px; border: 1px solid var(--rule); border-radius: 999px; }
+  .axis-meters { display: grid; gap: 16px; margin: 0; }
+  .axis-row { display: grid; grid-template-columns: 92px 1fr 92px; align-items: center; gap: 14px; }
+  .axis-pole { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-faint); }
+  .axis-pole.r { text-align: right; }
+  .axis-track { position: relative; height: 4px; background: var(--rule); border-radius: 2px; }
+  .axis-track::before { content: ""; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--ink-faint); opacity: .45; }
+  .axis-dot { position: absolute; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); transform: translate(-50%, -50%); box-shadow: 0 0 0 3px var(--paper); }
+  .essence-evidence { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .essence-evidence li { font-family: var(--mono); font-size: 12px; line-height: 1.5; color: var(--ink-soft); padding-left: 14px; border-left: 1px solid var(--rule); }
+
   /* — Logo — */
   .logo-card { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: center; padding: 24px 0; }
   @media (max-width: 640px) { .logo-card { grid-template-columns: 1fr; } }
@@ -963,6 +1030,7 @@ export function formatBrandBook(design, opts = {}) {
   <main class="wrap">
     ${buildCover(design, accent)}
     ${buildToc()}
+    ${buildEssence(design)}
     ${buildAbout(design)}
     ${buildLogo(design)}
     ${buildColor(design)}
@@ -1011,10 +1079,20 @@ export function formatBrandBookMarkdown(design) {
   const colors = design.colors || {};
   const t = design.typography || {};
   const families = (t.families || []).map(familyName).filter(Boolean);
+  const e = design.essence || deriveBrandEssence(design);
+  const ax = e.axes || {};
   const lines = [
     `# ${hostName} — Brand guidelines`,
     ``,
     `_Generated by designlang on ${date}._`,
+    ``,
+    `## 00 · Essence`,
+    ``,
+    `> ${e.positioning}`,
+    ``,
+    `- Archetype: **${e.archetype?.name || '—'}** (${Math.round((e.archetype?.confidence || 0) * 100)}% fit, vs ${e.archetype?.runnerUp || '—'})`,
+    `- Adjectives: ${(e.adjectives || []).join(', ') || '—'}`,
+    `- Axes: warmth ${ax.warmth?.value ?? 0}, energy ${ax.energy?.value ?? 0}, weight ${ax.weight?.value ?? 0}, era ${ax.era?.value ?? 0}`,
     ``,
     `## 01 · About`,
     ``,
