@@ -1,5 +1,5 @@
 ---
-description: Generate a full editorial brand-guidelines book for any URL. 13 chapters covering colour, typography, spacing, shape, iconography, motion, components, voice, accessibility, tokens, and how-to-use guidance. Print-ready, dark-mode toggle, hand-off-ready single HTML.
+description: Generate a full editorial brand-guidelines book for any URL. 14 chapters covering brand essence/archetype, colour, typography, spacing, shape, iconography, motion, components, voice, accessibility, tokens, and how-to-use guidance. Print-ready, dark-mode toggle, hand-off-ready single HTML.
 argument-hint: <url> [--open]
 ---
 
@@ -28,6 +28,7 @@ After the run completes:
 
 | § | Chapter | What it documents |
 |---|---|---|
+| 00 | Essence | Synthesized brand personality: positioning statement, archetype (1 of 12 Jungian, with confidence), adjectives, and a four-axis meter (warmth · energy · weight · era) — every call traced to extracted signals |
 | 01 | About | Page intent, material language, imagery style, component library, stack, voice tone |
 | 02 | Logo | Extracted SVG logo + clearspace + dimensions |
 | 03 | Colour | Brand colours with HEX/RGB/HSL/usage, neutrals grid, full palette, A11y callout |
