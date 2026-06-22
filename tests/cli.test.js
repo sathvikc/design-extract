@@ -39,6 +39,22 @@ describe('CLI', () => {
     const output = execFileSync('node', [CLI_PATH, '--help'], { encoding: 'utf-8' });
     assert.ok(output.includes('--platforms'));
   });
+
+  it('registers the fidelity command with a required --clone option', () => {
+    const output = execFileSync('node', [CLI_PATH, 'fidelity', '--help'], { encoding: 'utf-8' });
+    assert.ok(output.includes('Measure how faithfully a clone reproduces'));
+    assert.ok(output.includes('--clone'));
+    assert.ok(output.includes('--min'));
+  });
+
+  it('fidelity exits non-zero when --clone is missing', () => {
+    try {
+      execFileSync('node', [CLI_PATH, 'fidelity', 'https://example.com'], { encoding: 'utf-8', stdio: 'pipe' });
+      assert.fail('Should have thrown');
+    } catch (err) {
+      assert.ok(err.status !== 0);
+    }
+  });
 });
 
 describe('parsePlatforms', () => {

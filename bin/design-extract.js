@@ -2063,6 +2063,55 @@ program
     }
   });
 
+// ── Fidelity — clone-vs-original measured loop (visual + motion) ──
+program
+  .command('fidelity <original>')
+  .description('Measure how faithfully a clone reproduces a site — pixel-diff + motion-fidelity → one 0-100 score, letter grade, ranked correction plan, and a shareable card.')
+  .requiredOption('--clone <url>', 'URL of the clone to score against the original (e.g. http://localhost:3000)')
+  .option('-o, --out <dir>', 'output directory', './design-extract-output')
+  .option('--min <score>', 'exit non-zero if overall fidelity is below this (CI gate)', parseInt)
+  .option('--motion-runtime', 'capture runtime motion (real durations + choreography) on both sides')
+  .option('--system-chrome', 'use the system Chrome install instead of bundled Chromium')
+  .action(async (original, opts) => {
+    if (!original.startsWith('http')) original = `https://${original}`;
+    let clone = opts.clone;
+    if (!clone.startsWith('http')) clone = `https://${clone}`;
+    validateUrl(original); validateUrl(clone);
+    const spinner = ora('Measuring clone fidelity (visual + motion)').start();
+    try {
+      const { measureCloneFidelity } = await import('../src/fidelity/run.js');
+      const { formatFidelityJson, formatFidelityMarkdown, formatFidelityCard } = await import('../src/formatters/fidelity-report.js');
+      const channel = opts.systemChrome ? 'chrome' : undefined;
+      const { report, heatmap } = await measureCloneFidelity({
+        originalUrl: original,
+        cloneUrl: clone,
+        opts: { channel, extract: { motionRuntime: !!opts.motionRuntime } },
+      });
+
+      const outDir = resolve(opts.out);
+      mkdirSync(outDir, { recursive: true });
+      writeFileSync(join(outDir, 'fidelity.json'), formatFidelityJson(report), 'utf8');
+      writeFileSync(join(outDir, 'fidelity.md'), formatFidelityMarkdown(report), 'utf8');
+      writeFileSync(join(outDir, 'fidelity-card.svg'), formatFidelityCard(report), 'utf8');
+      if (heatmap) writeFileSync(join(outDir, 'fidelity-diff.png'), heatmap);
+
+      spinner.succeed(`Fidelity ${report.overall == null ? 'n/a' : report.overall + '/100'} (${report.grade}) → ${join(outDir, 'fidelity.md')}`);
+      console.log(`  ${chalk.bold('visual')} ${chalk.cyan(String(report.visual ?? '—'))}   ${chalk.bold('motion')} ${chalk.cyan(String(report.motion ?? '—'))}`);
+      for (const d of report.directives.slice(0, 6)) {
+        console.log(`  ${chalk.gray(`[${d.priority}/${d.area}]`)} ${d.issue}`);
+      }
+      if (report.directives.length > 6) console.log(chalk.gray(`  …and ${report.directives.length - 6} more in fidelity.md`));
+
+      if (opts.min != null && report.overall != null && report.overall < opts.min) {
+        console.error(chalk.red(`\n  Fidelity ${report.overall} is below --min ${opts.min}\n`));
+        process.exit(1);
+      }
+    } catch (err) {
+      spinner.fail(err.message);
+      process.exit(1);
+    }
+  });
+
 // ── Chat — REPL over a live extraction (v12) ──────────────
 program
   .command('chat <target>')
