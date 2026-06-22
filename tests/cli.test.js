@@ -39,6 +39,43 @@ describe('CLI', () => {
     const output = execFileSync('node', [CLI_PATH, '--help'], { encoding: 'utf-8' });
     assert.ok(output.includes('--platforms'));
   });
+
+  it('registers the fidelity command with a required --clone option', () => {
+    const output = execFileSync('node', [CLI_PATH, 'fidelity', '--help'], { encoding: 'utf-8' });
+    assert.ok(output.includes('Measure how faithfully a clone reproduces'));
+    assert.ok(output.includes('--clone'));
+    assert.ok(output.includes('--min'));
+  });
+
+  it('fidelity exits non-zero when --clone is missing', () => {
+    try {
+      execFileSync('node', [CLI_PATH, 'fidelity', 'https://example.com'], { encoding: 'utf-8', stdio: 'pipe' });
+      assert.fail('Should have thrown');
+    } catch (err) {
+      assert.ok(err.status !== 0);
+    }
+  });
+
+  it('registers the gallery command', () => {
+    const output = execFileSync('node', [CLI_PATH, 'gallery', '--help'], { encoding: 'utf-8' });
+    assert.ok(output.includes('Build a static, shareable gallery'));
+    assert.ok(output.includes('--base-url'));
+  });
+
+  it('clone exposes a --fidelity flag', () => {
+    const output = execFileSync('node', [CLI_PATH, 'clone', '--help'], { encoding: 'utf-8' });
+    assert.ok(output.includes('--fidelity'));
+    assert.ok(output.includes('FIDELITY.md') || output.includes('token-fidelity'));
+  });
+
+  it('gallery exits non-zero when no reports are found', () => {
+    try {
+      execFileSync('node', [CLI_PATH, 'gallery', resolve(import.meta.dirname, '..', 'src')], { encoding: 'utf-8', stdio: 'pipe' });
+      assert.fail('Should have thrown');
+    } catch (err) {
+      assert.ok(err.status !== 0);
+    }
+  });
 });
 
 describe('parsePlatforms', () => {

@@ -47,6 +47,8 @@ It also goes where extractors don't: **layout patterns**, **responsive behavior 
 ```bash
 npx designlang https://stripe.com                      # extract everything
 npx designlang site stripe.com                         # whole-site: one canonical system + consistency grade ← v12.23
+npx designlang fidelity stripe.com --clone localhost:3000  # score a clone vs the original (visual + motion) ← v12.24
+npx designlang gallery                                 # static shareable gallery of measured clones      ← v12.24
 npx designlang studio                                  # live token editor: edit, preview, export, share ← v12.19
 npx designlang verify stripe.com                       # fidelity score: rebuild from tokens vs live ← v12.18
 npx designlang pair stripe.com linear.app              # fuse two designs (visuals A × voice B)    ← v12.8
@@ -88,6 +90,47 @@ You get, alongside the standard pack emitted from the **canonical** system:
 | `*-site-coverage.md` | every token tagged 🟢 site-wide / 🟡 section / 🔴 page-local, with the pages using it |
 | `*-site-consistency.md` | a 0–100 consistency grade, per-category breakdown, and the off-system outliers to consolidate |
 
+## Measured clone fidelity (`fidelity` + `gallery`)
+
+Cloning tools all *claim* "pixel-perfect" — none of them **measure** it. `designlang
+fidelity` does. Point it at the original and your clone (often a local dev
+server) and it returns one honest number, both halves of the clone:
+
+- **Visual** — full-page screenshots of each, pixel-diffed.
+- **Motion** — `extractMotion()` on both, compared across feel, durations,
+  easings, springs, keyframe kinds, scroll-linked motion, and choreography/
+  stagger. (Most clones reproduce static pixels and drop the motion entirely;
+  this is where they lose.)
+
+The two blend into a 0–100 score + letter grade, and — the part competitors
+don't ship — a **ranked correction plan**: the exact next edits that will raise
+the score, hardest-hitting first. Measure → fix → re-run until it converges.
+
+```bash
+npx designlang fidelity https://stripe.com --clone http://localhost:3000
+npx designlang fidelity https://stripe.com --clone http://localhost:3000 --min 90   # CI gate
+```
+
+Generating the clone with `designlang clone`? Add `--fidelity` and it grades the
+clone's token basis against the live site the moment it's built — writing
+`FIDELITY.md` + a correction plan straight into the project, no separate step:
+
+```bash
+npx designlang clone https://stripe.com --fidelity
+```
+
+You get `fidelity.md` (score + motion table + correction plan), `fidelity.json`,
+a shareable `fidelity-card.svg` (`88% · B · stripe.com`), and a `fidelity-diff.png`
+loss heatmap.
+
+Then publish them. `designlang gallery` scans your reports and builds a
+deployable static site — an index of score cards plus a permalink page per clone
+(each with an OG card, so a shared link unfurls the number).
+
+```bash
+npx designlang gallery --title "Our clones" --base-url https://clones.example.com
+```
+
 ## Install
 
 ```bash
@@ -122,6 +165,8 @@ the commands are available:
 | `/pair <a> <b>` | fuse two designs across configurable axes |
 | `/studio` | live token editor — preview, dark mode, export, share |
 | `/verify <url>` | rebuild from tokens, pixel-diff vs live, fidelity score |
+| `/fidelity <url> --clone <url>` | score a clone vs the original (visual + motion) + correction plan |
+| `/gallery [dir]` | build a static shareable gallery of measured clones |
 
 > Prefer the raw MCP tools? The CLI also ships an MCP server — run
 > `designlang mcp --output-dir ./design-extract-output` to serve the latest
@@ -300,6 +345,8 @@ Commands:
   lint <file>                       (v9) Audit a local token file (.json/.css) — CI-ready
   drift <url> --tokens <file>       (v9) Check local tokens for drift against a live site
   visual-diff <before> <after>      (v9) Side-by-side HTML diff of two URLs
+  fidelity <original> --clone <url> Score a clone vs the original — visual pixel-diff + motion fidelity → one grade + ranked correction plan (--min, --motion-runtime)
+  gallery [dir]                     Build a shareable static gallery of measured clones (--title, --base-url)
 ```
 
 ## Example output

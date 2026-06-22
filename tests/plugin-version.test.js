@@ -19,14 +19,14 @@ describe('plugin manifest', () => {
   });
 
   it('ships a command file for every new command added in this release', () => {
-    for (const cmd of ['site', 'studio', 'verify']) {
+    for (const cmd of ['site', 'studio', 'verify', 'fidelity', 'gallery']) {
       assert.ok(existsSync(join(root, 'commands', `${cmd}.md`)), `commands/${cmd}.md missing`);
     }
   });
 
   it('describes the new commands in the plugin description', () => {
     const plugin = read('.claude-plugin/plugin.json');
-    for (const cmd of ['/site', '/studio', '/verify']) {
+    for (const cmd of ['/site', '/studio', '/verify', '/fidelity', '/gallery']) {
       assert.ok(plugin.description.includes(cmd), `plugin.json description missing ${cmd}`);
     }
   });
