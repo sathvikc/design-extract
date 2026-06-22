@@ -1,5 +1,34 @@
 # Changelog
 
+## [12.24.0] — 2026-06-22
+
+**Measured clone fidelity — the only clone score that covers motion, and a shareable gallery to publish it.**
+
+Cloning tools all *claim* "pixel-perfect"; none of them measure it, and none of
+them look at motion. This release closes that gap.
+
+- **`designlang fidelity <original> --clone <url>`.** Scores a clone against the
+  site it was cloned from and returns one honest number. **Visual:** full-page
+  screenshots of each, pixel-diffed (reusing `verify`'s letterbox diff).
+  **Motion:** `extractMotion()` on both sides, compared across feel, durations,
+  easings, springs, keyframe kinds, scroll-linked motion, and choreography/
+  stagger — the half every other cloner drops. The two blend into a 0–100 score
+  + letter grade, with a **ranked correction plan** (`expectedGain`-sorted) that
+  prescribes the next edits. `--min` gates CI; `--motion-runtime` captures real
+  runtime durations + choreography on both sides. Outputs `fidelity.md`,
+  `fidelity.json`, a shareable `fidelity-card.svg`, and a `fidelity-diff.png`
+  heatmap. New pure, unit-tested modules under `src/fidelity/`
+  (`motion-fidelity.js`, `correction-plan.js`, `index.js` combiner + closed-loop
+  driver) and `src/formatters/fidelity-report.js`.
+- **`designlang gallery [dir]`.** Scans a directory for `fidelity.json` reports
+  and builds a deployable static site: an index of score cards (best-first, with
+  summary stats) plus a permalink page per clone — each embedding the SVG score
+  card and OG/Twitter tags, so a shared link unfurls the measured number. New
+  modules `src/gallery/` (`index.js` model + builder, `load.js` report loader)
+  and `src/formatters/gallery.js`. `--title`, `--base-url`.
+- **39 new unit tests** across motion fidelity, the correction-plan/loop, report
+  and gallery formatters, the report loader, and CLI registration.
+
 ## [12.23.0] — 2026-06-18
 
 **Whole-site design system — synthesize one canonical system across every page, not just the homepage.**
