@@ -110,6 +110,7 @@ async function Nav() {
         </a>
 
         <nav className="nav-pillnav" aria-label="primary">
+          <a href="/watch"><span>Watch</span></a>
           <a href="/features"><span>Features</span></a>
           <a href="/gallery"><span>Gallery</span></a>
           <a href="/studio"><span>Studio</span></a>
@@ -165,6 +166,7 @@ function Footer() {
         <div className="ftr-cols">
           <div className="ftr-col">
             <span className="ftr-title">Product</span>
+            <a href="/watch">Watch it read</a>
             <a href="/features">Features</a>
             <a href="/gallery">Gallery</a>
             <a href="/spec">DESIGN.md spec</a>
