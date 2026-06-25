@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased] — 13.0.0
+
+**Live Extraction Theatre — watch the real browser read a site, on the website, and a 3× bigger gallery.**
+
+_In progress. See `docs/superpowers/specs/2026-06-25-extraction-theatre-design.md`._
+
+- **Live Extraction Theatre.** Paste a URL on the site and watch real headless
+  Chromium open the page and read its design system, live — a split stage with
+  the browser on the left and the design system assembling itself on the right
+  as tokens fly off the page. Streamed over the existing NDJSON `/api/extract`
+  (new opt-in `theatre` flag, fully backwards-compatible), recorded to Blob and
+  replayable so cached runs still look live. New homepage hero + `/watch` page.
+- **Gallery expansion.** 13 → ~36 recognizable sites with real grades, plus
+  sort/filter and a "watch it extract" link into the Theatre.
+
 ## [12.24.0] — 2026-06-22
 
 **Measured clone fidelity — the only clone score that covers motion, and a shareable gallery to publish it.**
