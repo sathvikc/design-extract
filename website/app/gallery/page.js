@@ -1,4 +1,5 @@
 import { listRecent } from '../../lib/cache';
+import GalleryFeatured from './GalleryFeatured';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -6,25 +7,50 @@ export const revalidate = 600;
 export const metadata = {
   title: 'Gallery — design systems extracted by designlang',
   description:
-    'Real, browseable extractions of stripe.com, linear.app, vercel.com, notion.so, figma.com, apple.com, arc.net, spotify.com, github.com, airbnb.com, openai.com, tailwindcss.com, anthropic.com plus every recent run. Each card opens the full brand book — DTCG tokens, Tailwind config, Figma variables, downloads.',
+    'Dozens of real, browseable design-system extractions — Stripe, Linear, Vercel, Figma, Apple, Supabase, Raycast, Framer, Netflix, Discord, PostHog, Sentry, Retool and more — each graded on a real designlang run. Open the brand book (DTCG tokens, Tailwind, Figma variables) or watch any one get read live.',
   alternates: { canonical: 'https://designlang.app/gallery' },
-  openGraph: { title: 'designlang gallery', description: 'Real extractions of well-known design systems — every card opens the brand book.' },
+  openGraph: { title: 'designlang gallery', description: 'Dozens of well-known design systems, graded on real runs — open the brand book or watch it read live.' },
 };
 
 const FEATURED = [
-  { host: 'stripe.com',  slug: 'stripe-com',  primary: '#533afd', accent: '#e5edf5', bg: '#ffffff', grade: 'B'  },
-  { host: 'linear.app',  slug: 'linear-app',  primary: '#5e6ad2', accent: '#e4f222', bg: '#08090a', grade: 'A'  },
-  { host: 'vercel.com',  slug: 'vercel-com',  primary: '#0068d6', accent: '#52aeff', bg: '#fafafa', grade: 'A'  },
-  { host: 'notion.so',   slug: 'notion-so',   primary: '#455dd3', accent: '#0075de', bg: '#ffffff', grade: 'A-' },
-  { host: 'figma.com',   slug: 'figma-com',   primary: '#00b6ff', accent: '#e4ff97', bg: '#ffffff', grade: 'A'  },
-  { host: 'apple.com',   slug: 'apple-com',   primary: '#0071e3', accent: '#f5f5f7', bg: '#ffffff', grade: 'A+' },
-  { host: 'arc.net',     slug: 'arc-net',     primary: '#2702c2', accent: '#fffadd', bg: '#fffcec', grade: 'A'  },
-  { host: 'spotify.com', slug: 'spotify-com', primary: '#1ed760', accent: '#346e4a', bg: '#121212', grade: 'A-' },
-  { host: 'github.com',      slug: 'github-com',      primary: '#08872b', accent: '#f0f6fc', bg: '#0d1117', grade: 'A'  },
-  { host: 'airbnb.com',      slug: 'airbnb-com',      primary: '#ff385c', accent: '#e00b41', bg: '#ffffff', grade: 'A-' },
-  { host: 'openai.com',      slug: 'openai-com',      primary: '#000000', accent: '#8e8ea0', bg: '#ffffff', grade: 'A'  },
-  { host: 'tailwindcss.com', slug: 'tailwindcss-com', primary: '#0080ff', accent: '#ec0853', bg: '#ffffff', grade: 'A'  },
-  { host: 'anthropic.com',   slug: 'anthropic-com',   primary: '#d97757', accent: '#141413', bg: '#faf9f5', grade: 'A'  },
+  { host: 'stripe.com',  slug: 'stripe-com',  primary: '#533afd', accent: '#e5edf5', bg: '#ffffff', grade: 'B',  tag: 'fintech' },
+  { host: 'linear.app',  slug: 'linear-app',  primary: '#5e6ad2', accent: '#e4f222', bg: '#08090a', grade: 'A',  tag: 'dev tools' },
+  { host: 'vercel.com',  slug: 'vercel-com',  primary: '#0068d6', accent: '#52aeff', bg: '#fafafa', grade: 'A',  tag: 'infra' },
+  { host: 'notion.so',   slug: 'notion-so',   primary: '#455dd3', accent: '#0075de', bg: '#ffffff', grade: 'A-', tag: 'productivity' },
+  { host: 'figma.com',   slug: 'figma-com',   primary: '#00b6ff', accent: '#e4ff97', bg: '#ffffff', grade: 'A',  tag: 'design' },
+  { host: 'apple.com',   slug: 'apple-com',   primary: '#0071e3', accent: '#f5f5f7', bg: '#ffffff', grade: 'A+', tag: 'consumer' },
+  { host: 'arc.net',     slug: 'arc-net',     primary: '#2702c2', accent: '#fffadd', bg: '#fffcec', grade: 'A',  tag: 'consumer' },
+  { host: 'spotify.com', slug: 'spotify-com', primary: '#1ed760', accent: '#346e4a', bg: '#121212', grade: 'A-', tag: 'consumer' },
+  { host: 'github.com',      slug: 'github-com',      primary: '#08872b', accent: '#f0f6fc', bg: '#0d1117', grade: 'A',  tag: 'dev tools' },
+  { host: 'airbnb.com',      slug: 'airbnb-com',      primary: '#ff385c', accent: '#e00b41', bg: '#ffffff', grade: 'A-', tag: 'consumer' },
+  { host: 'openai.com',      slug: 'openai-com',      primary: '#000000', accent: '#8e8ea0', bg: '#ffffff', grade: 'A',  tag: 'ai' },
+  { host: 'tailwindcss.com', slug: 'tailwindcss-com', primary: '#0080ff', accent: '#ec0853', bg: '#ffffff', grade: 'A',  tag: 'dev tools' },
+  { host: 'anthropic.com',   slug: 'anthropic-com',   primary: '#d97757', accent: '#141413', bg: '#faf9f5', grade: 'A',  tag: 'ai' },
+  // ── v13 expansion — values harvested from real `designlang` runs ──
+  { host: 'raycast.com',     slug: 'raycast-com',     primary: '#ff6363', accent: '#56c2ff', bg: '#07080a', grade: 'C', tag: 'dev tools', live: true },
+  { host: 'supabase.com',    slug: 'supabase-com',    primary: '#72e3ad', accent: '#a9f1ca', bg: '#fcfcfc', grade: 'A', tag: 'infra', live: true },
+  { host: 'framer.com',      slug: 'framer-com',      primary: '#0066ff', accent: '#0099ff', bg: '#000000', grade: 'C', tag: 'design', live: true },
+  { host: 'resend.com',      slug: 'resend-com',      primary: '#d6ebfd', accent: '#44ffa4', bg: '#000000', grade: 'B', tag: 'dev tools', live: true },
+  { host: 'clerk.com',       slug: 'clerk-com',       primary: '#6c47ff', accent: '#5de3ff', bg: '#f7f7f8', grade: 'B', tag: 'infra', live: true },
+  { host: 'cal.com',         slug: 'cal-com',         primary: '#0000ee', accent: '#d6ecfe', bg: '#f4f4f4', grade: 'C', tag: 'productivity', live: true },
+  { host: 'discord.com',     slug: 'discord-com',     primary: '#5865f2', accent: '#1a2081', bg: '#1a2081', grade: 'C', tag: 'consumer', live: true },
+  { host: 'netflix.com',     slug: 'netflix-com',     primary: '#e50914', accent: '#e50914', bg: '#000000', grade: 'A', tag: 'consumer', live: true },
+  { host: 'duolingo.com',    slug: 'duolingo-com',    primary: '#d7ffb8', accent: '#ddf4ff', bg: '#ffffff', grade: 'B', tag: 'consumer', live: true },
+  { host: 'coinbase.com',    slug: 'coinbase-com',    primary: '#0000ee', accent: '#0000ee', bg: '#ffffff', grade: 'B', tag: 'fintech', live: true },
+  { host: 'loom.com',        slug: 'loom-com',        primary: '#1868db', accent: '#e9f2fe', bg: '#ffffff', grade: 'B', tag: 'productivity', live: true },
+  { host: 'webflow.com',     slug: 'webflow-com',     primary: '#146ef5', accent: '#3b82f6', bg: '#ffffff', grade: 'B', tag: 'design', live: true },
+  { host: 'postman.com',     slug: 'postman-com',     primary: '#e05320', accent: '#ff6c37', bg: '#ffffff', grade: 'D', tag: 'dev tools', live: true },
+  { host: 'replit.com',      slug: 'replit-com',      primary: '#0051c3', accent: '#521010', bg: '#ffffff', grade: 'B', tag: 'dev tools', live: true },
+  { host: 'railway.app',     slug: 'railway-app',     primary: '#59497a', accent: '#1f132a', bg: '#13111c', grade: 'B', tag: 'infra', live: true },
+  { host: 'render.com',      slug: 'render-com',      primary: '#8a05ff', accent: '#e0f4ff', bg: '#ffffff', grade: 'C', tag: 'infra', live: true },
+  { host: 'mintlify.com',    slug: 'mintlify-com',    primary: '#faf8f5', accent: '#ff7a59', bg: '#f9f6f3', grade: 'A', tag: 'dev tools', live: true },
+  { host: 'posthog.com',     slug: 'posthog-com',     primary: '#e1d7c2', accent: '#eeefe9', bg: '#e5e7e0', grade: 'B', tag: 'dev tools', live: true },
+  { host: 'sentry.io',       slug: 'sentry-io',       primary: '#150f23', accent: '#2d2340', bg: '#1f1633', grade: 'B', tag: 'dev tools', live: true },
+  { host: 'perplexity.ai',   slug: 'perplexity-ai',   primary: '#0000ee', accent: '#0000ee', bg: '#ffffff', grade: 'B', tag: 'ai', live: true },
+  { host: 'ramp.com',        slug: 'ramp-com',        primary: '#000000', accent: '#000000', bg: '#ffffff', grade: 'B', tag: 'fintech', live: true },
+  { host: 'retool.com',      slug: 'retool-com',      primary: '#e9ebdf', accent: '#f7f8f4', bg: '#151515', grade: 'A', tag: 'dev tools', live: true },
+  { host: 'planetscale.com', slug: 'planetscale-com', primary: '#f2b600', accent: '#0b6ec5', bg: '#fafafa', grade: 'A', tag: 'infra', live: true },
+  { host: 'v0.dev',          slug: 'v0-dev',          primary: '#d2d2d2', accent: '#d2d2d2', bg: '#f4f4f4', grade: 'A', tag: 'ai', live: true },
 ];
 
 function relTime(ms) {
@@ -52,9 +78,10 @@ export default async function Gallery() {
             Real extractions, on this site.
           </h1>
           <p className="lede" style={{ marginTop: 20 }}>
-            Thirteen well-known design systems pulled with <code className="kbd">npx designlang &lt;host&gt;</code>{' '}
-            and committed to this repo. Click any card to open the actual brand book the CLI produced —
-            colour, typography, spacing, motion, anatomy, voice, accessibility, the lot.
+            Dozens of well-known design systems pulled with <code className="kbd">npx designlang &lt;host&gt;</code>{' '}
+            — each graded on a real run. Click any card to open the actual brand book the CLI produced
+            (colour, type, spacing, motion, anatomy, voice, a11y), or hit <strong>▶ watch</strong> to see
+            it read live.
           </p>
         </div>
       </section>
@@ -63,30 +90,9 @@ export default async function Gallery() {
         <div className="wrap">
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
             <h2 className="h2" style={{ fontSize: 28, margin: 0 }}>Featured.</h2>
-            <span className="mono faint" style={{ fontSize: 12 }}>{FEATURED.length} brand books · pre-rendered</span>
+            <span className="mono faint" style={{ fontSize: 12 }}>{FEATURED.length} brand books · graded · filter or watch any one</span>
           </header>
-          <div className="gallery-grid">
-            {FEATURED.map(g => (
-              <a
-                key={g.host}
-                href={`/gallery/${g.slug}`}
-                className="gal-card gal-real"
-              >
-                <div
-                  className="gal-swatch"
-                  style={{ background: `linear-gradient(135deg, ${g.primary} 0%, ${g.accent} 65%, ${g.bg === '#ffffff' ? '#1a1a1a' : g.bg} 100%)` }}
-                />
-                <div className="gal-logo">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`https://icon.horse/icon/${g.host}`} alt="" loading="lazy" width={64} height={64} />
-                </div>
-                <div className="gal-meta">
-                  <span className="gal-host">{g.host}</span>
-                  <span className="gal-grade">brand book ↗</span>
-                </div>
-              </a>
-            ))}
-          </div>
+          <GalleryFeatured items={FEATURED} />
         </div>
       </section>
 
